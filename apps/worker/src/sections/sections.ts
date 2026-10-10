@@ -6,6 +6,7 @@ export type SectionRecord = {
   name: string;
   description: string | null;
   browseButtonLabel: string;
+  conversionGroupId: string | null;
   iconType: 'icon' | 'asset';
   iconValue: string | null;
   iconAssetId: string | null;
@@ -26,6 +27,7 @@ export type SectionInput = {
   name: string;
   description: string | null;
   browseButtonLabel: string;
+  conversionGroupId: string | null;
   iconValue: string | null;
   iconAssetId: string | null;
   browseBackgroundAssetId: string | null;
@@ -42,6 +44,7 @@ type SectionRow = {
   name: string;
   description: string | null;
   browse_button_label: string;
+  conversion_group_id: string | null;
   icon_type: 'icon' | 'asset';
   icon_value: string | null;
   icon_asset_id: string | null;
@@ -125,6 +128,13 @@ export function validateSectionInput(value: unknown): ValidationResult {
     40,
   );
   if (!browseButtonLabel.ok) return browseButtonLabel;
+  const conversionGroupId = readOptionalText(
+    value.conversionGroupId,
+    'conversionGroupId',
+    '绑定转化池',
+    100,
+  );
+  if (!conversionGroupId.ok) return conversionGroupId;
   const iconValue = readOptionalText(value.iconValue, 'iconValue', '分区字符图标', 80);
   if (!iconValue.ok) return iconValue;
   const iconAssetId = readOptionalText(
@@ -171,6 +181,7 @@ export function validateSectionInput(value: unknown): ValidationResult {
       name: name.value,
       description: description.value,
       browseButtonLabel: browseButtonLabel.value,
+      conversionGroupId: conversionGroupId.value,
       iconValue: iconValue.value,
       iconAssetId: iconAssetId.value,
       browseBackgroundAssetId: browseBackgroundAssetId.value,
@@ -188,6 +199,7 @@ function mapSection(row: SectionRow): SectionRecord {
     name: row.name,
     description: row.description,
     browseButtonLabel: row.browse_button_label,
+    conversionGroupId: row.conversion_group_id,
     iconType: row.icon_type,
     iconValue: row.icon_value,
     iconAssetId: row.icon_asset_id,
@@ -214,6 +226,7 @@ const SECTION_SELECT = `SELECT
   s.name,
   s.description,
   s.browse_button_label,
+  s.conversion_group_id,
   s.icon_type,
   s.icon_value,
   s.icon_asset_id,
@@ -312,6 +325,7 @@ export async function createSectionStatements(
     name: input.name,
     description: input.description,
     browseButtonLabel: input.browseButtonLabel,
+    conversionGroupId: null,
     iconType,
     iconValue: input.iconAssetId ? null : input.iconValue,
     iconAssetId: input.iconAssetId,
@@ -336,8 +350,9 @@ export async function createSectionStatements(
           `INSERT INTO sections (
              id, slug, name, description, browse_button_label, icon_type, icon_value, icon_asset_id,
              browse_background_asset_id, sort_order, is_enabled, is_visible,
+             conversion_group_id,
              created_at, updated_at, deleted_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, NULL)`,
         )
         .bind(
           section.id,
@@ -371,6 +386,7 @@ export function createUpdateSectionStatement(
       `UPDATE sections
        SET name = ?, description = ?, browse_button_label = ?, icon_type = ?, icon_value = ?, icon_asset_id = ?,
            browse_background_asset_id = ?, sort_order = ?, is_enabled = ?, is_visible = ?,
+           conversion_group_id = ?,
            updated_at = ?
        WHERE id = ? AND deleted_at IS NULL`,
     )
@@ -385,6 +401,7 @@ export function createUpdateSectionStatement(
       input.sortOrder,
       input.isEnabled ? 1 : 0,
       input.isVisible === false ? 0 : 1,
+      input.conversionGroupId,
       now,
       id,
     );

@@ -40,6 +40,12 @@ export type CustomerServiceVerificationContext = {
 };
 
 type ProductCatalog = {
+  sections: Array<{
+    id: string;
+    name: string;
+    href: string;
+    isEnabled: true;
+  }>;
   products: Array<{
     id: string;
     title: string;
@@ -58,6 +64,13 @@ type ProductCatalog = {
 function publicProductHref(sectionSlug: string, productSlug: string): string {
   return new URL(
     `/sections/${encodeURIComponent(sectionSlug)}/products/${encodeURIComponent(productSlug)}/`,
+    window.location.origin,
+  ).toString();
+}
+
+function publicSectionHref(sectionSlug: string): string {
+  return new URL(
+    `/sections/${encodeURIComponent(sectionSlug)}/`,
     window.location.origin,
   ).toString();
 }
@@ -225,7 +238,7 @@ export async function batchDeleteCustomerServiceConnections(
 
 async function loadProductCatalog(connectionId: string): Promise<ProductCatalog> {
   const sections = await fetchSections('active');
-  const products = await Promise.all(
+  const catalog = await Promise.all(
     sections.map(async (section) => {
       const [sectionProducts, conversionGroups] = await Promise.all([
         fetchProducts(section.id, 'active'),
@@ -233,42 +246,66 @@ async function loadProductCatalog(connectionId: string): Promise<ProductCatalog>
       ]);
       const groupById = new Map(conversionGroups.map((group) => [group.id, group]));
 
-      return sectionProducts.flatMap((product) => {
-        const group = product.conversionGroupId
-          ? groupById.get(product.conversionGroupId)
-          : undefined;
-        if (
-          product.status !== 'published' ||
-          product.deletedAt ||
-          product.conversionMode !== 'customer_service' ||
-          !group ||
-          group.deletedAt ||
-          !group.isEnabled ||
-          group.mode !== 'customer_service' ||
-          group.customerServiceConnectionId !== connectionId
-        ) {
-          return [];
-        }
+      const group = section.conversionGroupId
+        ? groupById.get(section.conversionGroupId)
+        : undefined;
+      const sectionContext =
+        group &&
+        !group.deletedAt &&
+        group.isEnabled &&
+        group.mode === 'customer_service' &&
+        group.customerServiceConnectionId === connectionId &&
+        group.activeTargetCount > 0
+          ? {
+              id: section.id,
+              name: section.name,
+              href: publicSectionHref(section.slug),
+              isEnabled: true as const,
+            }
+          : null;
 
-        return [
-          {
-            id: product.id,
-            title: product.title,
-            href: publicProductHref(section.slug, product.slug),
-            coverUrl: product.effectiveCoverUrl,
-            sectionId: section.id,
-            sectionName: section.name,
-            categoryId: product.categoryId,
-            categoryName: product.categoryName,
-            isEnabled: true as const,
-            sourceType: 'product' as const,
-          },
-        ];
-      });
+      return {
+        section: sectionContext,
+        products: sectionProducts.flatMap((product) => {
+          const group = product.conversionGroupId
+            ? groupById.get(product.conversionGroupId)
+            : undefined;
+          if (
+            product.status !== 'published' ||
+            product.deletedAt ||
+            product.conversionMode !== 'customer_service' ||
+            !group ||
+            group.deletedAt ||
+            !group.isEnabled ||
+            group.mode !== 'customer_service' ||
+            group.customerServiceConnectionId !== connectionId
+          ) {
+            return [];
+          }
+
+          return [
+            {
+              id: product.id,
+              title: product.title,
+              href: publicProductHref(section.slug, product.slug),
+              coverUrl: product.effectiveCoverUrl,
+              sectionId: section.id,
+              sectionName: section.name,
+              categoryId: product.categoryId,
+              categoryName: product.categoryName,
+              isEnabled: true as const,
+              sourceType: 'product' as const,
+            },
+          ];
+        }),
+      };
     }),
   );
 
-  return { products: products.flat() };
+  return {
+    sections: catalog.flatMap((item) => (item.section ? [item.section] : [])),
+    products: catalog.flatMap((item) => item.products),
+  };
 }
 
 async function verifyPublicCustomerService(

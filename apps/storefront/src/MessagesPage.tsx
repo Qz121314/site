@@ -14,6 +14,7 @@ import { MessagesArticleListWorkspace } from './MessagesArticleListWorkspace';
 import { getMessageArticlesFromBootstrap } from './messages-articles';
 import { installSupportExpiryRuntime } from './support-expiry-runtime';
 import { replaceStorefrontLocation } from './storefront-navigation-runtime';
+import { sectionHref } from './routing';
 import type {
   SupportConversationDetail,
   SupportConversationSummary,
@@ -34,13 +35,13 @@ const HANDOFF_ID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 
 type ComposeContext = {
-  productId: string;
+  productId: string | null;
   sectionId: string;
   handoffId: string | null;
   ctaPath: string | null;
 };
 type ResolvedComposeContext = {
-  productId: string;
+  productId: string | null;
   sectionId: string;
   handoffId: string;
 };
@@ -70,14 +71,13 @@ function readComposeContext(): ComposeContext | null {
   const ctaPath =
     rawCtaPath.startsWith('/go/') && rawCtaPath.length <= 240 ? rawCtaPath : null;
   if (
-    !productId ||
     !sectionId ||
     (!handoffId && !ctaPath) ||
     productId.length > 120 ||
     sectionId.length > 120
   )
     return null;
-  return { productId, sectionId, handoffId, ctaPath };
+  return { productId: productId || null, sectionId, handoffId, ctaPath };
 }
 
 function parseResolvedComposePath(
@@ -91,13 +91,13 @@ function parseResolvedComposePath(
   if (
     target.origin !== window.location.origin ||
     target.pathname !== '/messages/new/' ||
-    productId !== expected.productId ||
+    (productId || null) !== expected.productId ||
     sectionId !== expected.sectionId ||
     !HANDOFF_ID_PATTERN.test(handoffId)
   ) {
     throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
   }
-  return { productId, sectionId, handoffId };
+  return { productId: productId || null, sectionId, handoffId };
 }
 
 function NotificationBellIcon({ enabled }: { enabled: boolean }) {
@@ -291,9 +291,9 @@ export function MessagesPage({
       composeContext?.sectionId,
       composeContext?.productId,
     ],
-    enabled: Boolean(composeContext),
+    enabled: Boolean(composeContext?.productId),
     queryFn: ({ signal }) => {
-      if (!composeContext) throw new Error('INVALID_COMPOSE_CONTEXT');
+      if (!composeContext?.productId) throw new Error('INVALID_COMPOSE_CONTEXT');
       return loadProductSnapshot(
         bootstrap,
         composeContext.productId,
@@ -330,6 +330,11 @@ export function MessagesPage({
     [conversationQuery.data?.pages],
   );
   const composeProduct = composeProductQuery.data?.product ?? null;
+  const composeSection = composeContext?.productId
+    ? null
+    : (bootstrap.home.allSections.find(
+        (section) => section.id === composeContext?.sectionId,
+      ) ?? null);
   const sortedProductMedia = composeProduct
     ? [...composeProduct.media].sort((left, right) => left.sortOrder - right.sortOrder)
     : [];
@@ -345,24 +350,37 @@ export function MessagesPage({
         productCoverUrl: firstProductImageUrl,
         productHref: `/sections/${encodeURIComponent(composeProduct.sectionId)}/products/${encodeURIComponent(composeProduct.id)}/`,
       }
-    : null;
+    : composeSection
+      ? {
+          productTitle: composeSection.name,
+          productCoverUrl: null,
+          productHref: sectionHref(composeSection),
+        }
+      : null;
   const composeStartQuery = useQuery({
     queryKey: ['support-compose-start', resolvedComposeContext?.handoffId],
     enabled: Boolean(resolvedComposeContext && pendingConversation?.productHref),
     queryFn: ({ signal }) => {
       if (!resolvedComposeContext || !pendingConversation?.productHref)
         throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
-      return siteSupportGateway.startConversation(
-        {
-          handoffId: resolvedComposeContext.handoffId,
-          productId: resolvedComposeContext.productId,
-          sectionId: resolvedComposeContext.sectionId,
-          productTitle: pendingConversation.productTitle,
-          productCoverUrl: pendingConversation.productCoverUrl,
-          productHref: pendingConversation.productHref,
-        },
-        signal,
-      );
+      const input = resolvedComposeContext.productId
+        ? {
+            contextType: 'product' as const,
+            handoffId: resolvedComposeContext.handoffId,
+            productId: resolvedComposeContext.productId,
+            sectionId: resolvedComposeContext.sectionId,
+            productTitle: pendingConversation.productTitle,
+            productCoverUrl: pendingConversation.productCoverUrl,
+            productHref: pendingConversation.productHref,
+          }
+        : {
+            contextType: 'section' as const,
+            handoffId: resolvedComposeContext.handoffId,
+            sectionId: resolvedComposeContext.sectionId,
+            sectionName: pendingConversation.productTitle,
+            sectionHref: pendingConversation.productHref,
+          };
+      return siteSupportGateway.startConversation(input, signal);
     },
     staleTime: Number.POSITIVE_INFINITY,
     retry: false,
@@ -380,13 +398,14 @@ export function MessagesPage({
   const conversations = conversationsQuery.data ?? [];
   const messageArticles = getMessageArticlesFromBootstrap(bootstrap);
   const composeUnavailable =
-    composeProductQuery.isError ||
+    (Boolean(composeContext?.productId) && composeProductQuery.isError) ||
+    (Boolean(composeContext && !composeContext.productId) && !composeSection) ||
     composeHandoffQuery.isError ||
     composeStartQuery.isError;
   const composeConnecting = Boolean(
     compose &&
     composeContext &&
-    (composeProductQuery.isLoading ||
+    ((Boolean(composeContext.productId) && composeProductQuery.isLoading) ||
       composeHandoffQuery.isFetching ||
       (!resolvedComposeContext && !composeHandoffQuery.isError) ||
       composeStartQuery.isFetching),
@@ -420,10 +439,10 @@ export function MessagesPage({
     const resolved = composeHandoffQuery.data;
     if (!compose || !resolved || composeContext?.handoffId) return;
     const params = new URLSearchParams({
-      productId: resolved.productId,
       sectionId: resolved.sectionId,
       handoffId: resolved.handoffId,
     });
+    if (resolved.productId) params.set('productId', resolved.productId);
     replaceStorefrontLocation(`/messages/new/?${params.toString()}`);
   }, [compose, composeContext?.handoffId, composeHandoffQuery.data]);
 

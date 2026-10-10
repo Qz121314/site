@@ -37,6 +37,14 @@ export function sectionHref(section: Pick<PublicSection, 'id' | 'slug'>): string
   return sectionRefHref(section.slug || section.id);
 }
 
+export function sectionCtaHref(
+  section: Pick<PublicSection, 'id' | 'slug' | 'conversionGroupId'>,
+): string {
+  return section.conversionGroupId
+    ? `/go/section/${routePart(section.id)}`
+    : sectionHref(section);
+}
+
 export function productHref(
   product: Pick<PublicProductSummary, 'id' | 'slug' | 'sectionId' | 'sectionSlug'>,
 ): string {

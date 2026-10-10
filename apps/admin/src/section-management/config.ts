@@ -9,6 +9,7 @@ export const emptySectionForm: SectionEditorInput = {
   name: '',
   description: '',
   browseButtonLabel: '',
+  conversionGroupId: null,
   iconValue: '',
   iconAssetId: null,
   browseBackgroundAssetId: null,

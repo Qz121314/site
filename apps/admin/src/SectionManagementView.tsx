@@ -33,6 +33,8 @@ import {
   AdminSegmentedItem,
 } from './components/ui/segmented-control';
 import { DeleteSectionDialog } from './section-management/DeleteSectionDialog';
+import { fetchConversionGroups, type AdminConversionGroup } from './conversion-pool/api';
+import { testCustomerServiceConnection } from './customer-service/api';
 import { SectionEditorDialog } from './section-management/SectionEditorDialog';
 import { SectionTable } from './section-management/SectionTable';
 import { emptySectionForm, type SectionEditorInput } from './section-management/config';
@@ -78,6 +80,7 @@ export function SectionManagementView({
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingSection, setEditingSection] = useState<AdminSection | null>(null);
+  const [conversionGroups, setConversionGroups] = useState<AdminConversionGroup[]>([]);
   const [form, setForm] = useState<SectionEditorInput>(emptySectionForm);
   const [localIcon, setLocalIcon] = useState<LocalBrandingImage | null>(null);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
@@ -152,6 +155,7 @@ export function SectionManagementView({
       ? Math.max(...activeSections.map((section) => section.sortOrder)) + 10
       : 0;
     setEditingSection(null);
+    setConversionGroups([]);
     setForm({ ...emptySectionForm, sortOrder });
     setLocalIcon(null);
     setErrorMessage('');
@@ -159,12 +163,19 @@ export function SectionManagementView({
     setEditorOpen(true);
   }
 
-  function openEditEditor(section: AdminSection) {
+  async function openEditEditor(section: AdminSection) {
+    try {
+      setConversionGroups(await fetchConversionGroups(section.id, 'active'));
+    } catch (error) {
+      handleOperationError(error);
+      return;
+    }
     setEditingSection(section);
     setForm({
       name: section.name,
       description: section.description ?? '',
       browseButtonLabel: section.browseButtonLabel,
+      conversionGroupId: section.conversionGroupId,
       iconValue: section.iconValue ?? '',
       iconAssetId: section.iconAssetId,
       browseBackgroundAssetId: section.browseBackgroundAssetId,
@@ -239,7 +250,28 @@ export function SectionManagementView({
             ),
           ),
         );
-        setSuccessMessage(`分区“${updated.name}”已更新。`);
+        const selectedGroup = conversionGroups.find(
+          (group) => group.id === updated.conversionGroupId,
+        );
+        if (
+          updated.conversionGroupId !== editingSection.conversionGroupId &&
+          selectedGroup?.mode === 'customer_service' &&
+          selectedGroup.customerServiceConnectionId
+        ) {
+          try {
+            await testCustomerServiceConnection(
+              selectedGroup.customerServiceConnectionId,
+            );
+            setSuccessMessage(`分区“${updated.name}”已更新并同步客服分区信息。`);
+          } catch (error) {
+            setSuccessMessage(
+              `分区“${updated.name}”已更新，但客服分区同步失败，请在客服管理中重新验证连接。`,
+            );
+            handleOperationError(error);
+          }
+        } else {
+          setSuccessMessage(`分区“${updated.name}”已更新。`);
+        }
       } else {
         const created = await createSection(input);
         onActiveSectionsChange(sortSections([...activeSections, created]));
@@ -261,6 +293,7 @@ export function SectionManagementView({
         name: section.name,
         description: section.description ?? '',
         browseButtonLabel: section.browseButtonLabel,
+        conversionGroupId: section.conversionGroupId,
         iconValue: section.iconValue ?? '',
         iconAssetId: section.iconAssetId,
         browseBackgroundAssetId: section.browseBackgroundAssetId,
@@ -450,6 +483,7 @@ export function SectionManagementView({
         <SectionEditorDialog
           editingSection={editingSection}
           form={form}
+          conversionGroups={conversionGroups}
           iconPreviewUrl={iconPreviewUrl}
           browseBackgroundPreviewUrl={browseBackgroundPreviewUrl}
           localIcon={localIcon}

@@ -58,6 +58,50 @@ publicConversionRoutes.get('/message-card/:cardId', async (context) => {
   return context.redirect(target.endpointUrl, 302);
 });
 
+publicConversionRoutes.get('/section/:sectionId', async (context) => {
+  setRedirectHeaders(context);
+  const sectionId = context.req.param('sectionId').trim();
+  if (!sectionId || sectionId.length > 100 || !/^[A-Za-z0-9-]+$/u.test(sectionId)) {
+    return unavailable(context, 404, 'This contact option is unavailable.');
+  }
+  const section = await context.env.DB.prepare(
+    `SELECT id, conversion_group_id
+     FROM sections
+     WHERE id = ? AND is_enabled = 1 AND is_visible = 1 AND deleted_at IS NULL
+       AND conversion_group_id IS NOT NULL`,
+  )
+    .bind(sectionId)
+    .first<{ id: string; conversion_group_id: string }>();
+  if (!section?.conversion_group_id) {
+    return unavailable(context, 404, 'This contact option is unavailable.');
+  }
+  const group = await getConversionGroup(
+    context.env.DB,
+    section.id,
+    section.conversion_group_id,
+  );
+  if (!group || group.deletedAt || !group.isEnabled || group.activeTargetCount < 1) {
+    return unavailable(context, 409, 'This contact option is temporarily unavailable.');
+  }
+  if (group.mode === 'customer_service') {
+    const handoffId = crypto.randomUUID();
+    const path = `/messages/new/?${new URLSearchParams({ sectionId, handoffId })}`;
+    if (context.req.header('accept')?.includes('application/json')) {
+      return context.json({ path });
+    }
+    return context.redirect(path, 302);
+  }
+  const target = await selectNextConversionTarget(
+    context.env.DB,
+    group,
+    new Date().toISOString(),
+  );
+  if (!target || target.bindingKind !== 'link' || !target.endpointUrl) {
+    return unavailable(context, 409, 'This contact option is temporarily unavailable.');
+  }
+  return context.redirect(target.endpointUrl, 302);
+});
+
 publicConversionRoutes.get('/:code', async (context) => {
   setRedirectHeaders(context);
   const code = context.req.param('code').trim();

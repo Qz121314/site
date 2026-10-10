@@ -6,11 +6,13 @@ import {
   type LocalBrandingImage,
 } from '../branding-media/local-branding-image';
 import type { AdminSection } from '../api';
+import type { AdminConversionGroup } from '../conversion-pool/api';
 import type { SectionEditorInput } from './config';
 
 type SectionEditorDialogProps = {
   editingSection: AdminSection | null;
   form: SectionEditorInput;
+  conversionGroups: AdminConversionGroup[];
   iconPreviewUrl: string | null;
   browseBackgroundPreviewUrl: string | null;
   localIcon: LocalBrandingImage | null;
@@ -30,6 +32,7 @@ type SectionEditorDialogProps = {
 export function SectionEditorDialog({
   editingSection,
   form,
+  conversionGroups,
   iconPreviewUrl,
   browseBackgroundPreviewUrl,
   localIcon,
@@ -111,6 +114,32 @@ export function SectionEditorDialog({
                   onFormChange({ ...form, browseButtonLabel: event.target.value })
                 }
               />
+            </label>
+            <label>
+              <span>绑定转化池</span>
+              <select
+                value={form.conversionGroupId ?? ''}
+                disabled={busy || !editingSection}
+                onChange={(event) =>
+                  onFormChange({
+                    ...form,
+                    conversionGroupId: event.target.value || null,
+                  })
+                }
+              >
+                <option value="">不绑定（进入产品列表）</option>
+                {conversionGroups.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name} · {group.buttonLabel} ·{' '}
+                    {group.mode === 'customer_service' ? '在线客服' : '链接'}
+                  </option>
+                ))}
+              </select>
+              <small>
+                {editingSection
+                  ? '绑定后，前台分区卡片按钮直接进入此转化池，并使用该池的按钮文案。'
+                  : '创建分区后，可编辑分区并选择已创建的转化池。'}
+              </small>
             </label>
           </div>
         </section>

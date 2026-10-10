@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { createAuditLogStatement } from '../audit/write-audit-log';
 import { apiError } from '../http/api-response';
+import { getConversionGroup } from '../conversion-pool/conversion-pool';
 import {
   createDeleteSectionStatement,
   createRestoreSectionStatement,
@@ -104,13 +105,21 @@ adminSectionRoutes.post('/', async (context) => {
       field: validation.field,
     });
   }
+  if (validation.value.conversionGroupId) {
+    return apiError(
+      context,
+      400,
+      'INVALID_SECTION_CONVERSION_GROUP',
+      '请先创建分区，再绑定该分区的转化池。',
+      { field: 'conversionGroupId' },
+    );
+  }
   const invalidImage = await validateImageReferences(context.env.DB, validation.value);
   if (invalidImage) {
     return apiError(context, 409, invalidImage.code, invalidImage.message, {
       field: invalidImage.field,
     });
   }
-
   const now = new Date().toISOString();
   const created = await createSectionStatements(context.env.DB, validation.value, now);
   try {
@@ -170,6 +179,22 @@ adminSectionRoutes.put('/:id', async (context) => {
       field: invalidImage.field,
     });
   }
+  if (validation.value.conversionGroupId) {
+    const group = await getConversionGroup(
+      context.env.DB,
+      current.id,
+      validation.value.conversionGroupId,
+    );
+    if (!group || group.deletedAt) {
+      return apiError(
+        context,
+        409,
+        'INVALID_SECTION_CONVERSION_GROUP',
+        '请选择当前分区中有效的转化池。',
+        { field: 'conversionGroupId' },
+      );
+    }
+  }
 
   const now = new Date().toISOString();
   const updated: SectionRecord = {
@@ -177,6 +202,7 @@ adminSectionRoutes.put('/:id', async (context) => {
     name: validation.value.name,
     description: validation.value.description,
     browseButtonLabel: validation.value.browseButtonLabel,
+    conversionGroupId: validation.value.conversionGroupId,
     iconType: validation.value.iconAssetId ? 'asset' : 'icon',
     iconValue: validation.value.iconAssetId ? null : validation.value.iconValue,
     iconAssetId: validation.value.iconAssetId,

@@ -253,3 +253,58 @@ publicStorefrontConfigRoutes.get('/support/route/:productId', async (context) =>
     },
   });
 });
+
+publicStorefrontConfigRoutes.get('/support/route/section/:sectionId', async (context) => {
+  setPublicRuntimeHeaders(context);
+  const sectionId = context.req.param('sectionId').trim();
+  if (!validPublicId(sectionId)) return context.json({ available: false });
+
+  const section = await context.env.DB.prepare(
+    `SELECT id, name, slug, conversion_group_id
+     FROM sections
+     WHERE id = ? AND is_enabled = 1 AND is_visible = 1
+       AND deleted_at IS NULL AND conversion_group_id IS NOT NULL`,
+  )
+    .bind(sectionId)
+    .first<{
+      id: string;
+      name: string;
+      slug: string;
+      conversion_group_id: string;
+    }>();
+  if (!section?.conversion_group_id) return context.json({ available: false });
+
+  const group = await getConversionGroup(
+    context.env.DB,
+    sectionId,
+    section.conversion_group_id,
+  );
+  if (
+    !group ||
+    group.deletedAt ||
+    !group.isEnabled ||
+    group.mode !== 'customer_service' ||
+    !group.customerServiceConnectionId
+  ) {
+    return context.json({ available: false });
+  }
+  const connection = await getCustomerServiceConnection(
+    context.env.DB,
+    group.customerServiceConnectionId,
+  );
+  if (!connection || connection.deletedAt || !connection.isEnabled) {
+    return context.json({ available: false });
+  }
+  const publicConnection = toPublicSupportConnection(connection);
+  if (!publicConnection) return context.json({ available: false });
+
+  return context.json({
+    available: true,
+    connection: publicConnection,
+    section: {
+      id: section.id,
+      name: section.name,
+      href: `/sections/${encodeURIComponent(section.slug)}/`,
+    },
+  });
+});

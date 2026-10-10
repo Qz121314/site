@@ -13,7 +13,7 @@ export function parseSupportProductContext(
 ): SupportProductContextSnapshot | null {
   if (!isRecord(value)) return null;
   if (
-    typeof value.productId !== 'string' ||
+    (typeof value.productId !== 'string' && value.productId !== null) ||
     typeof value.title !== 'string' ||
     !nullableString(value.coverUrl) ||
     typeof value.href !== 'string' ||
