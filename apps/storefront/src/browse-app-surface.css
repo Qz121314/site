@@ -17,6 +17,10 @@
     gap: 14px;
   }
 
+  .browse-directory-intro h1 {
+    font-size: clamp(1.15rem, 5vw, 1.3rem);
+  }
+
   .browse-section-list {
     gap: 12px;
   }
@@ -33,5 +37,23 @@
   .browse-section-list:not(.is-single) .browse-section-card {
     min-height: clamp(170px, 24svh, 210px);
     aspect-ratio: auto;
+  }
+
+  .browse-section-card-content {
+    right: 14px;
+    bottom: 14px;
+    left: 14px;
+    gap: 10px;
+  }
+
+  .browse-section-card-content p {
+    color: rgb(255 255 255 / 82%);
+    font-size: 0.8125rem;
+  }
+
+  .browse-section-card-action {
+    min-height: 44px;
+    padding-inline: 14px;
+    font-size: 0.8125rem;
   }
 }
