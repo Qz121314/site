@@ -33,10 +33,12 @@ import {
 import { validateProductDraft } from './product-management/product-editor-validation';
 import {
   batchDeleteProducts,
+  emptyProductTrash,
   createProduct,
   deleteProduct,
   fetchProduct,
   fetchProducts,
+  permanentlyDeleteProducts,
   reorderProducts,
   restoreProduct,
   updateProduct,
@@ -197,6 +199,10 @@ export function ProductManagementView({
   );
   const [working, setWorking] = useState(false);
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
+  const [pendingPermanentDeleteIds, setPendingPermanentDeleteIds] = useState<string[]>(
+    [],
+  );
+  const [emptyTrashPending, setEmptyTrashPending] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [resumeOpenedProductId, setResumeOpenedProductId] = useState<string | null>(null);
@@ -305,14 +311,21 @@ export function ProductManagementView({
   const filteredProducts = useMemo(() => {
     const keyword = search.trim().toLowerCase();
     return sourceProducts.filter((product) => {
-      if (statusFilter !== 'all' && product.status !== statusFilter) return false;
+      if (scope === 'active' && statusFilter !== 'all' && product.status !== statusFilter)
+        return false;
       if (
+        scope === 'active' &&
         !reviewMode &&
         categoryFilter !== 'all' &&
         product.categoryId !== categoryFilter
       )
         return false;
-      if (!reviewMode && tagFilter !== 'all' && !product.tagIds.includes(tagFilter))
+      if (
+        scope === 'active' &&
+        !reviewMode &&
+        tagFilter !== 'all' &&
+        !product.tagIds.includes(tagFilter)
+      )
         return false;
       if (!keyword) return true;
       const searchableText = reviewMode
@@ -320,7 +333,15 @@ export function ProductManagementView({
         : `${product.title} ${product.categoryName ?? ''} ${product.tags.map((tag) => tag.name).join(' ')} ${product.conversionGroupName ?? ''}`;
       return searchableText.toLowerCase().includes(keyword);
     });
-  }, [categoryFilter, reviewMode, search, sourceProducts, statusFilter, tagFilter]);
+  }, [
+    categoryFilter,
+    reviewMode,
+    scope,
+    search,
+    sourceProducts,
+    statusFilter,
+    tagFilter,
+  ]);
 
   const allVisibleSelected =
     filteredProducts.length > 0 &&
@@ -335,6 +356,7 @@ export function ProductManagementView({
 
   async function changeScope(nextScope: ProductScope) {
     setScope(nextScope);
+    setSelectedIds(new Set());
     if (nextScope === 'trash') {
       setLoading(true);
       try {
@@ -711,11 +733,62 @@ export function ProductManagementView({
       setActiveProducts((current) =>
         current.filter((product) => !deletingIds.includes(product.id)),
       );
+      const movedAt = new Date().toISOString();
+      const movedToTrash = deletingIds
+        .map((id) => activeProducts.find((product) => product.id === id))
+        .filter((product): product is AdminProduct => Boolean(product))
+        .map((product) => ({
+          ...product,
+          deletedAt: movedAt,
+          updatedAt: movedAt,
+        }));
+      setTrashProducts((current) => [...movedToTrash, ...current]);
       setSelectedIds(new Set());
       setPendingDeleteIds([]);
       setSuccessMessage(`已将 ${deletingIds.length} 个产品移入回收站。`);
     } catch (error) {
       setPendingDeleteIds([]);
+      handleError(error);
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  async function confirmPermanentDelete() {
+    if (pendingPermanentDeleteIds.length === 0 || working) return;
+    const deletingIds = [...pendingPermanentDeleteIds];
+    setWorking(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      await permanentlyDeleteProducts(section.id, deletingIds);
+      setTrashProducts((current) =>
+        current.filter((product) => !deletingIds.includes(product.id)),
+      );
+      setSelectedIds(new Set());
+      setPendingPermanentDeleteIds([]);
+      setSuccessMessage(`已永久删除 ${deletingIds.length} 个产品。`);
+    } catch (error) {
+      setPendingPermanentDeleteIds([]);
+      handleError(error);
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  async function confirmEmptyTrash() {
+    if (!emptyTrashPending || working) return;
+    setWorking(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      const deletedCount = await emptyProductTrash(section.id);
+      setTrashProducts([]);
+      setSelectedIds(new Set());
+      setEmptyTrashPending(false);
+      setSuccessMessage(`已清空回收站，永久删除 ${deletedCount} 个产品。`);
+    } catch (error) {
+      setEmptyTrashPending(false);
       handleError(error);
     } finally {
       setWorking(false);
@@ -778,6 +851,15 @@ export function ProductManagementView({
         }
         trailing={
           <div className="product-toolbar-actions">
+            {scope === 'trash' && trashProducts.length > 0 ? (
+              <Button
+                variant="danger"
+                disabled={working}
+                onClick={() => setEmptyTrashPending(true)}
+              >
+                清空回收站
+              </Button>
+            ) : null}
             <Button
               variant="primary"
               disabled={reviewMode && activeProducts.length > 0}
@@ -799,19 +881,21 @@ export function ProductManagementView({
           placeholder={reviewMode ? '搜索标题' : '标题、分类、标签或转化分组'}
           onChange={(event) => setSearch(event.target.value)}
         />
-        <label className="ui-management-filter">
-          <select
-            aria-label={reviewMode ? 'Review状态' : '产品状态'}
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
-          >
-            <option value="all">全部状态</option>
-            <option value="draft">草稿</option>
-            <option value="published">已发布</option>
-            <option value="archived">已归档</option>
-          </select>
-        </label>
-        {!reviewMode ? (
+        {scope === 'active' ? (
+          <label className="ui-management-filter">
+            <select
+              aria-label={reviewMode ? 'Review状态' : '产品状态'}
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
+            >
+              <option value="all">全部状态</option>
+              <option value="draft">草稿</option>
+              <option value="published">已发布</option>
+              <option value="archived">已归档</option>
+            </select>
+          </label>
+        ) : null}
+        {!reviewMode && scope === 'active' ? (
           <label className="ui-management-filter">
             <select
               aria-label="产品分类"
@@ -827,7 +911,7 @@ export function ProductManagementView({
             </select>
           </label>
         ) : null}
-        {!reviewMode ? (
+        {!reviewMode && scope === 'active' ? (
           <label className="ui-management-filter">
             <select
               aria-label="产品标签"
@@ -856,14 +940,18 @@ export function ProductManagementView({
         </div>
       ) : null}
 
-      {!reviewMode && scope === 'active' && selectedIds.size > 0 ? (
+      {!reviewMode && selectedIds.size > 0 ? (
         <AdminSelectionBar count={selectedIds.size} noun="产品">
           <Button
             variant="danger"
             disabled={working}
-            onClick={() => setPendingDeleteIds([...selectedIds])}
+            onClick={() =>
+              scope === 'active'
+                ? setPendingDeleteIds([...selectedIds])
+                : setPendingPermanentDeleteIds([...selectedIds])
+            }
           >
-            批量删除
+            {scope === 'active' ? '批量移入回收站' : '批量永久删除'}
           </Button>
         </AdminSelectionBar>
       ) : null}
@@ -882,7 +970,11 @@ export function ProductManagementView({
         onToggleSelectAll={toggleSelectAll}
         onEdit={(product) => void openProductEditor(product.id)}
         onCopy={(product) => void openCopyEditor(product)}
-        onDelete={(product) => setPendingDeleteIds([product.id])}
+        onDelete={(product) =>
+          scope === 'active'
+            ? setPendingDeleteIds([product.id])
+            : setPendingPermanentDeleteIds([product.id])
+        }
         onCopyLink={(product) => void copyProductLink(product)}
         onRestore={(product) => void handleRestore(product)}
         onMove={(product, direction) => void moveProduct(product, direction)}
@@ -952,9 +1044,30 @@ export function ProductManagementView({
         <DeleteProductDialog
           reviewMode={reviewMode}
           count={pendingDeleteIds.length}
+          mode="recycle"
           working={working}
           onCancel={() => setPendingDeleteIds([])}
           onConfirm={() => void confirmDelete()}
+        />
+      ) : null}
+      {pendingPermanentDeleteIds.length > 0 ? (
+        <DeleteProductDialog
+          reviewMode={reviewMode}
+          count={pendingPermanentDeleteIds.length}
+          mode="permanent"
+          working={working}
+          onCancel={() => setPendingPermanentDeleteIds([])}
+          onConfirm={() => void confirmPermanentDelete()}
+        />
+      ) : null}
+      {emptyTrashPending ? (
+        <DeleteProductDialog
+          reviewMode={reviewMode}
+          count={trashProducts.length}
+          mode="empty"
+          working={working}
+          onCancel={() => setEmptyTrashPending(false)}
+          onConfirm={() => void confirmEmptyTrash()}
         />
       ) : null}
     </section>

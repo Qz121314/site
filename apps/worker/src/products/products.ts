@@ -657,6 +657,29 @@ export function createUpdateProductStatements(
   return statements;
 }
 
+export function createPermanentDeleteProductStatements(
+  db: D1Database,
+  sectionId: string,
+  productId: string,
+): D1PreparedStatement[] {
+  return [
+    db
+      .prepare('UPDATE h5_page_ctas SET product_id = NULL WHERE product_id = ?')
+      .bind(productId),
+    db
+      .prepare(
+        `UPDATE audit_logs
+         SET before_json = json_remove(before_json, '$.body', '$.media', '$.categoryId', '$.coverAssetId', '$.address'),
+             after_json = json_remove(after_json, '$.body', '$.media', '$.categoryId', '$.coverAssetId', '$.address')
+         WHERE entity_type = 'product' AND entity_id = ?`,
+      )
+      .bind(productId),
+    db
+      .prepare('DELETE FROM products WHERE section_id = ? AND id = ?')
+      .bind(sectionId, productId),
+  ];
+}
+
 export function createDeleteProductStatement(
   db: D1Database,
   sectionId: string,

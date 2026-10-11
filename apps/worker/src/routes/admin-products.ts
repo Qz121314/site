@@ -197,7 +197,7 @@ adminProductRoutes.put('/:sectionId/products/:id', async (context) => {
   }
   const sectionId = context.req.param('sectionId');
   const current = await getProduct(context.env.DB, sectionId, context.req.param('id'));
-  if (!current || current.deletedAt) return productNotFound(context);
+  if (!current) return productNotFound(context);
 
   let body: unknown;
   try {
