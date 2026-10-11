@@ -691,14 +691,83 @@ test('product create/update media statements and tag replacement preserve determ
   );
 });
 
-test('permanent product deletion clears stored links and physically deletes the product row', () => {
+test('bulk permanent product deletion stays bounded and clears stored references', () => {
   const db = recordingDb();
-  const statements = createPermanentDeleteProductStatements(db, 'section-1', 'product-1');
+  const sqlite = new DatabaseSync(':memory:');
+  sqlite.exec(`
+    CREATE TABLE products (id TEXT PRIMARY KEY, section_id TEXT, deleted_at TEXT);
+    CREATE TABLE h5_page_ctas (product_id TEXT);
+    CREATE TABLE audit_logs (
+      id TEXT PRIMARY KEY, actor TEXT, action TEXT, entity_type TEXT, entity_id TEXT,
+      request_id TEXT, before_json TEXT, after_json TEXT, metadata_json TEXT, created_at TEXT
+    );
+    INSERT INTO products VALUES
+      ('product-1', 'section-1', '${NOW}'),
+      ('product-2', 'section-1', '${NOW}'),
+      ('product-active', 'section-1', NULL);
+    INSERT INTO h5_page_ctas VALUES ('product-1'), ('product-2'), ('product-active');
+    INSERT INTO audit_logs VALUES (
+      'old-1', 'single_admin', 'product.deleted', 'product', 'product-1',
+      'request-1', '{"body":"private","title":"Product One"}',
+      '{"media":["private"],"title":"Product One"}', NULL, '${NOW}'
+    );
+  `);
+  const ids = [
+    'product-1',
+    'product-2',
+    ...Array.from({ length: 98 }, (_, index) => `missing-${index}`),
+  ];
+  const statements = createPermanentDeleteProductStatements(
+    db,
+    'section-1',
+    ids,
+    'request-2',
+    NOW,
+  );
 
-  assert.equal(statements.length, 3);
+  assert.equal(statements.length, 4, 'statement count must not grow with product count');
   assert.match(statements[0].sql, /UPDATE h5_page_ctas SET product_id = NULL/u);
   assert.match(statements[1].sql, /json_remove\(before_json/u);
   assert.match(statements[1].sql, /json_remove\(after_json/u);
-  assert.match(statements[2].sql, /DELETE FROM products/u);
-  assert.deepEqual(statements[2].args, ['section-1', 'product-1']);
+  assert.match(statements[2].sql, /INSERT INTO audit_logs/u);
+  assert.match(statements[3].sql, /DELETE FROM products/u);
+  for (const statement of statements) {
+    sqlite.prepare(statement.sql).run(...statement.args);
+  }
+
+  assert.equal(
+    sqlite
+      .prepare('SELECT COUNT(*) AS count FROM products WHERE deleted_at IS NOT NULL')
+      .get().count,
+    0,
+  );
+  assert.equal(
+    sqlite
+      .prepare("SELECT product_id FROM h5_page_ctas WHERE product_id = 'product-active'")
+      .get().product_id,
+    'product-active',
+  );
+  assert.equal(
+    sqlite
+      .prepare('SELECT COUNT(*) AS count FROM h5_page_ctas WHERE product_id IS NULL')
+      .get().count,
+    2,
+  );
+  assert.equal(
+    sqlite
+      .prepare(
+        "SELECT json_extract(before_json, '$.body') AS body FROM audit_logs WHERE id = 'old-1'",
+      )
+      .get().body,
+    null,
+  );
+  assert.equal(
+    sqlite
+      .prepare(
+        "SELECT COUNT(*) AS count FROM audit_logs WHERE action = 'product.permanently_deleted'",
+      )
+      .get().count,
+    2,
+  );
+  sqlite.close();
 });
