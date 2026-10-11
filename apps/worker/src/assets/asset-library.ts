@@ -1,10 +1,21 @@
+import {
+  mediaAssetReferenceCountsSql,
+  mediaAssetUnreferencedSql,
+  type MediaAssetReferenceCounts,
+} from '../media/media-asset-references';
+
 const IMAGE_EXTENSION_PATTERN = /\.(?:avif|bmp|gif|heic|heif|ico|jpe?g|png|svg|webp)$/i;
 const GUARD_BATCH_SIZE = 100;
 
 export type AssetReferenceCounts = {
   logo: number;
+  pwaIcon: number;
   hero: number;
+  bottomNavigation: number;
   sectionIcon: number;
+  sectionBackground: number;
+  messageArticleBackground: number;
+  messageCtaBackground: number;
   productCover: number;
   productGallery: number;
 };
@@ -26,17 +37,12 @@ export type AdminAsset = {
   publicUrl: string | null;
 };
 
-export type MediaAssetReferenceRow = {
+export type MediaAssetReferenceRow = MediaAssetReferenceCounts & {
   id: string;
   object_key: string;
   status: string;
   deleted_at: string | null;
   updated_at: string;
-  logo_count: number;
-  hero_count: number;
-  section_icon_count: number;
-  product_cover_count: number;
-  product_gallery_count: number;
 };
 
 type AssetCleanupGuardRow = {
@@ -99,21 +105,20 @@ async function runStatementChunks(
 function toReferenceCounts(row: MediaAssetReferenceRow | null): AssetReferenceCounts {
   return {
     logo: row?.logo_count ?? 0,
+    pwaIcon: row?.pwa_icon_count ?? 0,
     hero: row?.hero_count ?? 0,
+    bottomNavigation: row?.bottom_nav_icon_count ?? 0,
     sectionIcon: row?.section_icon_count ?? 0,
+    sectionBackground: row?.section_background_count ?? 0,
+    messageArticleBackground: row?.message_article_background_count ?? 0,
+    messageCtaBackground: row?.message_cta_background_count ?? 0,
     productCover: row?.product_cover_count ?? 0,
     productGallery: row?.product_gallery_count ?? 0,
   };
 }
 
 export function countReferences(references: AssetReferenceCounts): number {
-  return (
-    references.logo +
-    references.hero +
-    references.sectionIcon +
-    references.productCover +
-    references.productGallery
-  );
+  return Object.values(references).reduce((total, count) => total + count, 0);
 }
 
 export function isValidR2ObjectKey(key: string): boolean {
@@ -321,8 +326,8 @@ function modularRetentionBlocked(
   key: string,
   protectedKeys: Set<string>,
 ): boolean {
-  return Boolean(
-    row && countReferences(toReferenceCounts(row)) === 0 && protectedKeys.has(key),
+  return (
+    protectedKeys.has(key) && (!row || countReferences(toReferenceCounts(row)) === 0)
   );
 }
 
@@ -342,16 +347,7 @@ export async function getMediaAssetReferenceRows(
          ma.status,
          ma.deleted_at,
          ma.updated_at,
-         (SELECT COUNT(*) FROM site_settings ss WHERE ss.logo_asset_id = ma.id) AS logo_count,
-         (SELECT COUNT(*) FROM site_hero_slides hs WHERE hs.media_asset_id = ma.id) AS hero_count,
-         (
-           SELECT COUNT(*)
-           FROM sections s
-           WHERE s.icon_asset_id = ma.id OR s.browse_background_asset_id = ma.id
-         ) AS section_icon_count,
-         (SELECT COUNT(*) FROM products p WHERE p.cover_asset_id = ma.id) AS product_cover_count,
-         (SELECT COUNT(*) FROM product_media pm WHERE pm.media_asset_id = ma.id)
-           AS product_gallery_count
+         ${mediaAssetReferenceCountsSql('ma')}
        FROM media_assets ma
        WHERE ma.object_key IN (${buildPlaceholders(keys.length)})`,
     )
@@ -500,17 +496,7 @@ export function createMarkMediaAssetDeletedStatement(
        SET status = 'deleted', deleted_at = ?, updated_at = ?
        WHERE id = ?
          AND updated_at = ?
-         AND NOT EXISTS (SELECT 1 FROM site_settings ss WHERE ss.logo_asset_id = media_assets.id)
-         AND NOT EXISTS (SELECT 1 FROM site_hero_slides hs WHERE hs.media_asset_id = media_assets.id)
-         AND NOT EXISTS (
-           SELECT 1
-           FROM sections s
-           WHERE s.icon_asset_id = media_assets.id OR s.browse_background_asset_id = media_assets.id
-         )
-         AND NOT EXISTS (SELECT 1 FROM products p WHERE p.cover_asset_id = media_assets.id)
-         AND NOT EXISTS (
-           SELECT 1 FROM product_media pm WHERE pm.media_asset_id = media_assets.id
-         )`,
+         AND ${mediaAssetUnreferencedSql('media_assets')}`,
     )
     .bind(now, now, row.id, row.updated_at);
 }

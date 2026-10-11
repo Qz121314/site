@@ -18,7 +18,12 @@ function mediaRow({ key = 'media/old.webp', references = {}, id = 'media-1' } = 
   };
 }
 
-function createAssetDb({ rows = [], retainedVersions = [], guards = [] } = {}) {
+function createAssetDb({
+  rows = [],
+  retainedVersions = [],
+  publishedMediaKeys = [],
+  guards = [],
+} = {}) {
   const rowMap = new Map(rows.map((row) => [row.object_key, row]));
   const guardMap = new Map(guards.map((guard) => [guard.object_key, { ...guard }]));
   const batches = [];
@@ -37,6 +42,13 @@ function createAssetDb({ rows = [], retainedVersions = [], guards = [] } = {}) {
         async all() {
           if (this.sql.includes('FROM media_assets ma')) {
             return { results: this.args.map((key) => rowMap.get(key)).filter(Boolean) };
+          }
+          if (this.sql.includes('FROM publish_module_versions')) {
+            return {
+              results: publishedMediaKeys.map((key) => ({
+                media_keys_json: JSON.stringify([key]),
+              })),
+            };
           }
           if (this.sql.includes('FROM publish_versions')) {
             return {
@@ -179,4 +191,15 @@ test('an untracked image object with no D1 media record is cleanup-eligible and 
   assert.equal(evaluation.row, null);
   assert.equal(evaluation.blockedReason, null);
   assert.equal(db.guardMap.size, 0);
+});
+
+test('an untracked image still referenced by a published snapshot stays protected', async () => {
+  const key = 'uploads/published.webp';
+  const db = createAssetDb({ publishedMediaKeys: [key] });
+  const bucket = createBucket([r2Object(key)]);
+
+  const [evaluation] = await evaluateCleanupCandidates(bucket, db, [key]);
+
+  assert.equal(evaluation.row, null);
+  assert.equal(evaluation.blockedReason, 'SNAPSHOT_RETENTION');
 });

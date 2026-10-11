@@ -329,7 +329,7 @@ adminAssetRoutes.post('/cleanup', async (context) => {
 
   const responseBody = {
     deletedKeys: keys,
-    deletedCount: keys.length,
+    deletedCount: existing.length,
     alreadyMissingCount: keys.length - existing.length,
     freedBytes: existing.reduce((total, item) => total + item.object.size, 0),
   };

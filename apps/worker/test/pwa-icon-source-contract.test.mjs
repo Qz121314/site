@@ -10,6 +10,7 @@ test('PWA app icon has an independent setting and never reads the webpage logo',
   const routeSource = source('../src/routes/public-pwa.ts');
   const settingsSource = source('../src/settings/site-settings.ts');
   const mediaDeleteSource = source('../src/media/media-delete.ts');
+  const mediaReferencesSource = source('../src/media/media-asset-references.ts');
   const migrationSource = source('../../../migrations/0029_pwa_icon_asset.sql');
 
   assert.match(routeSource, /settings\.pwa_icon_asset_id/u);
@@ -21,5 +22,6 @@ test('PWA app icon has an independent setting and never reads the webpage logo',
   assert.match(migrationSource, /ADD COLUMN pwa_icon_asset_id/u);
   assert.doesNotMatch(migrationSource, /logo_asset_id/u);
 
-  assert.match(mediaDeleteSource, /pwa_icon_asset_id/u);
+  assert.match(mediaDeleteSource, /mediaAssetUnreferencedSql/u);
+  assert.match(mediaReferencesSource, /pwa_icon_asset_id/u);
 });

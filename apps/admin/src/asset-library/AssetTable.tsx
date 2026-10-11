@@ -16,7 +16,17 @@ function formatUploadedAt(value: string): string {
 function referenceLabels(references: AssetReferenceCounts): string[] {
   const labels: string[] = [];
   if (references.logo > 0) labels.push(`Logo × ${references.logo}`);
+  if (references.pwaIcon > 0) labels.push(`PWA 图标 × ${references.pwaIcon}`);
+  if (references.hero > 0) labels.push(`轮播图 × ${references.hero}`);
+  if (references.bottomNavigation > 0)
+    labels.push(`底部导航 × ${references.bottomNavigation}`);
   if (references.sectionIcon > 0) labels.push(`分区图标 × ${references.sectionIcon}`);
+  if (references.sectionBackground > 0)
+    labels.push(`分区背景 × ${references.sectionBackground}`);
+  if (references.messageArticleBackground > 0)
+    labels.push(`文章背景 × ${references.messageArticleBackground}`);
+  if (references.messageCtaBackground > 0)
+    labels.push(`消息卡片背景 × ${references.messageCtaBackground}`);
   if (references.productCover > 0) labels.push(`产品封面 × ${references.productCover}`);
   if (references.productGallery > 0)
     labels.push(`产品图片 × ${references.productGallery}`);
@@ -79,17 +89,6 @@ export function AssetTable({
             const references = referenceLabels(asset.references);
             const status = cleanupStatus(asset);
             const selected = selectedKeys.has(asset.key);
-            const unclassifiedReferenceCount = Math.max(
-              0,
-              asset.referenceCount -
-                (asset.references.logo +
-                  asset.references.sectionIcon +
-                  asset.references.productCover +
-                  asset.references.productGallery),
-            );
-            if (unclassifiedReferenceCount > 0) {
-              references.unshift(`Hero × ${unclassifiedReferenceCount}`);
-            }
             return (
               <tr
                 key={asset.key}
