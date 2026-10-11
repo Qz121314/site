@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { evaluateCleanupCandidates } from '../src/assets/asset-library.ts';
+import { evaluateCleanupCandidates, scanAssetPage } from '../src/assets/asset-library.ts';
 
 const NOW = '2026-08-07T00:00:00.000Z';
 
@@ -27,21 +27,25 @@ function createAssetDb({
   const rowMap = new Map(rows.map((row) => [row.object_key, row]));
   const guardMap = new Map(guards.map((guard) => [guard.object_key, { ...guard }]));
   const batches = [];
+  const boundQueries = [];
 
   return {
     guardMap,
     batches,
+    boundQueries,
     prepare(sql) {
       const statement = {
         sql,
         args: [],
         bind(...args) {
           this.args = args;
+          boundQueries.push({ sql: this.sql, args });
           return this;
         },
         async all() {
           if (this.sql.includes('FROM media_assets ma')) {
-            return { results: this.args.map((key) => rowMap.get(key)).filter(Boolean) };
+            const keys = JSON.parse(this.args[0]);
+            return { results: keys.map((key) => rowMap.get(key)).filter(Boolean) };
           }
           if (this.sql.includes('FROM publish_module_versions')) {
             return {
@@ -56,9 +60,13 @@ function createAssetDb({
             };
           }
           if (this.sql.includes('FROM asset_cleanup_guards')) {
-            return { results: this.args.map((key) => guardMap.get(key)).filter(Boolean) };
+            const keys = JSON.parse(this.args[0]);
+            return { results: keys.map((key) => guardMap.get(key)).filter(Boolean) };
           }
           throw new Error(`Unexpected all SQL: ${this.sql}`);
+        },
+        async first() {
+          return null;
         },
       };
       return statement;
@@ -91,6 +99,9 @@ function createAssetDb({
 function createBucket(objects) {
   const objectMap = new Map(objects.map((object) => [object.key, object]));
   return {
+    async list() {
+      return { objects, truncated: false, cursor: undefined };
+    },
     async head(key) {
       return objectMap.get(key) ?? null;
     },
@@ -106,6 +117,27 @@ function r2Object(key, contentType = 'image/webp') {
     httpMetadata: { contentType },
   };
 }
+
+test('a full R2 scan page stays under D1 bind limits in reference and guard lookups', async () => {
+  const keys = Array.from({ length: 500 }, (_, index) => `media/${index}.webp`);
+  const rows = keys.map((key, index) => mediaRow({ key, id: `media-${index}` }));
+  const db = createAssetDb({ rows });
+  const bucket = createBucket(keys.map((key) => r2Object(key)));
+
+  const page = await scanAssetPage(bucket, db, { limit: 500 });
+
+  assert.equal(page.assets.length, 500);
+  const lookups = db.boundQueries.filter(
+    ({ sql }) =>
+      sql.includes('FROM media_assets ma') || sql.includes('FROM asset_cleanup_guards'),
+  );
+  assert.equal(lookups.length, 2);
+  for (const lookup of lookups) {
+    assert.equal(lookup.args.length, 1);
+    assert.deepEqual(JSON.parse(lookup.args[0]), keys);
+    assert.ok(lookup.sql.includes('json_each(?)'));
+  }
+});
 
 test('an unused D1 media asset becomes snapshot-protected while the current retained version can still reference it', async () => {
   const row = mediaRow();
