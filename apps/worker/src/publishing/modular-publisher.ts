@@ -186,6 +186,7 @@ type ProductRow = {
   category_name: string | null;
   category_enabled: number | null;
   effective_cover_object_key: string | null;
+  conversion_button_label: string | null;
   is_featured: number;
   featured_order: number;
   sort_order: number;
@@ -629,6 +630,7 @@ async function loadSource(db: D1Database): Promise<Source> {
            p.category_id,
            c.name AS category_name,
            c.is_enabled AS category_enabled,
+           conversion_group.button_label AS conversion_button_label,
            cover.object_key AS effective_cover_object_key,
            p.is_featured,
            p.featured_order,
@@ -641,6 +643,10 @@ async function loadSource(db: D1Database): Promise<Source> {
           AND s.is_enabled = 1
           AND s.is_visible = 1
          LEFT JOIN categories c ON c.id = p.category_id AND c.deleted_at IS NULL
+         LEFT JOIN conversion_groups conversion_group
+           ON conversion_group.id = p.conversion_group_id
+          AND conversion_group.section_id = p.section_id
+          AND conversion_group.deleted_at IS NULL
          LEFT JOIN media_assets cover ON cover.id = COALESCE(
            p.cover_asset_id,
            (SELECT pm.media_asset_id FROM product_media pm
@@ -899,6 +905,7 @@ function sectionPublicData(source: Source, sectionId: string) {
       slug: product.slug,
       sectionId,
       title: product.title,
+      conversionButtonLabel: product.conversion_button_label,
       serviceMode: product.service_mode,
       address: product.address,
       category: { id: product.category_id, name: product.category_name },

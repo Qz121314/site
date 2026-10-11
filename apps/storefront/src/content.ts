@@ -92,6 +92,7 @@ export type PublicProductSummary = {
   sectionSlug: string;
   sectionName: string;
   title: string;
+  conversionButtonLabel?: string | null;
   serviceMode: 'online' | 'offline';
   address: string | null;
   category: {
@@ -310,6 +311,7 @@ type V2ProductSummary = {
   slug: string;
   sectionId: string;
   title: string;
+  conversionButtonLabel?: string | null;
   serviceMode: 'online' | 'offline';
   address: string | null;
   category: { id: string | null; name: string | null };
@@ -1058,6 +1060,7 @@ export function resolveV2Summary(
     sectionSlug: section.slug,
     sectionName: section.name,
     title: product.title,
+    conversionButtonLabel: product.conversionButtonLabel ?? null,
     serviceMode: product.serviceMode,
     address: product.address,
     category: product.category,
