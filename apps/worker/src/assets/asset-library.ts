@@ -84,10 +84,6 @@ type SnapshotProtection = {
 
 const RETAINED_PUBLISH_VERSION_COUNT = 2;
 
-function buildPlaceholders(count: number): string {
-  return Array.from({ length: count }, () => '?').join(', ');
-}
-
 function chunk<T>(items: T[], size: number): T[][] {
   const chunks: T[][] = [];
   for (let index = 0; index < items.length; index += size) {
@@ -262,9 +258,9 @@ async function getCleanupGuardRows(
     .prepare(
       `SELECT object_key, media_asset_id, guard_content_version, first_seen_at
        FROM asset_cleanup_guards
-       WHERE object_key IN (${buildPlaceholders(keys.length)})`,
+       WHERE object_key IN (SELECT value FROM json_each(?))`,
     )
-    .bind(...keys)
+    .bind(JSON.stringify(keys))
     .all<AssetCleanupGuardRow>();
   return new Map(result.results.map((row) => [row.object_key, row]));
 }
@@ -363,9 +359,9 @@ export async function getMediaAssetReferenceRows(
          ${mediaAssetReferenceCountColumnsSql()}
        FROM media_assets ma
        ${mediaAssetReferenceCountJoinsSql('ma')}
-       WHERE ma.object_key IN (${buildPlaceholders(keys.length)})`,
+       WHERE ma.object_key IN (SELECT value FROM json_each(?))`,
     )
-    .bind(...keys)
+    .bind(JSON.stringify(keys))
     .all<MediaAssetReferenceRow>();
 
   return new Map(result.results.map((row) => [row.object_key, row]));
