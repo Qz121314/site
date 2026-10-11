@@ -660,23 +660,73 @@ export function createUpdateProductStatements(
 export function createPermanentDeleteProductStatements(
   db: D1Database,
   sectionId: string,
-  productId: string,
+  productIds: string[],
+  requestId: string,
+  createdAt: string,
 ): D1PreparedStatement[] {
+  const serializedProducts = JSON.stringify(
+    productIds.map((id) => ({ id, auditId: crypto.randomUUID() })),
+  );
   return [
     db
-      .prepare('UPDATE h5_page_ctas SET product_id = NULL WHERE product_id = ?')
-      .bind(productId),
+      .prepare(
+        `UPDATE h5_page_ctas SET product_id = NULL
+         WHERE product_id IN (
+           SELECT p.id FROM products p
+           JOIN json_each(?) selected
+             ON json_extract(selected.value, '$.id') = p.id
+           WHERE p.section_id = ? AND p.deleted_at IS NOT NULL
+         )`,
+      )
+      .bind(serializedProducts, sectionId),
     db
       .prepare(
         `UPDATE audit_logs
          SET before_json = json_remove(before_json, '$.body', '$.media', '$.categoryId', '$.coverAssetId', '$.address'),
              after_json = json_remove(after_json, '$.body', '$.media', '$.categoryId', '$.coverAssetId', '$.address')
-         WHERE entity_type = 'product' AND entity_id = ?`,
+         WHERE entity_type = 'product' AND entity_id IN (
+           SELECT json_extract(value, '$.id') FROM json_each(?)
+         )`,
       )
-      .bind(productId),
+      .bind(serializedProducts),
     db
-      .prepare('DELETE FROM products WHERE section_id = ? AND id = ?')
-      .bind(sectionId, productId),
+      .prepare(
+        `INSERT INTO audit_logs (
+           id, actor, action, entity_type, entity_id, request_id,
+           before_json, after_json, metadata_json, created_at
+         )
+         SELECT
+           json_extract(selected.value, '$.auditId'),
+           'single_admin',
+           'product.permanently_deleted',
+           'product',
+           p.id,
+           ?,
+           json_object('id', p.id, 'sectionId', ?),
+           NULL,
+           json_object('sectionId', ?, 'batchIndex', CAST(selected.key AS INTEGER), 'batchSize', ?),
+           ?
+         FROM json_each(?) selected
+         JOIN products p ON p.id = json_extract(selected.value, '$.id')
+         WHERE p.section_id = ? AND p.deleted_at IS NOT NULL`,
+      )
+      .bind(
+        requestId,
+        sectionId,
+        sectionId,
+        productIds.length,
+        createdAt,
+        serializedProducts,
+        sectionId,
+      ),
+    db
+      .prepare(
+        `DELETE FROM products
+         WHERE section_id = ? AND id IN (
+           SELECT json_extract(value, '$.id') FROM json_each(?)
+         ) AND deleted_at IS NOT NULL`,
+      )
+      .bind(sectionId, serializedProducts),
   ];
 }
 

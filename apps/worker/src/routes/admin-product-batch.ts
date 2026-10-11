@@ -203,10 +203,19 @@ adminProductBatchRoutes.post(
         '请选择 1 到 100 个有效产品。',
       );
     }
-    const products = await Promise.all(
-      ids.map((id) => getProduct(context.env.DB, sectionId, id)),
+    const products = await context.env.DB.prepare(
+      `SELECT id, deleted_at FROM products
+       WHERE section_id = ?
+         AND id IN (SELECT value FROM json_each(?))`,
+    )
+      .bind(sectionId, JSON.stringify(ids))
+      .all<{ id: string; deleted_at: string | null }>();
+    const productsById = new Map(
+      products.results.map((product) => [product.id, product]),
     );
-    const missingIndex = products.findIndex((product) => !product || !product.deletedAt);
+    const missingIndex = ids.findIndex(
+      (id) => !productsById.get(id) || !productsById.get(id)!.deleted_at,
+    );
     if (missingIndex >= 0) {
       return apiError(
         context,
@@ -217,21 +226,13 @@ adminProductBatchRoutes.post(
     }
 
     const response = { deletedIds: ids };
-    const statements = products.flatMap((product, index) => {
-      const current = product!;
-      return [
-        ...createPermanentDeleteProductStatements(context.env.DB, sectionId, current.id),
-        createAuditLogStatement(context.env.DB, {
-          action: 'product.permanently_deleted',
-          entityType: 'product',
-          entityId: current.id,
-          requestId: context.get('requestId'),
-          before: { id: current.id, sectionId },
-          metadata: { sectionId, batchIndex: index, batchSize: ids.length },
-          createdAt: now,
-        }),
-      ];
-    });
+    const statements = createPermanentDeleteProductStatements(
+      context.env.DB,
+      sectionId,
+      ids,
+      context.get('requestId'),
+      now,
+    );
     statements.push(
       createIdempotencyStatement(context.env.DB, scope, idempotencyKey, response, now),
     );
