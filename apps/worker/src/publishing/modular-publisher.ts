@@ -343,6 +343,16 @@ function sectionModuleKey(sectionId: string): string {
   return `${SECTION_PREFIX}${sectionId}`;
 }
 
+export function pointerModuleKeys(pointer: ModularStorefrontPointer): string[] {
+  return [
+    'site',
+    'sections-index',
+    'faq',
+    ...(pointer.reviews ? ['reviews'] : []),
+    ...Object.keys(pointer.sections).map(sectionModuleKey),
+  ];
+}
+
 function parseSectionModuleKey(moduleKey: string): string | null {
   if (!moduleKey.startsWith(SECTION_PREFIX)) return null;
   const sectionId = moduleKey.slice(SECTION_PREFIX.length);
@@ -1359,7 +1369,10 @@ async function markJobFailed(
   }
 }
 
-async function deleteR2PrefixBestEffort(bucket: R2Bucket, prefix: string): Promise<void> {
+async function deleteR2PrefixBestEffort(
+  bucket: R2Bucket,
+  prefix: string,
+): Promise<boolean> {
   try {
     let cursor: string | undefined;
     do {
@@ -1374,10 +1387,12 @@ async function deleteR2PrefixBestEffort(bucket: R2Bucket, prefix: string): Promi
       )) {
         if (batch.length > 0) await bucket.delete(batch);
       }
+      if (page.truncated && !page.cursor) return false;
       cursor = page.truncated ? page.cursor : undefined;
     } while (cursor);
+    return true;
   } catch {
-    // Orphan cleanup is best effort and is retried by retention on later publishes.
+    return false;
   }
 }
 
@@ -1544,6 +1559,7 @@ async function pruneModuleRetention(
   db: D1Database,
   bucket: R2Bucket,
   moduleKey: string,
+  isActive: boolean,
 ): Promise<void> {
   const rows = (
     await db
@@ -1557,18 +1573,23 @@ async function pruneModuleRetention(
       .bind(moduleKey)
       .all<RetentionVersionRow>()
   ).results;
-  const retained = rows.slice(0, RETAINED_VERSION_COUNT);
-  const stale = rows.slice(RETAINED_VERSION_COUNT);
+  const retained = isActive ? rows.slice(0, RETAINED_VERSION_COUNT) : [];
+  const stale = isActive ? rows.slice(RETAINED_VERSION_COUNT) : rows;
+  const deleted: RetentionVersionRow[] = [];
 
   for (const row of stale) {
-    await deleteR2PrefixBestEffort(
-      bucket,
-      `${moduleBasePrefix(moduleKey)}/${row.content_version}`,
-    );
+    if (
+      await deleteR2PrefixBestEffort(
+        bucket,
+        `${moduleBasePrefix(moduleKey)}/${row.content_version}`,
+      )
+    ) {
+      deleted.push(row);
+    }
   }
-  if (stale.length > 0) {
+  if (deleted.length > 0) {
     await db.batch(
-      stale.map((row) =>
+      deleted.map((row) =>
         db
           .prepare('DELETE FROM publish_module_versions WHERE content_version = ?')
           .bind(row.content_version),
@@ -1576,7 +1597,11 @@ async function pruneModuleRetention(
     );
   }
 
-  const protectedJobIds = new Set(retained.map((row) => row.publish_job_id));
+  const protectedJobIds = new Set(
+    [...retained, ...stale.filter((row) => !deleted.includes(row))].map(
+      (row) => row.publish_job_id,
+    ),
+  );
   const jobs = (
     await db
       .prepare(
@@ -1588,7 +1613,9 @@ async function pruneModuleRetention(
       .bind(moduleKey)
       .all<{ id: string }>()
   ).results;
-  const extraSlots = Math.max(0, RETAINED_VERSION_COUNT - protectedJobIds.size);
+  const extraSlots = isActive
+    ? Math.max(0, RETAINED_VERSION_COUNT - protectedJobIds.size)
+    : 0;
   const extraKeep = jobs
     .filter((job) => !protectedJobIds.has(job.id))
     .slice(0, extraSlots);
@@ -1606,11 +1633,31 @@ async function pruneModuleRetention(
 async function pruneModulesBestEffort(
   db: D1Database,
   bucket: R2Bucket,
-  moduleKeys: string[],
+  pointer: ModularStorefrontPointer,
 ): Promise<void> {
-  for (const moduleKey of [...new Set(moduleKeys)]) {
+  let moduleKeys: string[];
+  try {
+    moduleKeys = (
+      await db
+        .prepare('SELECT DISTINCT module_key FROM publish_module_jobs')
+        .all<{ module_key: string }>()
+    ).results.map((row) => row.module_key);
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        level: 'error',
+        event: 'storefront.module_retention_failed',
+        moduleKey: '*',
+        errorName: error instanceof Error ? error.name : 'UnknownError',
+        errorMessage: error instanceof Error ? error.message : 'Unknown retention error',
+      }),
+    );
+    return;
+  }
+  const activeModuleKeys = new Set(pointerModuleKeys(pointer));
+  for (const moduleKey of moduleKeys) {
     try {
-      await pruneModuleRetention(db, bucket, moduleKey);
+      await pruneModuleRetention(db, bucket, moduleKey, activeModuleKeys.has(moduleKey));
     } catch (error) {
       console.error(
         JSON.stringify({
@@ -1735,6 +1782,7 @@ export async function publishModularStorefront(
   }
 
   if (prepared.length === 0 && pointerResult.pointer) {
+    await pruneModulesBestEffort(db, bucket, pointerResult.pointer);
     return {
       pointerVersion: pointerResult.pointer.contentVersion,
       publishedAt: pointerResult.pointer.publishedAt,
@@ -1839,11 +1887,7 @@ export async function publishModularStorefront(
       // Modular retained-version media indexes supersede legacy cleanup guards.
     }
   }
-  await pruneModulesBestEffort(
-    db,
-    bucket,
-    prepared.map((publication) => publication.moduleKey),
-  );
+  await pruneModulesBestEffort(db, bucket, nextPointer);
   return {
     pointerVersion: nextPointer.contentVersion,
     publishedAt: nextPointer.publishedAt,
