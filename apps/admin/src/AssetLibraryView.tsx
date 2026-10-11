@@ -216,7 +216,6 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [cleanupLoading, setCleanupLoading] = useState(false);
   const [cleanupNextCursor, setCleanupNextCursor] = useState<string | null>(null);
   const [cleanupScanComplete, setCleanupScanComplete] = useState(false);
-  const [scannedImages, setScannedImages] = useState(0);
   const [cleaning, setCleaning] = useState(false);
   const [showCleanupDialog, setShowCleanupDialog] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
@@ -337,7 +336,6 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
 
   const scanFirstPage = useCallback(async () => {
     setCleanupLoading(true);
-    setScannedImages(0);
     setCleanupError(null);
     setCleanupSuccess(null);
     setSelectedKeys(new Set());
@@ -348,7 +346,6 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       const nextCursor = page.truncated && page.cursor ? page.cursor : null;
       cleanupVisitedCursorsRef.current = new Set(nextCursor ? [nextCursor] : []);
       setAssets(firstPageAssets);
-      setScannedImages(firstPageAssets.length);
       setMediaBaseUrl(page.mediaBaseUrl);
       setCleanupNextCursor(nextCursor);
       setCleanupScanComplete(!nextCursor);
@@ -382,7 +379,6 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
         nextCursor = page.cursor;
       }
       setAssets(nextAssets);
-      setScannedImages(nextAssets.length);
       setMediaBaseUrl(page.mediaBaseUrl);
       setCleanupNextCursor(nextCursor);
       setCleanupScanComplete(!nextCursor);
@@ -413,7 +409,6 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
         const page = await fetchAssetPage(cursor);
         allAssets = mergeAssets(allAssets, page.assets);
         setAssets(allAssets);
-        setScannedImages(allAssets.length);
         setMediaBaseUrl(page.mediaBaseUrl);
 
         if (!page.truncated || !page.cursor) {
@@ -1097,8 +1092,8 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       ) : cleanupLoading && !cleanupLoaded ? (
         <AdminFeedbackState
           kind="loading"
-          title="正在扫描首批 R2 图片对象…"
-          description={`已发现 ${scannedImages} 张图片。`}
+          title="正在读取 R2 首批对象…"
+          description="首批扫描结果返回后才会显示图片数量；完整统计请点击“扫描全部”。"
         />
       ) : (
         <>

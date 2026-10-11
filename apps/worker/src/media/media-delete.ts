@@ -1,3 +1,10 @@
+import {
+  countMediaAssetReferences,
+  mediaAssetReferenceCountsSql,
+  mediaAssetUnreferencedSql,
+  type MediaAssetReferenceCounts,
+} from './media-asset-references';
+
 export type MediaDeleteResult = {
   deletedIds: string[];
   deletedKeys: string[];
@@ -17,16 +24,7 @@ type MediaDeleteRow = {
   updated_at: string;
 };
 
-type MediaReferenceRow = MediaDeleteRow & {
-  logo_count: number;
-  pwa_icon_count: number;
-  hero_slide_count: number;
-  bottom_nav_icon_count: number;
-  section_icon_count: number;
-  section_browse_background_count: number;
-  product_cover_count: number;
-  product_gallery_count: number;
-};
+type MediaReferenceRow = MediaDeleteRow & MediaAssetReferenceCounts;
 
 type SnapshotRow = { media_keys_json: string };
 
@@ -72,14 +70,7 @@ async function referenceRows(
            ma.object_key,
            ma.byte_size,
            ma.updated_at,
-           (SELECT COUNT(*) FROM site_settings ss WHERE ss.logo_asset_id = ma.id) AS logo_count,
-           (SELECT COUNT(*) FROM site_settings ss WHERE ss.pwa_icon_asset_id = ma.id) AS pwa_icon_count,
-           (SELECT COUNT(*) FROM site_hero_slides hs WHERE hs.media_asset_id = ma.id) AS hero_slide_count,
-           (SELECT COUNT(*) FROM site_bottom_navigation nav WHERE nav.icon_asset_id = ma.id) AS bottom_nav_icon_count,
-           (SELECT COUNT(*) FROM sections s WHERE s.icon_asset_id = ma.id) AS section_icon_count,
-           (SELECT COUNT(*) FROM sections s WHERE s.browse_background_asset_id = ma.id) AS section_browse_background_count,
-           (SELECT COUNT(*) FROM products p WHERE p.cover_asset_id = ma.id) AS product_cover_count,
-           (SELECT COUNT(*) FROM product_media pm WHERE pm.media_asset_id = ma.id) AS product_gallery_count
+           ${mediaAssetReferenceCountsSql('ma')}
          FROM media_assets ma
          WHERE ma.id IN (${placeholders(ids.length)})
            AND ma.status = 'ready'
@@ -88,20 +79,6 @@ async function referenceRows(
       .bind(...ids)
       .all<MediaReferenceRow>()
   ).results;
-}
-
-function hasReferences(row: MediaReferenceRow): boolean {
-  return (
-    row.logo_count +
-      row.pwa_icon_count +
-      row.hero_slide_count +
-      row.bottom_nav_icon_count +
-      row.section_icon_count +
-      row.section_browse_background_count +
-      row.product_cover_count +
-      row.product_gallery_count >
-    0
-  );
 }
 
 export async function deleteManagedMediaAssets(
@@ -122,7 +99,7 @@ export async function deleteManagedMediaAssets(
 
   const protectedKeys = await protectedMediaKeys(db);
   for (const row of rows) {
-    if (hasReferences(row))
+    if (countMediaAssetReferences(row) > 0)
       return { ok: false, blocked: { id: row.id, reason: 'IN_USE' } };
     if (protectedKeys.has(row.object_key)) {
       return { ok: false, blocked: { id: row.id, reason: 'SNAPSHOT_RETENTION' } };
@@ -139,14 +116,7 @@ export async function deleteManagedMediaAssets(
              AND status = 'ready'
              AND deleted_at IS NULL
              AND updated_at = ?
-             AND NOT EXISTS (SELECT 1 FROM site_settings ss WHERE ss.logo_asset_id = media_assets.id)
-             AND NOT EXISTS (SELECT 1 FROM site_settings ss WHERE ss.pwa_icon_asset_id = media_assets.id)
-             AND NOT EXISTS (SELECT 1 FROM site_hero_slides hs WHERE hs.media_asset_id = media_assets.id)
-             AND NOT EXISTS (SELECT 1 FROM site_bottom_navigation nav WHERE nav.icon_asset_id = media_assets.id)
-             AND NOT EXISTS (SELECT 1 FROM sections s WHERE s.icon_asset_id = media_assets.id)
-             AND NOT EXISTS (SELECT 1 FROM sections s WHERE s.browse_background_asset_id = media_assets.id)
-             AND NOT EXISTS (SELECT 1 FROM products p WHERE p.cover_asset_id = media_assets.id)
-             AND NOT EXISTS (SELECT 1 FROM product_media pm WHERE pm.media_asset_id = media_assets.id)`,
+             AND ${mediaAssetUnreferencedSql('media_assets')}`,
         )
         .bind(now, now, row.id, row.updated_at),
     ),

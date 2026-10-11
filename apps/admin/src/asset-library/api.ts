@@ -7,7 +7,13 @@ import {
 
 export type AssetReferenceCounts = {
   logo: number;
+  pwaIcon: number;
+  hero: number;
+  bottomNavigation: number;
   sectionIcon: number;
+  sectionBackground: number;
+  messageArticleBackground: number;
+  messageCtaBackground: number;
   productCover: number;
   productGallery: number;
 };
@@ -129,7 +135,13 @@ function parseReferences(value: unknown): AssetReferenceCounts {
   if (
     !references ||
     typeof references.logo !== 'number' ||
+    typeof references.pwaIcon !== 'number' ||
+    typeof references.hero !== 'number' ||
+    typeof references.bottomNavigation !== 'number' ||
     typeof references.sectionIcon !== 'number' ||
+    typeof references.sectionBackground !== 'number' ||
+    typeof references.messageArticleBackground !== 'number' ||
+    typeof references.messageCtaBackground !== 'number' ||
     typeof references.productCover !== 'number' ||
     typeof references.productGallery !== 'number'
   ) {
@@ -138,7 +150,13 @@ function parseReferences(value: unknown): AssetReferenceCounts {
 
   return {
     logo: references.logo,
+    pwaIcon: references.pwaIcon,
+    hero: references.hero,
+    bottomNavigation: references.bottomNavigation,
     sectionIcon: references.sectionIcon,
+    sectionBackground: references.sectionBackground,
+    messageArticleBackground: references.messageArticleBackground,
+    messageCtaBackground: references.messageCtaBackground,
     productCover: references.productCover,
     productGallery: references.productGallery,
   };
