@@ -14,7 +14,7 @@ import { resolveStorefrontLayoutConfig, type StorefrontLayoutConfig } from '@sit
 const CURRENT_KEY = 'public/current.json';
 const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
 const POINTER_CACHE = 'public, max-age=30, must-revalidate';
-const RETAINED_VERSION_COUNT = 3;
+const RETAINED_VERSION_COUNT = 2;
 const R2_DELETE_BATCH_SIZE = 1000;
 const SECTION_PREFIX = 'section:';
 

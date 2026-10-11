@@ -251,7 +251,7 @@ adminAssetRoutes.post('/cleanup', async (context) => {
       context,
       409,
       'ASSET_CLEANUP_BLOCKED',
-      '部分图片仍在使用、仍受最近 3 个可回退快照保护或不是图片，请重新扫描。',
+      '部分图片仍在使用、仍受当前或上一版快照保护或不是图片，请重新扫描。',
       {
         blockedKey: blocked.key,
         blockedReason: blocked.blockedReason ?? 'UNKNOWN',

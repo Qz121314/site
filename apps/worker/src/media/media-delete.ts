@@ -47,10 +47,20 @@ async function protectedMediaKeys(db: D1Database): Promise<Set<string>> {
   const rows = (
     await db
       .prepare(
-        `SELECT v.media_keys_json
-         FROM publish_module_versions v
-         JOIN publish_module_jobs j ON j.id = v.publish_job_id
-         WHERE j.status = 'published'`,
+        `WITH ranked_versions AS (
+           SELECT
+             v.media_keys_json,
+             ROW_NUMBER() OVER (
+               PARTITION BY v.module_key
+               ORDER BY v.is_current DESC, v.published_at DESC, v.content_version DESC
+             ) AS retention_rank
+           FROM publish_module_versions v
+           JOIN publish_module_jobs j ON j.id = v.publish_job_id
+           WHERE j.status = 'published'
+         )
+         SELECT media_keys_json
+         FROM ranked_versions
+         WHERE retention_rank <= 2`,
       )
       .all<SnapshotRow>()
   ).results;
