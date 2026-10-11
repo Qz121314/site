@@ -1,5 +1,6 @@
 import {
-  mediaAssetReferenceCountsSql,
+  mediaAssetReferenceCountColumnsSql,
+  mediaAssetReferenceCountJoinsSql,
   mediaAssetUnreferencedSql,
   type MediaAssetReferenceCounts,
 } from '../media/media-asset-references';
@@ -347,8 +348,9 @@ export async function getMediaAssetReferenceRows(
          ma.status,
          ma.deleted_at,
          ma.updated_at,
-         ${mediaAssetReferenceCountsSql('ma')}
+         ${mediaAssetReferenceCountColumnsSql()}
        FROM media_assets ma
+       ${mediaAssetReferenceCountJoinsSql('ma')}
        WHERE ma.object_key IN (${buildPlaceholders(keys.length)})`,
     )
     .bind(...keys)
