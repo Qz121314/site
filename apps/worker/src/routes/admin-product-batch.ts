@@ -8,6 +8,7 @@ import {
 } from '../idempotency/idempotency';
 import {
   createDeleteProductStatement,
+  createPermanentDeleteProductStatements,
   createReorderProductStatement,
   getProduct,
 } from '../products/products';
@@ -152,6 +153,156 @@ adminProductBatchRoutes.post('/:sectionId/products/batch-delete', async (context
     createIdempotencyStatement(context.env.DB, scope, idempotencyKey, response, now),
   );
   await context.env.DB.batch(statements);
+  return context.json(response);
+});
+
+adminProductBatchRoutes.post(
+  '/:sectionId/products/batch-permanent-delete',
+  async (context) => {
+    context.header('Cache-Control', 'no-store');
+    if (!hasAdminRequestHeader(context)) {
+      return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
+    }
+    const sectionId = context.req.param('sectionId');
+    const sectionError = await requireSection(context, sectionId);
+    if (sectionError) return sectionError;
+
+    const idempotencyKey = normalizeIdempotencyKey(
+      context.req.header(IDEMPOTENCY_HEADER),
+    );
+    if (!idempotencyKey) {
+      return apiError(
+        context,
+        400,
+        'IDEMPOTENCY_KEY_REQUIRED',
+        '批量删除需要有效的幂等键。',
+      );
+    }
+    const now = new Date().toISOString();
+    const scope = `product-batch-permanent-delete:${sectionId}`;
+    const previous = await readIdempotentResponse(
+      context.env.DB,
+      scope,
+      idempotencyKey,
+      now,
+    );
+    if (previous) return context.json(previous);
+
+    let body: unknown;
+    try {
+      body = await readJsonBody(context);
+    } catch (error) {
+      return jsonBodyError(context, error);
+    }
+    const ids = parseIds(body);
+    if (!ids) {
+      return apiError(
+        context,
+        400,
+        'INVALID_PRODUCT_BATCH',
+        '请选择 1 到 100 个有效产品。',
+      );
+    }
+    const products = await Promise.all(
+      ids.map((id) => getProduct(context.env.DB, sectionId, id)),
+    );
+    const missingIndex = products.findIndex((product) => !product || !product.deletedAt);
+    if (missingIndex >= 0) {
+      return apiError(
+        context,
+        404,
+        'PRODUCT_NOT_FOUND',
+        `产品 ${ids[missingIndex]} 不在回收站中。`,
+      );
+    }
+
+    const response = { deletedIds: ids };
+    const statements = products.flatMap((product, index) => {
+      const current = product!;
+      return [
+        ...createPermanentDeleteProductStatements(context.env.DB, sectionId, current.id),
+        createAuditLogStatement(context.env.DB, {
+          action: 'product.permanently_deleted',
+          entityType: 'product',
+          entityId: current.id,
+          requestId: context.get('requestId'),
+          before: { id: current.id, sectionId },
+          metadata: { sectionId, batchIndex: index, batchSize: ids.length },
+          createdAt: now,
+        }),
+      ];
+    });
+    statements.push(
+      createIdempotencyStatement(context.env.DB, scope, idempotencyKey, response, now),
+    );
+    await context.env.DB.batch(statements);
+    return context.json(response);
+  },
+);
+
+adminProductBatchRoutes.post('/:sectionId/products/empty-trash', async (context) => {
+  context.header('Cache-Control', 'no-store');
+  if (!hasAdminRequestHeader(context)) {
+    return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
+  }
+  const sectionId = context.req.param('sectionId');
+  const sectionError = await requireSection(context, sectionId);
+  if (sectionError) return sectionError;
+
+  const idempotencyKey = normalizeIdempotencyKey(context.req.header(IDEMPOTENCY_HEADER));
+  if (!idempotencyKey) {
+    return apiError(
+      context,
+      400,
+      'IDEMPOTENCY_KEY_REQUIRED',
+      '清空回收站需要有效的幂等键。',
+    );
+  }
+  const now = new Date().toISOString();
+  const scope = `product-empty-trash:${sectionId}`;
+  const previous = await readIdempotentResponse(
+    context.env.DB,
+    scope,
+    idempotencyKey,
+    now,
+  );
+  if (previous) return context.json(previous);
+
+  const row = await context.env.DB.prepare(
+    'SELECT COUNT(*) AS count FROM products WHERE section_id = ? AND deleted_at IS NOT NULL',
+  )
+    .bind(sectionId)
+    .first<{ count: number }>();
+  const deletedCount = row?.count ?? 0;
+  const response = { deletedCount };
+  await context.env.DB.batch([
+    context.env.DB.prepare(
+      `UPDATE h5_page_ctas SET product_id = NULL
+       WHERE product_id IN (
+         SELECT id FROM products WHERE section_id = ? AND deleted_at IS NOT NULL
+       )`,
+    ).bind(sectionId),
+    context.env.DB.prepare(
+      `UPDATE audit_logs
+       SET before_json = json_remove(before_json, '$.body', '$.media', '$.categoryId', '$.coverAssetId', '$.address'),
+           after_json = json_remove(after_json, '$.body', '$.media', '$.categoryId', '$.coverAssetId', '$.address')
+       WHERE entity_type = 'product' AND entity_id IN (
+         SELECT id FROM products WHERE section_id = ? AND deleted_at IS NOT NULL
+       )`,
+    ).bind(sectionId),
+    context.env.DB.prepare(
+      'DELETE FROM products WHERE section_id = ? AND deleted_at IS NOT NULL',
+    ).bind(sectionId),
+    createAuditLogStatement(context.env.DB, {
+      action: 'product.trash_emptied',
+      entityType: 'product',
+      requestId: context.get('requestId'),
+      after: { deletedCount },
+      metadata: { sectionId },
+      createdAt: now,
+    }),
+    createIdempotencyStatement(context.env.DB, scope, idempotencyKey, response, now),
+  ]);
   return context.json(response);
 });
 

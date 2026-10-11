@@ -8,6 +8,7 @@ import { adminCustomerServiceRoutes } from '../src/routes/admin-customer-service
 import { adminFaqRoutes } from '../src/routes/admin-faqs.ts';
 import { adminTagRoutes } from '../src/routes/admin-tags.ts';
 import {
+  createPermanentDeleteProductStatements,
   createProduct,
   createUpdateProductStatements,
   validateProductDependencies,
@@ -406,7 +407,7 @@ test('category deletion ignores product references from another section', async 
   db.close();
 });
 
-test('category deletion still protects same-section products in the recycle bin', async () => {
+test('category deletion remains blocked by same-section products in the recycle bin', async () => {
   const db = categoryReferenceDb('section-1', NOW);
   const app = withRequestId(adminCategoryRoutes);
   const response = await app.request(
@@ -688,4 +689,16 @@ test('product create/update media statements and tag replacement preserve determ
     updated.slice(2).map((statement) => statement.args[2]),
     [0, 10],
   );
+});
+
+test('permanent product deletion clears stored links and physically deletes the product row', () => {
+  const db = recordingDb();
+  const statements = createPermanentDeleteProductStatements(db, 'section-1', 'product-1');
+
+  assert.equal(statements.length, 3);
+  assert.match(statements[0].sql, /UPDATE h5_page_ctas SET product_id = NULL/u);
+  assert.match(statements[1].sql, /json_remove\(before_json/u);
+  assert.match(statements[1].sql, /json_remove\(after_json/u);
+  assert.match(statements[2].sql, /DELETE FROM products/u);
+  assert.deepEqual(statements[2].args, ['section-1', 'product-1']);
 });

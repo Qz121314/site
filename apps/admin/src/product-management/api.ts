@@ -270,6 +270,45 @@ export function deleteProduct(
   ).then(parseProductEnvelope);
 }
 
+export async function permanentlyDeleteProducts(
+  sectionId: string,
+  ids: string[],
+): Promise<string[]> {
+  const body = await requestJson(`${basePath(sectionId)}/batch-permanent-delete`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-admin-request': '1',
+      'x-idempotency-key': crypto.randomUUID(),
+    },
+    body: JSON.stringify({ ids }),
+  });
+  const result = asRecord(body);
+  if (
+    !result ||
+    !Array.isArray(result.deletedIds) ||
+    !result.deletedIds.every((id) => typeof id === 'string')
+  ) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '产品永久删除返回数据无效。');
+  }
+  return result.deletedIds;
+}
+
+export async function emptyProductTrash(sectionId: string): Promise<number> {
+  const body = await requestJson(`${basePath(sectionId)}/empty-trash`, {
+    method: 'POST',
+    headers: {
+      'x-admin-request': '1',
+      'x-idempotency-key': crypto.randomUUID(),
+    },
+  });
+  const deletedCount = asRecord(body)?.deletedCount;
+  if (typeof deletedCount !== 'number' || !Number.isInteger(deletedCount)) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '清空回收站返回数据无效。');
+  }
+  return deletedCount;
+}
+
 export function restoreProduct(
   sectionId: string,
   productId: string,

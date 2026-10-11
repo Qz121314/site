@@ -160,15 +160,27 @@ function ReviewTable({
                       </Button>
                     </>
                   ) : (
-                    <Button
-                      variant="secondary"
-                      size="compact"
-                      disabled={working}
-                      aria-label={`恢复Review 页面 ${product.title}`}
-                      onClick={() => onRestore(product)}
-                    >
-                      恢复
-                    </Button>
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="compact"
+                        disabled={working}
+                        aria-label={`恢复Review 页面 ${product.title}`}
+                        onClick={() => onRestore(product)}
+                      >
+                        恢复
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="compact"
+                        className="ui-row-action-danger"
+                        disabled={working}
+                        aria-label={`永久删除Review 页面 ${product.title}`}
+                        onClick={() => onDelete(product)}
+                      >
+                        永久删除
+                      </Button>
+                    </>
                   )}
                 </div>
               </td>
@@ -430,7 +442,7 @@ export function ProductTable({
         <thead>
           <tr>
             <th className="product-select-column">
-              {scope === 'active' ? (
+              {!reviewMode ? (
                 <input
                   type="checkbox"
                   aria-label="选择当前结果全部产品"
@@ -465,13 +477,13 @@ export function ProductTable({
               <tr
                 key={product.id}
                 className={rowClassName}
-                aria-selected={scope === 'active' ? selected : undefined}
+                aria-selected={!reviewMode ? selected : undefined}
                 onDragOver={(event) => handleDragOver(event, product)}
                 onDrop={(event) => handleDrop(event, product)}
                 onDragEnd={clearDragState}
               >
                 <td className="product-select-column">
-                  {scope === 'active' ? (
+                  {!reviewMode ? (
                     <input
                       type="checkbox"
                       aria-label={`选择产品 ${product.title}`}
@@ -576,15 +588,27 @@ export function ProductTable({
                         </Button>
                       </>
                     ) : (
-                      <Button
-                        variant="secondary"
-                        size="compact"
-                        disabled={working}
-                        aria-label={`恢复产品 ${product.title}`}
-                        onClick={() => onRestore(product)}
-                      >
-                        恢复
-                      </Button>
+                      <>
+                        <Button
+                          variant="secondary"
+                          size="compact"
+                          disabled={working}
+                          aria-label={`恢复产品 ${product.title}`}
+                          onClick={() => onRestore(product)}
+                        >
+                          恢复
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="compact"
+                          className="ui-row-action-danger"
+                          disabled={working}
+                          aria-label={`永久删除产品 ${product.title}`}
+                          onClick={() => onDelete(product)}
+                        >
+                          永久删除
+                        </Button>
+                      </>
                     )}
                   </div>
                 </td>
