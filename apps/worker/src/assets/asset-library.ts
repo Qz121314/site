@@ -4,6 +4,7 @@ import {
   mediaAssetUnreferencedSql,
   type MediaAssetReferenceCounts,
 } from '../media/media-asset-references';
+import { pointerModuleKeys, readModularPointer } from '../publishing/modular-publisher';
 
 const IMAGE_EXTENSION_PATTERN = /\.(?:avif|bmp|gif|heic|heif|ico|jpe?g|png|svg|webp)$/i;
 const GUARD_BATCH_SIZE = 100;
@@ -207,8 +208,45 @@ function parseMediaKeys(value: string): string[] {
   }
 }
 
-async function getSnapshotProtection(db: D1Database): Promise<SnapshotProtection> {
+async function getSnapshotProtection(
+  db: D1Database,
+  bucket: R2Bucket,
+): Promise<SnapshotProtection> {
   try {
+    const { pointer } = await readModularPointer(bucket);
+    if (pointer) {
+      const moduleKeys = pointerModuleKeys(pointer);
+      const rows = (
+        await db
+          .prepare(
+            `WITH ranked_versions AS (
+               SELECT
+                 v.media_keys_json,
+                 ROW_NUMBER() OVER (
+                   PARTITION BY v.module_key
+                   ORDER BY v.is_current DESC, v.published_at DESC, v.content_version DESC
+                 ) AS retention_rank
+               FROM publish_module_versions v
+               JOIN publish_module_jobs j ON j.id = v.publish_job_id
+               WHERE j.status = 'published'
+                 AND v.module_key IN (SELECT value FROM json_each(?))
+             )
+             SELECT media_keys_json
+             FROM ranked_versions
+             WHERE retention_rank <= ${RETAINED_PUBLISH_VERSION_COUNT}`,
+          )
+          .bind(JSON.stringify(moduleKeys))
+          .all<ModularMediaRow>()
+      ).results;
+      return {
+        modular: true,
+        protectedKeys: new Set(
+          rows.flatMap((row) => parseMediaKeys(row.media_keys_json)),
+        ),
+        retainedLegacyVersions: [],
+      };
+    }
+
     const rows = (
       await db
         .prepare(
@@ -247,6 +285,13 @@ async function getSnapshotProtection(db: D1Database): Promise<SnapshotProtection
     protectedKeys: new Set(),
     retainedLegacyVersions: await listRetainedPublishVersions(db),
   };
+}
+
+export async function getSnapshotProtectedMediaKeys(
+  db: D1Database,
+  bucket: R2Bucket,
+): Promise<Set<string>> {
+  return (await getSnapshotProtection(db, bucket)).protectedKeys;
 }
 
 async function getCleanupGuardRows(
@@ -410,7 +455,7 @@ export async function scanAssetPage(
   const [listed, mediaBaseUrl, protection] = await Promise.all([
     bucket.list(options),
     getMediaBaseUrl(db),
-    getSnapshotProtection(db),
+    getSnapshotProtection(db, bucket),
   ]);
   const imageObjects = listed.objects.filter((object) =>
     isImageObject(
@@ -457,7 +502,7 @@ export async function evaluateCleanupCandidates(
   const [objects, rows, protection] = await Promise.all([
     Promise.all(keys.map((key) => bucket.head(key))),
     getMediaAssetReferenceRows(db, keys),
-    getSnapshotProtection(db),
+    getSnapshotProtection(db, bucket),
   ]);
 
   let guards = new Map<string, AssetCleanupGuardRow>();

@@ -4,6 +4,7 @@ import {
   mediaAssetUnreferencedSql,
   type MediaAssetReferenceCounts,
 } from './media-asset-references';
+import { getSnapshotProtectedMediaKeys } from '../assets/asset-library';
 
 export type MediaDeleteResult = {
   deletedIds: string[];
@@ -26,45 +27,8 @@ type MediaDeleteRow = {
 
 type MediaReferenceRow = MediaDeleteRow & MediaAssetReferenceCounts;
 
-type SnapshotRow = { media_keys_json: string };
-
 function placeholders(count: number): string {
   return Array.from({ length: count }, () => '?').join(', ');
-}
-
-function parseMediaKeys(value: string): string[] {
-  try {
-    const parsed = JSON.parse(value) as unknown;
-    return Array.isArray(parsed)
-      ? parsed.filter((key): key is string => typeof key === 'string' && key.length > 0)
-      : [];
-  } catch {
-    return [];
-  }
-}
-
-async function protectedMediaKeys(db: D1Database): Promise<Set<string>> {
-  const rows = (
-    await db
-      .prepare(
-        `WITH ranked_versions AS (
-           SELECT
-             v.media_keys_json,
-             ROW_NUMBER() OVER (
-               PARTITION BY v.module_key
-               ORDER BY v.is_current DESC, v.published_at DESC, v.content_version DESC
-             ) AS retention_rank
-           FROM publish_module_versions v
-           JOIN publish_module_jobs j ON j.id = v.publish_job_id
-           WHERE j.status = 'published'
-         )
-         SELECT media_keys_json
-         FROM ranked_versions
-         WHERE retention_rank <= 2`,
-      )
-      .all<SnapshotRow>()
-  ).results;
-  return new Set(rows.flatMap((row) => parseMediaKeys(row.media_keys_json)));
 }
 
 async function referenceRows(
@@ -107,7 +71,7 @@ export async function deleteManagedMediaAssets(
     if (!rowById.has(id)) return { ok: false, blocked: { id, reason: 'NOT_FOUND' } };
   }
 
-  const protectedKeys = await protectedMediaKeys(db);
+  const protectedKeys = await getSnapshotProtectedMediaKeys(db, bucket);
   for (const row of rows) {
     if (countMediaAssetReferences(row) > 0)
       return { ok: false, blocked: { id: row.id, reason: 'IN_USE' } };

@@ -22,6 +22,7 @@ function createAssetDb({
   rows = [],
   retainedVersions = [],
   publishedMediaKeys = [],
+  publishedVersions = [],
   guards = [],
 } = {}) {
   const rowMap = new Map(rows.map((row) => [row.object_key, row]));
@@ -48,6 +49,16 @@ function createAssetDb({
             return { results: keys.map((key) => rowMap.get(key)).filter(Boolean) };
           }
           if (this.sql.includes('FROM publish_module_versions')) {
+            if (this.sql.includes('json_each(?)')) {
+              const activeModules = new Set(JSON.parse(this.args[0]));
+              return {
+                results: publishedVersions
+                  .filter((row) => activeModules.has(row.module_key))
+                  .map(({ media_keys }) => ({
+                    media_keys_json: JSON.stringify(media_keys),
+                  })),
+              };
+            }
             return {
               results: publishedMediaKeys.map((key) => ({
                 media_keys_json: JSON.stringify([key]),
@@ -96,9 +107,17 @@ function createAssetDb({
   };
 }
 
-function createBucket(objects) {
+function createBucket(objects, pointer = null) {
   const objectMap = new Map(objects.map((object) => [object.key, object]));
   return {
+    async get(key) {
+      if (key !== 'public/current.json' || !pointer) return null;
+      return {
+        async text() {
+          return JSON.stringify(pointer);
+        },
+      };
+    },
     async list() {
       return { objects, truncated: false, cursor: undefined };
     },
@@ -234,4 +253,39 @@ test('an untracked image still referenced by a published snapshot stays protecte
 
   assert.equal(evaluation.row, null);
   assert.equal(evaluation.blockedReason, 'SNAPSHOT_RETENTION');
+});
+
+test('snapshots for a section removed from the current pointer do not block image cleanup', async () => {
+  const retiredKey = 'uploads/retired-section.webp';
+  const currentKey = 'uploads/current-site.webp';
+  const reference = {
+    contentVersion: 'version-current',
+    manifestKey: 'public/modules/site/version-current/manifest.json',
+    sourceRevision: 'revision-current',
+    publishedAt: NOW,
+  };
+  const pointer = {
+    schemaVersion: 2,
+    contentVersion: 'pointer-current',
+    publishedAt: NOW,
+    site: reference,
+    sectionsIndex: reference,
+    faq: reference,
+    sections: {},
+  };
+  const db = createAssetDb({
+    publishedVersions: [
+      { module_key: 'section:deleted-section', media_keys: [retiredKey] },
+      { module_key: 'site', media_keys: [currentKey] },
+    ],
+  });
+  const bucket = createBucket([r2Object(retiredKey), r2Object(currentKey)], pointer);
+
+  const [retired, current] = await Promise.all([
+    evaluateCleanupCandidates(bucket, db, [retiredKey]),
+    evaluateCleanupCandidates(bucket, db, [currentKey]),
+  ]);
+
+  assert.equal(retired[0].blockedReason, null);
+  assert.equal(current[0].blockedReason, 'SNAPSHOT_RETENTION');
 });
