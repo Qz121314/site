@@ -670,17 +670,6 @@ export function createPermanentDeleteProductStatements(
   return [
     db
       .prepare(
-        `UPDATE h5_page_ctas SET product_id = NULL
-         WHERE product_id IN (
-           SELECT p.id FROM products p
-           JOIN json_each(?) selected
-             ON json_extract(selected.value, '$.id') = p.id
-           WHERE p.section_id = ? AND p.deleted_at IS NOT NULL
-         )`,
-      )
-      .bind(serializedProducts, sectionId),
-    db
-      .prepare(
         `UPDATE audit_logs
          SET before_json = json_remove(before_json, '$.body', '$.media', '$.categoryId', '$.coverAssetId', '$.address'),
              after_json = json_remove(after_json, '$.body', '$.media', '$.categoryId', '$.coverAssetId', '$.address')
