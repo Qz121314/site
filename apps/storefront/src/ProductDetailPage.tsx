@@ -281,6 +281,7 @@ export function ProductDetailPage({
   }
 
   const ctaLoading = ctaQuery.isFetching || ctaQuery.isPending;
+  const ctaLabel = ctaQuery.data?.label ?? product?.conversionButtonLabel ?? null;
   const ctaMissing = !ctaLoading && !ctaQuery.error && ctaQuery.data === null;
   const ctaFailed = !ctaLoading && Boolean(ctaQuery.error);
   const ctaVisible = ctaLoading || ctaFailed || Boolean(ctaQuery.data);
@@ -305,8 +306,12 @@ export function ProductDetailPage({
       >
         {ctaLoading ? (
           <>
+            {ctaLabel ? (
+              <span className="product-detail-cta-label">{ctaLabel}</span>
+            ) : (
+              <span className="sr-only">{SYSTEM_UI.loading}</span>
+            )}
             <LoadingHalo size="small" />
-            <span className="sr-only">{SYSTEM_UI.loading}</span>
           </>
         ) : ctaMissing ? (
           <span>{SYSTEM_UI.unavailable}</span>
@@ -317,7 +322,7 @@ export function ProductDetailPage({
           </>
         ) : cta ? (
           <>
-            <span className="product-detail-cta-label">{cta.label}</span>
+            <span className="product-detail-cta-label">{ctaLabel ?? cta.label}</span>
             <CtaArrow />
           </>
         ) : null}

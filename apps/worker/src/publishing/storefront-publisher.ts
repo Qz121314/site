@@ -22,6 +22,7 @@ type DerivedProductSummary = {
   slug: string;
   sectionId: string;
   title: string;
+  conversionButtonLabel?: string | null;
   serviceMode: 'online' | 'offline';
   address: string | null;
   category: { id: string | null; name: string | null };
