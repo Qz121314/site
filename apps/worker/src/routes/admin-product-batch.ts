@@ -278,12 +278,6 @@ adminProductBatchRoutes.post('/:sectionId/products/empty-trash', async (context)
   const response = { deletedCount };
   await context.env.DB.batch([
     context.env.DB.prepare(
-      `UPDATE h5_page_ctas SET product_id = NULL
-       WHERE product_id IN (
-         SELECT id FROM products WHERE section_id = ? AND deleted_at IS NOT NULL
-       )`,
-    ).bind(sectionId),
-    context.env.DB.prepare(
       `UPDATE audit_logs
        SET before_json = json_remove(before_json, '$.body', '$.media', '$.categoryId', '$.coverAssetId', '$.address'),
            after_json = json_remove(after_json, '$.body', '$.media', '$.categoryId', '$.coverAssetId', '$.address')

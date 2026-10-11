@@ -6,6 +6,7 @@ import { adminCategoryRoutes } from '../src/routes/admin-categories.ts';
 import { adminConversionPoolRoutes } from '../src/routes/admin-conversion-pool.ts';
 import { adminCustomerServiceRoutes } from '../src/routes/admin-customer-service.ts';
 import { adminFaqRoutes } from '../src/routes/admin-faqs.ts';
+import { adminProductBatchRoutes } from '../src/routes/admin-product-batch.ts';
 import { adminTagRoutes } from '../src/routes/admin-tags.ts';
 import {
   createPermanentDeleteProductStatements,
@@ -695,17 +696,53 @@ test('bulk permanent product deletion stays bounded and clears stored references
   const db = recordingDb();
   const sqlite = new DatabaseSync(':memory:');
   sqlite.exec(`
-    CREATE TABLE products (id TEXT PRIMARY KEY, section_id TEXT, deleted_at TEXT);
-    CREATE TABLE h5_page_ctas (product_id TEXT);
+    PRAGMA foreign_keys = ON;
+    CREATE TABLE sections (id TEXT PRIMARY KEY);
+    CREATE TABLE categories (id TEXT PRIMARY KEY);
+    CREATE TABLE conversion_groups (id TEXT PRIMARY KEY);
+    CREATE TABLE media_assets (id TEXT PRIMARY KEY);
+    CREATE TABLE products (
+      id TEXT PRIMARY KEY, section_id TEXT, category_id TEXT, conversion_group_id TEXT,
+      cover_asset_id TEXT, deleted_at TEXT,
+      FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE RESTRICT,
+      FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT,
+      FOREIGN KEY (conversion_group_id) REFERENCES conversion_groups(id) ON DELETE RESTRICT,
+      FOREIGN KEY (cover_asset_id) REFERENCES media_assets(id) ON DELETE RESTRICT
+    );
+    CREATE TABLE h5_pages (
+      id TEXT PRIMARY KEY, product_id TEXT REFERENCES products(id) ON DELETE SET NULL
+    );
+    CREATE TABLE h5_page_ctas (id TEXT PRIMARY KEY);
+    CREATE TABLE product_media (
+      product_id TEXT REFERENCES products(id) ON DELETE CASCADE,
+      media_asset_id TEXT REFERENCES media_assets(id) ON DELETE RESTRICT
+    );
+    CREATE TABLE product_tag_bindings (
+      product_id TEXT REFERENCES products(id) ON DELETE CASCADE, tag_id TEXT
+    );
+    CREATE TABLE conversion_events (
+      product_id TEXT REFERENCES products(id) ON DELETE SET NULL
+    );
     CREATE TABLE audit_logs (
       id TEXT PRIMARY KEY, actor TEXT, action TEXT, entity_type TEXT, entity_id TEXT,
       request_id TEXT, before_json TEXT, after_json TEXT, metadata_json TEXT, created_at TEXT
     );
+    INSERT INTO sections VALUES ('section-1');
+    INSERT INTO categories VALUES ('category-1');
+    INSERT INTO conversion_groups VALUES ('group-1');
+    INSERT INTO media_assets VALUES ('media-1');
     INSERT INTO products VALUES
-      ('product-1', 'section-1', '${NOW}'),
-      ('product-2', 'section-1', '${NOW}'),
-      ('product-active', 'section-1', NULL);
-    INSERT INTO h5_page_ctas VALUES ('product-1'), ('product-2'), ('product-active');
+      ('product-1', 'section-1', 'category-1', 'group-1', 'media-1', '${NOW}'),
+      ('product-2', 'section-1', 'category-1', 'group-1', 'media-1', '${NOW}'),
+      ('product-active', 'section-1', 'category-1', 'group-1', 'media-1', NULL);
+    INSERT INTO h5_pages VALUES
+      ('page-1', 'product-1'), ('page-2', 'product-2'), ('page-active', 'product-active');
+    INSERT INTO product_media VALUES
+      ('product-1', 'media-1'), ('product-2', 'media-1'), ('product-active', 'media-1');
+    INSERT INTO product_tag_bindings VALUES
+      ('product-1', 'tag-1'), ('product-2', 'tag-1'), ('product-active', 'tag-1');
+    INSERT INTO conversion_events VALUES
+      ('product-1'), ('product-2'), ('product-active');
     INSERT INTO audit_logs VALUES (
       'old-1', 'single_admin', 'product.deleted', 'product', 'product-1',
       'request-1', '{"body":"private","title":"Product One"}',
@@ -725,12 +762,15 @@ test('bulk permanent product deletion stays bounded and clears stored references
     NOW,
   );
 
-  assert.equal(statements.length, 4, 'statement count must not grow with product count');
-  assert.match(statements[0].sql, /UPDATE h5_page_ctas SET product_id = NULL/u);
-  assert.match(statements[1].sql, /json_remove\(before_json/u);
-  assert.match(statements[1].sql, /json_remove\(after_json/u);
-  assert.match(statements[2].sql, /INSERT INTO audit_logs/u);
-  assert.match(statements[3].sql, /DELETE FROM products/u);
+  assert.equal(statements.length, 3, 'statement count must not grow with product count');
+  assert.doesNotMatch(
+    statements.map((statement) => statement.sql).join('\n'),
+    /h5_page_ctas/u,
+  );
+  assert.match(statements[0].sql, /json_remove\(before_json/u);
+  assert.match(statements[0].sql, /json_remove\(after_json/u);
+  assert.match(statements[1].sql, /INSERT INTO audit_logs/u);
+  assert.match(statements[2].sql, /DELETE FROM products/u);
   for (const statement of statements) {
     sqlite.prepare(statement.sql).run(...statement.args);
   }
@@ -742,14 +782,31 @@ test('bulk permanent product deletion stays bounded and clears stored references
     0,
   );
   assert.equal(
-    sqlite
-      .prepare("SELECT product_id FROM h5_page_ctas WHERE product_id = 'product-active'")
-      .get().product_id,
+    sqlite.prepare("SELECT product_id FROM h5_pages WHERE id = 'page-active'").get()
+      .product_id,
     'product-active',
   );
   assert.equal(
     sqlite
-      .prepare('SELECT COUNT(*) AS count FROM h5_page_ctas WHERE product_id IS NULL')
+      .prepare('SELECT COUNT(*) AS count FROM h5_pages WHERE product_id IS NULL')
+      .get().count,
+    2,
+  );
+  assert.equal(
+    sqlite.prepare('SELECT COUNT(*) AS count FROM product_media').get().count,
+    1,
+  );
+  assert.equal(
+    sqlite.prepare('SELECT COUNT(*) AS count FROM product_tag_bindings').get().count,
+    1,
+  );
+  assert.equal(
+    sqlite.prepare('SELECT COUNT(*) AS count FROM media_assets').get().count,
+    1,
+  );
+  assert.equal(
+    sqlite
+      .prepare('SELECT COUNT(*) AS count FROM conversion_events WHERE product_id IS NULL')
       .get().count,
     2,
   );
@@ -770,4 +827,78 @@ test('bulk permanent product deletion stays bounded and clears stored references
     2,
   );
   sqlite.close();
+});
+
+test('emptying product trash does not update the retired H5 CTA product column', async () => {
+  let batchStatements = [];
+  const db = {
+    prepare(sql) {
+      const statement = {
+        sql,
+        args: [],
+        bind(...args) {
+          this.args = args;
+          return this;
+        },
+        async first() {
+          if (this.sql.includes('FROM sections s')) {
+            return {
+              id: 'section-1',
+              slug: 'section-1',
+              name: 'Section One',
+              description: null,
+              browse_button_label: 'Browse',
+              conversion_group_id: null,
+              icon_type: 'icon',
+              icon_value: null,
+              icon_asset_id: null,
+              icon_object_key: null,
+              browse_background_asset_id: null,
+              browse_background_object_key: null,
+              media_base_url: null,
+              sort_order: 0,
+              is_enabled: 1,
+              is_visible: 1,
+              created_at: NOW,
+              updated_at: NOW,
+              deleted_at: null,
+              product_count: 0,
+              conversion_method_count: 0,
+            };
+          }
+          if (this.sql.includes('SELECT response_body')) return null;
+          if (this.sql.includes('COUNT(*) AS count FROM products')) return { count: 37 };
+          throw new Error(`Unexpected first SQL: ${this.sql}`);
+        },
+        async run() {
+          return { meta: { changes: 0 } };
+        },
+      };
+      return statement;
+    },
+    async batch(statements) {
+      batchStatements = statements;
+      return [];
+    },
+  };
+  const app = withRequestId(adminProductBatchRoutes);
+  const response = await app.request(
+    'http://local.test/section-1/products/empty-trash',
+    {
+      method: 'POST',
+      headers: { 'x-admin-request': '1', 'x-idempotency-key': 'empty-trash-1' },
+    },
+    { DB: db },
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { deletedCount: 37 });
+  assert.equal(batchStatements.length, 4);
+  assert.doesNotMatch(
+    batchStatements.map((statement) => statement.sql).join('\n'),
+    /h5_page_ctas/u,
+  );
+  assert.ok(
+    batchStatements.some((statement) => statement.sql.includes('DELETE FROM products')),
+  );
 });
