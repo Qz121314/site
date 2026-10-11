@@ -14,7 +14,7 @@ import { writeStorefrontPublishedBootstrap } from './storefront-bootstrap-snapsh
 
 const DERIVED_HOME_PREFIX = 'public/home';
 const DERIVED_SEARCH_PREFIX = 'public/search';
-const DERIVED_SNAPSHOT_RETENTION = 3;
+const DERIVED_SNAPSHOT_RETENTION = 2;
 const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
 
 type DerivedProductSummary = {

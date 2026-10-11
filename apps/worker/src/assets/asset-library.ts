@@ -82,6 +82,8 @@ type SnapshotProtection = {
   retainedLegacyVersions: string[];
 };
 
+const RETAINED_PUBLISH_VERSION_COUNT = 2;
+
 function buildPlaceholders(count: number): string {
   return Array.from({ length: count }, () => '?').join(', ');
 }
@@ -191,7 +193,7 @@ async function listRetainedPublishVersions(db: D1Database): Promise<string[]> {
         `SELECT content_version
          FROM publish_versions
          ORDER BY is_current DESC, published_at DESC, content_version DESC
-         LIMIT 3`,
+         LIMIT ${RETAINED_PUBLISH_VERSION_COUNT}`,
       )
       .all<RetainedVersionRow>()
   ).results;
@@ -214,10 +216,20 @@ async function getSnapshotProtection(db: D1Database): Promise<SnapshotProtection
     const rows = (
       await db
         .prepare(
-          `SELECT v.media_keys_json
-           FROM publish_module_versions v
-           JOIN publish_module_jobs j ON j.id = v.publish_job_id
-           WHERE j.status = 'published'`,
+          `WITH ranked_versions AS (
+             SELECT
+               v.media_keys_json,
+               ROW_NUMBER() OVER (
+                 PARTITION BY v.module_key
+                 ORDER BY v.is_current DESC, v.published_at DESC, v.content_version DESC
+               ) AS retention_rank
+             FROM publish_module_versions v
+             JOIN publish_module_jobs j ON j.id = v.publish_job_id
+             WHERE j.status = 'published'
+           )
+           SELECT media_keys_json
+           FROM ranked_versions
+           WHERE retention_rank <= ${RETAINED_PUBLISH_VERSION_COUNT}`,
         )
         .all<ModularMediaRow>()
     ).results;
@@ -377,7 +389,7 @@ function toAdminAsset(
     uploadedAt: object.uploaded.toISOString(),
     etag: object.etag,
     contentType,
-    usageStatus: referenceCount > 0 ? 'used' : 'unused',
+    usageStatus: cleanupBlockedReason ? 'used' : 'unused',
     referenceCount,
     references,
     cleanupEligible: cleanupBlockedReason === null,

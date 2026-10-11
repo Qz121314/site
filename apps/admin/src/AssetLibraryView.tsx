@@ -219,7 +219,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [cleaning, setCleaning] = useState(false);
   const [showCleanupDialog, setShowCleanupDialog] = useState(false);
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
-  const [filter, setFilter] = useState<AssetFilter>('used');
+  const [filter, setFilter] = useState<AssetFilter>('unused');
   const [query, setQuery] = useState('');
   const [cleanupError, setCleanupError] = useState<string | null>(null);
   const [cleanupSuccess, setCleanupSuccess] = useState<string | null>(null);
@@ -1102,9 +1102,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             leading={
               <div className="media-cleanup-copy">
                 <strong>底层存储清理</strong>
-                <span>
-                  仅用于清理没有业务引用、且已经退出最近 3 个可回退快照的图片对象。
-                </span>
+                <span>默认显示没有当前内容或当前/上一版快照引用的图片对象。</span>
               </div>
             }
             trailing={
@@ -1154,17 +1152,17 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               </small>
             </article>
             <article>
-              <span>当前使用</span>
+              <span>有引用</span>
               <strong>{cleanupStats.used}</strong>
-              <small>D1 中存在业务引用</small>
+              <small>当前内容或保留快照仍有引用</small>
             </article>
             <article>
               <span>快照保护</span>
               <strong>{cleanupStats.protected}</strong>
-              <small>等待最近 3 版自然淘汰</small>
+              <small>当前版或上一版仍有引用</small>
             </article>
             <article>
-              <span>可物理清理</span>
+              <span>未引用，可物理清理</span>
               <strong>{cleanupStats.eligible}</strong>
               <small>引用和回退窗口均已释放</small>
             </article>
@@ -1209,13 +1207,13 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                   selected={filter === 'used'}
                   onClick={() => setFilter('used')}
                 >
-                  使用中 ({cleanupStats.used})
+                  有引用 ({cleanupStats.used})
                 </AdminSegmentedItem>
                 <AdminSegmentedItem
                   selected={filter === 'unused'}
                   onClick={() => setFilter('unused')}
                 >
-                  未使用 ({cleanupStats.protected + cleanupStats.eligible})
+                  未引用 ({cleanupStats.eligible})
                 </AdminSegmentedItem>
               </AdminSegmentedControl>
             }
@@ -1252,7 +1250,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
           ) : (
             <AdminFeedbackState
               kind="empty"
-              title={filter === 'used' ? '没有使用中的图片' : '没有未使用的图片'}
+              title={filter === 'used' ? '没有被引用的图片' : '没有未引用的图片'}
               description="可以调整搜索条件或从头重新扫描 R2。"
             />
           )}

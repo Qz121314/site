@@ -37,10 +37,10 @@ function cleanupStatus(asset: AdminAsset): {
   label: string;
   tone: 'success' | 'warning' | 'default';
 } {
-  if (asset.usageStatus === 'used') return { label: '使用中', tone: 'default' };
   if (asset.cleanupBlockedReason === 'SNAPSHOT_RETENTION') {
     return { label: '快照保护', tone: 'warning' };
   }
+  if (asset.usageStatus === 'used') return { label: '使用中', tone: 'default' };
   return { label: '可清理', tone: 'success' };
 }
 
@@ -136,9 +136,11 @@ export function AssetTable({
                       ))}
                     </div>
                   ) : asset.cleanupBlockedReason === 'SNAPSHOT_RETENTION' ? (
-                    <span className="asset-muted">最近 3 个可回退快照仍处于保护窗口</span>
+                    <span className="asset-muted">当前版或上一版快照仍引用此图片</span>
                   ) : (
-                    <span className="asset-muted">无业务引用，可物理清理</span>
+                    <span className="asset-muted">
+                      无当前内容或保留快照引用，可物理清理
+                    </span>
                   )}
                 </td>
               </tr>
