@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { DatabaseSync } from 'node:sqlite';
 import test from 'node:test';
 import { Hono } from 'hono';
 import { adminCategoryRoutes } from '../src/routes/admin-categories.ts';
@@ -53,6 +54,58 @@ function blockingDb(match, row) {
     async batch() {
       batchCalls += 1;
       return [];
+    },
+  };
+}
+
+function categoryReferenceDb(productSectionId, productDeletedAt = null) {
+  const sqlite = new DatabaseSync(':memory:');
+  sqlite.exec(`
+    CREATE TABLE categories (
+      id TEXT PRIMARY KEY, section_id TEXT, name TEXT, sort_order INTEGER,
+      is_enabled INTEGER, created_at TEXT, updated_at TEXT, deleted_at TEXT
+    );
+    CREATE TABLE products (
+      id TEXT PRIMARY KEY, section_id TEXT, category_id TEXT, deleted_at TEXT
+    );
+    INSERT INTO categories VALUES (
+      'category-1', 'section-1', 'Primary', 0, 1, '${NOW}', '${NOW}', NULL
+    );
+    INSERT INTO products VALUES (
+      'product-1', '${productSectionId}', 'category-1',
+      ${productDeletedAt ? `'${productDeletedAt}'` : 'NULL'}
+    );
+  `);
+
+  return {
+    prepare(sql) {
+      const statement = {
+        sql,
+        args: [],
+        bind(...args) {
+          this.args = args;
+          return this;
+        },
+        async first() {
+          return sqlite.prepare(sql).get(...this.args) ?? null;
+        },
+      };
+      return statement;
+    },
+    async batch(statements) {
+      for (const statement of statements) {
+        if (statement.sql.startsWith('UPDATE categories')) {
+          sqlite.prepare(statement.sql).run(...statement.args);
+        }
+      }
+    },
+    deletedAt() {
+      return sqlite
+        .prepare('SELECT deleted_at FROM categories WHERE id = ?')
+        .get('category-1').deleted_at;
+    },
+    close() {
+      sqlite.close();
     },
   };
 }
@@ -337,6 +390,34 @@ test('category deletion is blocked when products still reference the category', 
   assert.equal(body.error.code, 'CATEGORY_HAS_PRODUCTS');
   assert.equal(body.error.details.productCount, 2);
   assert.equal(db.batchCalls, 0);
+});
+
+test('category deletion ignores product references from another section', async () => {
+  const db = categoryReferenceDb('section-2');
+  const app = withRequestId(adminCategoryRoutes);
+  const response = await app.request(
+    'http://local.test/section-1/categories/category-1',
+    { method: 'DELETE', headers: { 'x-admin-request': '1' } },
+    { DB: db },
+  );
+
+  assert.equal(response.status, 200);
+  assert.ok(db.deletedAt());
+  db.close();
+});
+
+test('category deletion still protects same-section products in the recycle bin', async () => {
+  const db = categoryReferenceDb('section-1', NOW);
+  const app = withRequestId(adminCategoryRoutes);
+  const response = await app.request(
+    'http://local.test/section-1/categories/category-1',
+    { method: 'DELETE', headers: { 'x-admin-request': '1' } },
+    { DB: db },
+  );
+
+  assert.equal(response.status, 409);
+  assert.equal(db.deletedAt(), null);
+  db.close();
 });
 
 test('tag deletion is blocked while an active product references the tag', async () => {

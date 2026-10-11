@@ -100,7 +100,8 @@ const CATEGORY_SELECT = `SELECT
   c.created_at,
   c.updated_at,
   c.deleted_at,
-  (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id) AS product_count
+  (SELECT COUNT(*) FROM products p
+   WHERE p.category_id = c.id AND p.section_id = c.section_id) AS product_count
 FROM categories c`;
 
 export async function listCategories(
