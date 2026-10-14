@@ -72,6 +72,16 @@ const objects = new Map([
           title: 'Los Angeles',
           address: 'Los Angeles, CA',
           coverObjectKey: 'media/product.webp',
+          isVisible: true,
+        },
+        {
+          id: 'product-hidden',
+          slug: 'unlisted-service',
+          sectionId: 'section-1',
+          title: 'Unlisted service',
+          address: 'Los Angeles, CA',
+          coverObjectKey: 'media/hidden.webp',
+          isVisible: false,
         },
       ],
     },
@@ -87,6 +97,22 @@ const objects = new Map([
         address: 'Los Angeles, CA',
         coverObjectKey: 'media/product.webp',
         body: '**Private appointment** in Los Angeles.',
+        media: [],
+      },
+    },
+  ],
+  [
+    'public/modules/sections/section-1/section-v1/products/product-hidden.json',
+    {
+      product: {
+        id: 'product-hidden',
+        slug: 'unlisted-service',
+        sectionId: 'section-1',
+        title: 'Unlisted service',
+        address: 'Los Angeles, CA',
+        coverObjectKey: 'media/hidden.webp',
+        isVisible: false,
+        body: 'Available by direct link.',
         media: [],
       },
     },
@@ -144,6 +170,7 @@ test('SEO routes return real robots text and a published-content sitemap', async
     xml,
     /https:\/\/example\.com\/sections\/escorts\/products\/los-angeles\//u,
   );
+  assert.doesNotMatch(xml, /unlisted-service/u);
   assert.match(xml, /https:\/\/example\.com\/faq\/booking\//u);
 });
 
@@ -162,6 +189,24 @@ test('Storefront HTML has route metadata, canonical URLs and structured data', a
   );
   assert.match(html, /<meta property="og:image"/u);
   assert.match(html, /application\/ld\+json/u);
+});
+
+test('hidden published products remain available by direct URL without entering the sitemap', async () => {
+  const response = await app.request(
+    'https://example.com/sections/escorts/products/unlisted-service/',
+    {},
+    env(),
+  );
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /<title>Unlisted service · EROSDOOR<\/title>/u);
+  assert.match(
+    html,
+    /<link rel="canonical" href="https:\/\/example\.com\/sections\/escorts\/products\/unlisted-service\//u,
+  );
+
+  const sitemap = await app.request('https://example.com/sitemap.xml', {}, env());
+  assert.doesNotMatch(await sitemap.text(), /unlisted-service/u);
 });
 
 test('Browse HTML preloads the responsive LCP image before client rendering', async () => {

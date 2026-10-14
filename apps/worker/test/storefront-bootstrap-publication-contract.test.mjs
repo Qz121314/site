@@ -75,12 +75,25 @@ test('publisher writes the repository-owned current bootstrap protocol', async (
   assert.doesNotMatch(bootstrapSnapshot, /const BOOTSTRAP_SCHEMA_VERSION\s*=/u);
 });
 
-test('section snapshots carry the publish-time direct-product decision', async () => {
+test('product listing visibility does not prevent publishing direct product details', async () => {
   const modularPublisher = await readFile(modularPublisherUrl, 'utf8');
+  const productQuery =
+    /`SELECT\s+p\.id,[\s\S]*?FROM products p[\s\S]*?ORDER BY p\.section_id, p\.sort_order ASC, p\.updated_at DESC`/u.exec(
+      modularPublisher,
+    )?.[0];
 
+  assert.ok(productQuery, 'the product publication query must remain identifiable');
+  assert.match(productQuery, /p\.is_visible/u);
+  assert.match(productQuery, /WHERE p\.deleted_at IS NULL AND p\.status = 'published'/u);
+  assert.doesNotMatch(productQuery, /AND p\.is_visible\s*=\s*1/u);
+  assert.match(modularPublisher, /isVisible: product\.is_visible === 1/u);
   assert.match(
     modularPublisher,
-    /directProductId:\s*products\.length === 1 \? \(products\[0\]\?\.summary\.id \?\? null\) : null/u,
+    /products\.map\(\(product\) => \(\{[\s\S]*?relativePath: `products\//u,
+  );
+  assert.match(
+    modularPublisher,
+    /const visibleProducts = products\.filter\(\(product\) => product\.summary\.isVisible\);[\s\S]*?directProductId:\s*visibleProducts\.length === 1/u,
   );
   assert.match(
     modularPublisher,

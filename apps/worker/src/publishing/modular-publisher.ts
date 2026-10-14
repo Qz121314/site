@@ -188,6 +188,7 @@ type ProductRow = {
   category_enabled: number | null;
   effective_cover_object_key: string | null;
   conversion_button_label: string | null;
+  is_visible: number;
   is_featured: number;
   featured_order: number;
   sort_order: number;
@@ -634,6 +635,7 @@ async function loadSource(db: D1Database): Promise<Source> {
            c.is_enabled AS category_enabled,
            conversion_group.button_label AS conversion_button_label,
            cover.object_key AS effective_cover_object_key,
+           p.is_visible,
            p.is_featured,
            p.featured_order,
            p.sort_order,
@@ -654,7 +656,7 @@ async function loadSource(db: D1Database): Promise<Source> {
            (SELECT pm.media_asset_id FROM product_media pm
              WHERE pm.product_id = p.id ORDER BY pm.sort_order ASC LIMIT 1)
          ) AND cover.status = 'ready' AND cover.deleted_at IS NULL
-         WHERE p.deleted_at IS NULL AND p.status = 'published' AND p.is_visible = 1
+         WHERE p.deleted_at IS NULL AND p.status = 'published'
          ORDER BY p.section_id, p.sort_order ASC, p.updated_at DESC`,
       )
       .all<ProductRow>()
@@ -914,6 +916,7 @@ function sectionPublicData(source: Source, sectionId: string) {
       category: { id: product.category_id, name: product.category_name },
       tags: productTags,
       coverObjectKey: product.effective_cover_object_key,
+      isVisible: product.is_visible === 1,
       isFeatured: product.is_featured === 1,
       featuredOrder: product.featured_order,
       publishedAt: product.published_at,
@@ -929,12 +932,14 @@ function sectionPublicData(source: Source, sectionId: string) {
       },
     };
   });
+  const visibleProducts = products.filter((product) => product.summary.isVisible);
   return {
     section,
     categories,
     tags,
     products,
-    directProductId: products.length === 1 ? (products[0]?.summary.id ?? null) : null,
+    directProductId:
+      visibleProducts.length === 1 ? (visibleProducts[0]?.summary.id ?? null) : null,
   };
 }
 

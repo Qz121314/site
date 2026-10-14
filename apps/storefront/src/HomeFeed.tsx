@@ -225,7 +225,7 @@ function HomeRecommendationRail({
   const products = useMemo(
     () =>
       (initialProducts.length > 0 ? initialProducts : (query.data?.products ?? []))
-        .filter((product) => product.isFeatured)
+        .filter((product) => product.isVisible !== false && product.isFeatured)
         .sort(
           (left, right) =>
             left.featuredOrder - right.featuredOrder ||
@@ -292,7 +292,9 @@ function HomePrimaryDirectory({
     },
     staleTime: Number.POSITIVE_INFINITY,
   });
-  const products = query.data?.products ?? initialProducts;
+  const products = (query.data?.products ?? initialProducts).filter(
+    (product) => product.isVisible !== false,
+  );
   const categories = query.data?.categories ?? [];
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const visibleProducts = selectedCategoryId

@@ -29,6 +29,7 @@ type DerivedProductSummary = {
   category: { id: string | null; name: string | null };
   tags: Array<{ id: string; name: string; sortOrder: number }>;
   coverObjectKey: string | null;
+  isVisible?: boolean;
   isFeatured: boolean;
   featuredOrder: number;
   publishedAt: string | null;
@@ -126,13 +127,14 @@ async function writeDerivedHomeSnapshot(
 ): Promise<string> {
   const { pointer, products } = source;
   const featuredProducts = products
-    .filter((product) => product.isFeatured)
+    .filter((product) => product.isVisible !== false && product.isFeatured)
     .sort(
       (left, right) =>
         left.featuredOrder - right.featuredOrder || left.sortOrder - right.sortOrder,
     )
     .slice(0, 30);
-  const latestProducts = [...products]
+  const latestProducts = products
+    .filter((product) => product.isVisible !== false)
     .sort((left, right) =>
       (right.publishedAt ?? '').localeCompare(left.publishedAt ?? ''),
     )
@@ -184,7 +186,7 @@ async function writeDerivedSearchSnapshot(
       schemaVersion: 2,
       pointerVersion: pointer.contentVersion,
       publishedAt: pointer.publishedAt,
-      products,
+      products: products.filter((product) => product.isVisible !== false),
     }),
     {
       httpMetadata: {
