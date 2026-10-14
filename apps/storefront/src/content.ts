@@ -1,6 +1,7 @@
 import {
   defaultStorefrontLayoutConfig,
   resolveStorefrontLayoutConfig,
+  type StorefrontLayoutKey,
   type StorefrontLayoutConfig,
 } from '@site/shared';
 
@@ -92,6 +93,7 @@ export type PublicProductSummary = {
   sectionSlug: string;
   sectionName: string;
   title: string;
+  detailLayout?: StorefrontLayoutKey;
   conversionButtonLabel?: string | null;
   serviceMode: 'online' | 'offline';
   address: string | null;
@@ -311,6 +313,7 @@ type V2ProductSummary = {
   slug: string;
   sectionId: string;
   title: string;
+  detailLayout?: StorefrontLayoutKey;
   conversionButtonLabel?: string | null;
   serviceMode: 'online' | 'offline';
   address: string | null;
@@ -770,6 +773,7 @@ function normalizeV1Summary(product: PublicProductSummary): PublicProductSummary
     .featuredOrder;
   return {
     ...product,
+    detailLayout: product.detailLayout === 'template-a' ? 'template-a' : 'current',
     tags: normalizeTags((product as { tags?: unknown }).tags),
     featuredOrder: typeof featuredOrder === 'number' ? featuredOrder : 0,
   };
@@ -1060,6 +1064,7 @@ export function resolveV2Summary(
     sectionSlug: section.slug,
     sectionName: section.name,
     title: product.title,
+    detailLayout: product.detailLayout === 'template-a' ? 'template-a' : 'current',
     conversionButtonLabel: product.conversionButtonLabel ?? null,
     serviceMode: product.serviceMode,
     address: product.address,

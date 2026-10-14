@@ -1,3 +1,4 @@
+import type { StorefrontLayoutKey } from '@site/shared';
 import { buildAssetPublicUrl, getMediaBaseUrl } from '../assets/asset-library';
 import { getCategory } from '../categories/categories';
 import {
@@ -28,6 +29,7 @@ export type ProductRecord = {
   slug: string;
   isVisible: boolean;
   serviceMode: ProductServiceMode;
+  detailLayout: StorefrontLayoutKey;
   title: string;
   body: string;
   address: string | null;
@@ -54,6 +56,7 @@ export type ProductRecord = {
 export type ProductInput = {
   isVisible?: boolean;
   serviceMode: ProductServiceMode;
+  detailLayout: StorefrontLayoutKey;
   title: string;
   body: string;
   address: string | null;
@@ -73,6 +76,7 @@ type ProductRow = {
   slug: string;
   is_visible: number;
   service_mode: ProductServiceMode;
+  detail_layout: StorefrontLayoutKey;
   title: string;
   body: string;
   address: string | null;
@@ -215,6 +219,10 @@ export function validateProductInput(value: unknown): ValidationResult<ProductIn
   if (value.serviceMode !== 'online' && value.serviceMode !== 'offline') {
     return { ok: false, field: 'serviceMode', message: '请选择线上服务或线下服务。' };
   }
+  const detailLayout = value.detailLayout ?? 'current';
+  if (detailLayout !== 'current' && detailLayout !== 'template-a') {
+    return { ok: false, field: 'detailLayout', message: '商品详情模板无效。' };
+  }
   const title = readRequiredText(value.title, 'title', '产品标题', 200);
   if (!title.ok) return title;
   const body = readRequiredText(value.body, 'body', '产品正文', 20_000);
@@ -256,6 +264,7 @@ export function validateProductInput(value: unknown): ValidationResult<ProductIn
     value: {
       isVisible,
       serviceMode: value.serviceMode,
+      detailLayout,
       title: title.value,
       body: body.value,
       address: value.serviceMode === 'offline' ? address.value : null,
@@ -371,6 +380,7 @@ function mapProduct(row: ProductRow): ProductRecord {
     slug: row.slug,
     isVisible: row.is_visible === 1,
     serviceMode: row.service_mode,
+    detailLayout: row.detail_layout === 'template-a' ? 'template-a' : 'current',
     title: row.title,
     body: row.body,
     address: row.address,
@@ -403,6 +413,7 @@ const PRODUCT_SELECT = `SELECT
   p.slug,
   p.is_visible,
   p.service_mode,
+  p.detail_layout,
   p.title,
   p.body,
   p.address,
@@ -538,6 +549,7 @@ export function createProduct(
     slug: `${slugBase(input.title)}-${id.slice(0, 8)}`,
     isVisible: input.isVisible !== false,
     serviceMode: input.serviceMode,
+    detailLayout: input.detailLayout ?? 'current',
     title: input.title,
     body: input.body,
     address: input.address,
@@ -567,8 +579,8 @@ export function createProduct(
            id, section_id, slug, service_mode, title, body, address,
            cover_asset_id, conversion_method_id, is_featured, featured_order,
            status, published_at, created_at, updated_at, deleted_at,
-           category_id, conversion_group_id, sort_order, is_visible
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)`,
+           category_id, conversion_group_id, sort_order, is_visible, detail_layout
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)`,
       )
       .bind(
         product.id,
@@ -589,6 +601,7 @@ export function createProduct(
         product.conversionGroupId,
         product.sortOrder,
         product.isVisible ? 1 : 0,
+        product.detailLayout,
       ),
   ];
   input.mediaAssetIds.forEach((assetId, index) => {
@@ -620,7 +633,7 @@ export function createUpdateProductStatements(
          SET service_mode = ?, title = ?, body = ?, address = ?, category_id = ?,
              conversion_group_id = ?, cover_asset_id = ?, is_featured = ?,
              featured_order = ?, sort_order = ?, status = ?, published_at = ?, updated_at = ?,
-             is_visible = ?
+             is_visible = ?, detail_layout = ?
          WHERE section_id = ? AND id = ? AND deleted_at IS NULL`,
       )
       .bind(
@@ -638,6 +651,7 @@ export function createUpdateProductStatements(
         publishedAt,
         now,
         input.isVisible === false ? 0 : 1,
+        input.detailLayout ?? 'current',
         current.sectionId,
         current.id,
       ),

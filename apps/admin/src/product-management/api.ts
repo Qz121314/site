@@ -1,3 +1,4 @@
+import type { StorefrontLayoutKey } from '@site/shared';
 import { AdminApiError } from '../api';
 import { adminFetch } from '../admin-fetch';
 
@@ -31,6 +32,7 @@ export type AdminProduct = {
   slug: string;
   isVisible: boolean;
   serviceMode: ProductServiceMode;
+  detailLayout: StorefrontLayoutKey;
   title: string;
   body: string;
   address: string | null;
@@ -59,6 +61,7 @@ export type AdminProduct = {
 export type ProductInput = {
   isVisible?: boolean;
   serviceMode: ProductServiceMode;
+  detailLayout: StorefrontLayoutKey;
   title: string;
   body: string;
   address: string | null;
@@ -165,6 +168,9 @@ function parseProduct(value: unknown): AdminProduct {
     typeof product.slug !== 'string' ||
     typeof product.isVisible !== 'boolean' ||
     (product.serviceMode !== 'online' && product.serviceMode !== 'offline') ||
+    (product.detailLayout !== undefined &&
+      product.detailLayout !== 'current' &&
+      product.detailLayout !== 'template-a') ||
     typeof product.title !== 'string' ||
     typeof product.body !== 'string' ||
     (typeof product.address !== 'string' && product.address !== null) ||
@@ -202,6 +208,7 @@ function parseProduct(value: unknown): AdminProduct {
   }
   return {
     ...(product as Omit<AdminProduct, 'media' | 'tags'>),
+    detailLayout: product.detailLayout === 'template-a' ? 'template-a' : 'current',
     media: product.media.map(parseMedia),
     tags: product.tags.map(parseProductTag),
   };

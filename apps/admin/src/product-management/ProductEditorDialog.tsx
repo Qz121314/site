@@ -101,6 +101,7 @@ function baselineForm(
   if (!product) {
     return formWithoutMedia({
       serviceMode: 'offline',
+      detailLayout: 'current',
       title: '',
       body: '',
       address: null,
@@ -117,6 +118,7 @@ function baselineForm(
   }
   return formWithoutMedia({
     serviceMode: product.serviceMode,
+    detailLayout: product.detailLayout,
     title: product.title,
     body: product.body,
     address: product.address,
@@ -490,6 +492,25 @@ export function ProductEditorDialog({
               <option value="online">线上服务</option>
             </select>
           </label>
+
+          {!reviewMode ? (
+            <label className="product-field product-core-template">
+              <span>商品详情模板</span>
+              <select
+                value={form.detailLayout}
+                disabled={busy}
+                onChange={(event) =>
+                  patch({
+                    detailLayout: event.target.value as ProductInput['detailLayout'],
+                  })
+                }
+              >
+                <option value="current">默认模板</option>
+                <option value="template-a">落地页模板A</option>
+              </select>
+              <small>只影响当前商品详情页。</small>
+            </label>
+          ) : null}
 
           <div className="product-field product-core-category">
             <span>所属分类</span>

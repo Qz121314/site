@@ -179,6 +179,7 @@ type ProductRow = {
   section_id: string;
   slug: string;
   service_mode: 'online' | 'offline';
+  detail_layout: 'current' | 'template-a';
   title: string;
   body: string;
   address: string | null;
@@ -624,6 +625,7 @@ async function loadSource(db: D1Database): Promise<Source> {
            p.section_id,
            p.slug,
            p.service_mode,
+           p.detail_layout,
            p.title,
            p.body,
            p.address,
@@ -905,6 +907,7 @@ function sectionPublicData(source: Source, sectionId: string) {
       slug: product.slug,
       sectionId,
       title: product.title,
+      detailLayout: product.detail_layout === 'template-a' ? 'template-a' : 'current',
       conversionButtonLabel: product.conversion_button_label,
       serviceMode: product.service_mode,
       address: product.address,
