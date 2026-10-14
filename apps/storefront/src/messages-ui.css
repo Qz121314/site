@@ -545,18 +545,20 @@
 
 .chat-greeting-ctas {
   display: flex;
-  gap: 7px;
-  width: min(78%, 360px);
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  width: min(100%, 540px);
+  min-width: 0;
   margin: 4px 0 11px;
-  padding-left: 12px;
-  overflow-x: auto;
-  padding-bottom: 2px;
-  scrollbar-width: thin;
 }
 
 .chat-greeting-cta {
+  display: inline-flex;
   flex: 0 0 auto;
-  max-width: min(78vw, 300px);
+  align-items: center;
+  max-width: 100%;
+  min-height: 44px;
   padding: 8px 12px;
   border: 1px solid color-mix(in srgb, var(--brand) 38%, var(--line));
   border-radius: 999px;
@@ -566,13 +568,20 @@
   font-size: 0.74rem;
   line-height: 1.25;
   text-align: left;
+  white-space: nowrap;
   cursor: pointer;
 }
 
-.chat-greeting-cta:hover:not(:disabled),
+.chat-greeting-cta:hover:not(:disabled) {
+  border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 14%, var(--surface));
+}
+
 .chat-greeting-cta:focus-visible {
   border-color: var(--brand);
   background: color-mix(in srgb, var(--brand) 14%, var(--surface));
+  outline: 2px solid color-mix(in srgb, var(--brand) 72%, var(--text));
+  outline-offset: 2px;
 }
 
 .chat-greeting-cta:disabled {

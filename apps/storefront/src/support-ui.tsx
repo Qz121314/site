@@ -195,6 +195,51 @@ function ChatImageLink({
   );
 }
 
+function ChatMessageAttachment({
+  attachment,
+}: {
+  attachment: SupportMessage['attachments'][number];
+}) {
+  if (attachment.kind === 'image') return <ChatImageLink attachment={attachment} />;
+
+  const href = buildSupportContactCardHref(
+    attachment.kind,
+    attachment.value,
+    attachment.presetMessage,
+  );
+  const brandIconSrc =
+    attachment.kind === 'sms'
+      ? '/icons/contact-card-imessage.svg'
+      : attachment.kind === 'whatsapp'
+        ? '/icons/contact-card-whatsapp.svg'
+        : attachment.kind === 'telegram'
+          ? '/icons/contact-card-telegram.svg'
+          : null;
+  const opensNewWindow = attachment.kind !== 'sms';
+
+  return (
+    <a
+      className="chat-contact-card"
+      href={href}
+      target={opensNewWindow ? '_blank' : undefined}
+      rel={opensNewWindow ? 'noreferrer' : undefined}
+    >
+      <span className="chat-contact-card-icon" aria-hidden="true">
+        {brandIconSrc ? (
+          <img src={brandIconSrc} alt="" width="20" height="20" />
+        ) : (
+          <Link />
+        )}
+      </span>
+      <span>
+        <small>{attachment.label}</small>
+        <strong>{attachment.value}</strong>
+      </span>
+      <ChevronRight className="chat-contact-card-chevron" aria-hidden="true" />
+    </a>
+  );
+}
+
 export function MessagesPageContent({
   conversations,
   activeConversationId = null,
@@ -730,6 +775,23 @@ export function MessageThreadPageContent({
           const groupEnd =
             !next || !sameDayAsNext || next.direction !== message.direction;
           const showDay = !previous || !sameDayAsPrevious;
+          const splitAgentAttachments =
+            message.direction === 'agent' &&
+            message.kind !== 'product_context' &&
+            message.attachments.length > 0;
+          const hasMessageBody =
+            message.kind === 'product_context'
+              ? Boolean(message.productContext)
+              : Boolean(message.body);
+          const renderMessageBubble = !splitAgentAttachments || hasMessageBody;
+          const hasCustomerFollowup = messages
+            .slice(index + 1)
+            .some(
+              (laterMessage) =>
+                laterMessage.direction === 'customer' &&
+                laterMessage.delivery !== 'failed',
+            );
+          const greetingCtas = greetingCtasByMessageId.get(message.id);
           return (
             <Fragment key={message.id}>
               {showDay ? (
@@ -737,97 +799,87 @@ export function MessageThreadPageContent({
                   <span>{formatChatDay(message.sentAt)}</span>
                 </div>
               ) : null}
-              <div
-                className={`chat-message-row is-${message.direction}${message.kind === 'product_context' ? ' is-product-context' : ''}${groupStart ? ' is-group-start' : ''}${groupEnd ? ' is-group-end' : ''}${message.delivery === 'failed' ? ' is-failed' : ''}`}
-              >
-                <div className="chat-message-bubble">
-                  {message.kind === 'product_context' && message.productContext ? (
-                    <ProductContextMessageCard
-                      context={message.productContext}
-                      LinkComponent={LinkComponent}
-                    />
-                  ) : message.body ? (
-                    <p>{message.body}</p>
-                  ) : null}
-                  {message.kind !== 'product_context' &&
-                  message.attachments.length > 0 ? (
-                    <div className="chat-message-attachments">
-                      {message.attachments.map((attachment) => {
-                        if (attachment.kind === 'image') {
-                          return (
-                            <ChatImageLink attachment={attachment} key={attachment.id} />
-                          );
-                        }
-                        const href = buildSupportContactCardHref(
-                          attachment.kind,
-                          attachment.value,
-                          attachment.presetMessage,
-                        );
-                        const brandIconSrc =
-                          attachment.kind === 'sms'
-                            ? '/icons/contact-card-imessage.svg'
-                            : attachment.kind === 'whatsapp'
-                              ? '/icons/contact-card-whatsapp.svg'
-                              : attachment.kind === 'telegram'
-                                ? '/icons/contact-card-telegram.svg'
-                                : null;
-                        const opensNewWindow = attachment.kind !== 'sms';
-                        return (
-                          <a
-                            className="chat-contact-card"
-                            href={href}
-                            target={opensNewWindow ? '_blank' : undefined}
-                            rel={opensNewWindow ? 'noreferrer' : undefined}
-                            key={attachment.id}
-                          >
-                            <span className="chat-contact-card-icon" aria-hidden="true">
-                              {brandIconSrc ? (
-                                <img src={brandIconSrc} alt="" width="20" height="20" />
-                              ) : (
-                                <Link />
-                              )}
-                            </span>
-                            <span>
-                              <small>{attachment.label}</small>
-                              <strong>{attachment.value}</strong>
-                            </span>
-                            <ChevronRight
-                              className="chat-contact-card-chevron"
-                              aria-hidden="true"
-                            />
-                          </a>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-                  <span className="chat-message-meta">
-                    <time dateTime={message.sentAt}>
-                      {formatChatClock(message.sentAt)}
-                    </time>
-                    {message.direction === 'customer' ? (
-                      <DeliveryMark
-                        delivery={message.delivery}
-                        onRetry={
-                          message.delivery === 'failed' && onRetryMessage
-                            ? () => void onRetryMessage(message).catch(() => undefined)
-                            : undefined
-                        }
+              {renderMessageBubble ? (
+                <div
+                  className={`chat-message-row is-${message.direction}${message.kind === 'product_context' ? ' is-product-context' : ''}${groupStart ? ' is-group-start' : ''}${groupEnd && !splitAgentAttachments ? ' is-group-end' : ''}${message.delivery === 'failed' ? ' is-failed' : ''}`}
+                >
+                  <div className="chat-message-bubble">
+                    {message.kind === 'product_context' && message.productContext ? (
+                      <ProductContextMessageCard
+                        context={message.productContext}
+                        LinkComponent={LinkComponent}
                       />
+                    ) : message.body ? (
+                      <p>{message.body}</p>
                     ) : null}
-                  </span>
+                    {!splitAgentAttachments && message.attachments.length > 0 ? (
+                      <div className="chat-message-attachments">
+                        {message.attachments.map((attachment) => (
+                          <ChatMessageAttachment
+                            attachment={attachment}
+                            key={attachment.id}
+                          />
+                        ))}
+                      </div>
+                    ) : null}
+                    {!splitAgentAttachments ? (
+                      <span className="chat-message-meta">
+                        <time dateTime={message.sentAt}>
+                          {formatChatClock(message.sentAt)}
+                        </time>
+                        {message.direction === 'customer' ? (
+                          <DeliveryMark
+                            delivery={message.delivery}
+                            onRetry={
+                              message.delivery === 'failed' && onRetryMessage
+                                ? () =>
+                                    void onRetryMessage(message).catch(() => undefined)
+                                : undefined
+                            }
+                          />
+                        ) : null}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
+              ) : null}
+              {splitAgentAttachments
+                ? message.attachments.map((attachment, attachmentIndex) => {
+                    const isLastPart = attachmentIndex === message.attachments.length - 1;
+                    return (
+                      <div
+                        className={`chat-message-row is-agent is-agent-attachment-part is-group-start${isLastPart && groupEnd ? ' is-group-end' : ''}`}
+                        key={`${message.id}:${attachment.id}`}
+                      >
+                        <div className="chat-message-bubble">
+                          <ChatMessageAttachment attachment={attachment} />
+                          {isLastPart ? (
+                            <span className="chat-message-meta">
+                              <time dateTime={message.sentAt}>
+                                {formatChatClock(message.sentAt)}
+                              </time>
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                    );
+                  })
+                : null}
               {message.direction === 'agent' &&
-              greetingCtasByMessageId.has(message.id) &&
+              greetingCtas?.length &&
+              !hasCustomerFollowup &&
+              !greetingCtaSending &&
+              !sending &&
+              !imageSending &&
               onGreetingCta &&
               canSend ? (
                 <div className="chat-greeting-ctas">
-                  {greetingCtasByMessageId.get(message.id)?.map((cta) => (
+                  {greetingCtas.map((cta) => (
                     <button
                       className="chat-greeting-cta"
                       type="button"
                       key={cta.id}
-                      disabled={greetingCtaSending}
+                      disabled={greetingCtaSending || sending || imageSending}
                       onClick={() => void onGreetingCta(cta.id)}
                     >
                       {cta.label}

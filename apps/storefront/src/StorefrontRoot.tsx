@@ -260,6 +260,8 @@ type SupportPriorityAlert = {
   messageId: string;
 };
 
+const SUPPORT_PRIORITY_ALERT_DURATION_MS = 3_000;
+
 function SupportPriorityAlert({
   alert,
   onDismiss,
@@ -268,7 +270,7 @@ function SupportPriorityAlert({
   onDismiss: () => void;
 }) {
   useEffect(() => {
-    const timeout = window.setTimeout(onDismiss, 8_000);
+    const timeout = window.setTimeout(onDismiss, SUPPORT_PRIORITY_ALERT_DURATION_MS);
     return () => window.clearTimeout(timeout);
   }, [alert.messageId, onDismiss]);
 
@@ -392,6 +394,7 @@ export function StorefrontRoot() {
     Boolean(peekSupportVisitorIdentity());
   const [supportUnread, setSupportUnread] = useState(0);
   const [supportAlert, setSupportAlert] = useState<SupportPriorityAlert | null>(null);
+  const dismissSupportAlert = useCallback(() => setSupportAlert(null), []);
   const handleAgentMessage = useCallback(
     (message: SupportMessage, conversationRef: string) => {
       setSupportAlert({
@@ -600,10 +603,7 @@ export function StorefrontRoot() {
         unreadMessages={messagesBadge}
       >
         {supportAlert ? (
-          <SupportPriorityAlert
-            alert={supportAlert}
-            onDismiss={() => setSupportAlert(null)}
-          />
+          <SupportPriorityAlert alert={supportAlert} onDismiss={dismissSupportAlert} />
         ) : null}
         <StorefrontPageLayout
           bootstrap={bootstrap}

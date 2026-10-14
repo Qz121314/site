@@ -219,6 +219,10 @@
   margin-top: 7px;
 }
 
+.chat-message-row.is-agent-attachment-part {
+  margin-top: 5px;
+}
+
 .chat-day-separator + .chat-message-row.is-group-start {
   margin-top: 0;
 }
@@ -461,6 +465,10 @@
 
   .chat-message-row {
     padding-inline: 0;
+  }
+
+  .chat-message-row.is-agent-attachment-part {
+    margin-top: 3px;
   }
 
   .chat-message-bubble {
