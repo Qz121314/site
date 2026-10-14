@@ -126,6 +126,7 @@ const bootstrap = {
         showFaq: true,
         messageArticles: [],
       },
+      storefrontLayout: { product: 'current' },
       runtime: {
         mediaBaseUrl: null,
         theme,
@@ -178,12 +179,56 @@ const product = {
   },
 };
 
-export async function installLocalCustomerServiceCtaFixture(page: Page): Promise<string> {
+export async function installLocalCustomerServiceCtaFixture(
+  page: Page,
+  productLayout: 'current' | 'template-a' = 'current',
+): Promise<string> {
+  const fixtureBootstrap = {
+    ...bootstrap,
+    mediaBaseUrl: 'https://media.test',
+    site: {
+      ...bootstrap.site,
+      site: {
+        ...bootstrap.site.site,
+        storefrontLayout: { product: productLayout },
+      },
+    },
+  };
+  const fixtureProduct =
+    productLayout === 'template-a'
+      ? {
+          ...product,
+          product: {
+            ...product.product,
+            address: 'Hidden address metadata',
+            category: { id: 'massage', name: 'Massage' },
+            body: 'Location: Downtown Studio',
+            media: [
+              {
+                id: 'media-1',
+                objectKey: 'product/one.svg',
+                width: 1,
+                height: 1,
+                altText: 'Studio room',
+                sortOrder: 0,
+              },
+              {
+                id: 'media-2',
+                objectKey: 'product/two.svg',
+                width: 1,
+                height: 1,
+                altText: 'Massage room',
+                sortOrder: 1,
+              },
+            ],
+          },
+        }
+      : product;
   await page.route('**/api/public/storefront/bootstrap', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(bootstrap),
+      body: JSON.stringify(fixtureBootstrap),
     });
   });
   await page.route(
@@ -192,7 +237,7 @@ export async function installLocalCustomerServiceCtaFixture(page: Page): Promise
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(product),
+        body: JSON.stringify(fixtureProduct),
       });
     },
   );

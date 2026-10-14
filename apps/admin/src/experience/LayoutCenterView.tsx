@@ -125,6 +125,9 @@ export function LayoutCenterView({ onSessionExpired }: { onSessionExpired: () =>
                 {page.key === 'browse' ? (
                   <option value="template-a">模板 A · 主分区聚焦</option>
                 ) : null}
+                {page.key === 'product' ? (
+                  <option value="template-a">落地页模板A</option>
+                ) : null}
               </select>
             </label>
           ))}

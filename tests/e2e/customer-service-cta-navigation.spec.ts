@@ -67,7 +67,7 @@ test('customer-service CTA opens the chat shell before the Worker handoff resolv
   request,
 }) => {
   const productHref = useLocalFixture
-    ? await installLocalCustomerServiceCtaFixture(page)
+    ? await installLocalCustomerServiceCtaFixture(page, 'template-a')
     : (await findPublishedProductRoute(request))?.productHref;
   test.skip(!productHref, 'No published product is available for CTA verification.');
 
@@ -81,6 +81,13 @@ test('customer-service CTA opens the chat shell before the Worker handoff resolv
         mode: 'customer_service',
         path: '/go/__cta-navigation-test__',
       }),
+    });
+  });
+  await page.route('https://media.test/**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"></svg>',
     });
   });
 
@@ -100,6 +107,15 @@ test('customer-service CTA opens the chat shell before the Worker handoff resolv
   });
 
   await page.goto(productHref!);
+  if (useLocalFixture) {
+    await expect(
+      page.getByText('Location: Downtown Studio', { exact: true }),
+    ).toBeVisible();
+    await expect(page.locator('.product-detail-address')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Next image' })).toBeVisible();
+    await page.getByRole('button', { name: 'Next image' }).click();
+    await expect(page.locator('.detail-mobile-media-count')).toHaveText('2 / 2');
+  }
   const cta = page.locator(
     '.storefront-route-action-host .product-detail-route-action .cta-button',
   );

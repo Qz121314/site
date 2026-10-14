@@ -1,7 +1,14 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { LoadingHalo } from '@site/storefront-ui/loading';
-import { ChevronRight, CircleAlert, MapPin, Play } from 'lucide-react';
+import {
+  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
+  CircleAlert,
+  MapPin,
+  Play,
+} from 'lucide-react';
 import {
   useEffect,
   useLayoutEffect,
@@ -25,6 +32,7 @@ import { pushStorefrontLocation } from './storefront-navigation-runtime';
 import { startStorefrontSharedElementTransition } from './storefront-shared-transition';
 import { StorefrontRouteAction } from './StorefrontRouteAction';
 import { SYSTEM_UI } from './system-ui';
+import { layoutForPage } from './layout-config';
 import './product-detail-ui.css';
 import './product-detail-content-flow.css';
 import '@site/storefront-ui/product-detail-theme-contract.css';
@@ -99,10 +107,10 @@ function handleInternalBack(event: ReactMouseEvent<HTMLAnchorElement>) {
   navigateStorefrontBack();
 }
 
-function CtaArrow() {
+function CtaArrow({ editorial = false }: { editorial?: boolean }) {
   return (
     <span className="product-detail-cta-arrow" aria-hidden="true">
-      <ChevronRight />
+      {editorial ? <ArrowUpRight /> : <ChevronRight />}
     </span>
   );
 }
@@ -122,6 +130,7 @@ export function ProductDetailPage({
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const [mobileMediaIndex, setMobileMediaIndex] = useState(0);
   const mobileMediaTrackRef = useRef<HTMLDivElement | null>(null);
+  const isLandingPageTemplate = layoutForPage(bootstrap, 'product') === 'template-a';
   const isEscortCityDetail = bootstrap.home.allSections.some(
     (section) =>
       section.slug === 'escorts' &&
@@ -251,6 +260,37 @@ export function ProductDetailPage({
     setMobileMediaIndex((current) => (current === nextIndex ? current : nextIndex));
   }
 
+  function navigateMobileGallery(index: number) {
+    const track = mobileMediaTrackRef.current;
+    const item = track?.children.item(index);
+    if (!(item instanceof HTMLElement) || !track) return;
+    track.scrollTo({
+      left:
+        item.getBoundingClientRect().left -
+        track.getBoundingClientRect().left +
+        track.scrollLeft,
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'auto'
+        : 'smooth',
+    });
+    setMobileMediaIndex(index);
+  }
+
+  function shiftMobileGallery(direction: -1 | 1) {
+    navigateMobileGallery(
+      (mobileMediaIndex + direction + mobileGalleryItems.length) %
+        mobileGalleryItems.length,
+    );
+  }
+
+  function shiftDesktopGallery(direction: -1 | 1) {
+    if (media.length < 2) return;
+    const activeIndex = media.findIndex((item) => item.id === activeMedia?.id);
+    const nextIndex = (activeIndex + direction + media.length) % media.length;
+    const nextItem = media[nextIndex];
+    if (nextItem) setActiveMediaId(nextItem.id);
+  }
+
   async function handleCtaClick() {
     if (ctaQuery.isFetching) return;
     const currentProduct = product;
@@ -298,7 +338,7 @@ export function ProductDetailPage({
 
     return (
       <button
-        className={`cta-button${stateClass}`}
+        className={`cta-button${stateClass}${isLandingPageTemplate ? ' is-template-a' : ''}`}
         type="button"
         aria-busy={ctaLoading || undefined}
         disabled={ctaLoading || ctaMissing}
@@ -318,12 +358,12 @@ export function ProductDetailPage({
         ) : ctaFailed ? (
           <>
             <span>{SYSTEM_UI.retry}</span>
-            <CtaArrow />
+            <CtaArrow editorial={isLandingPageTemplate} />
           </>
         ) : cta ? (
           <>
             <span className="product-detail-cta-label">{ctaLabel ?? cta.label}</span>
-            <CtaArrow />
+            <CtaArrow editorial={isLandingPageTemplate} />
           </>
         ) : null}
       </button>
@@ -362,7 +402,7 @@ export function ProductDetailPage({
   return (
     <>
       <article
-        className={`product-detail-page${isEscortCityDetail ? ' is-escort-city' : ''}`}
+        className={`product-detail-page${isEscortCityDetail ? ' is-escort-city' : ''}${isLandingPageTemplate ? ' is-template-a' : ''}`}
         aria-labelledby="product-detail-title"
       >
         <div className="product-detail-hero">
@@ -388,6 +428,7 @@ export function ProductDetailPage({
                         <div
                           className="detail-mobile-media-item"
                           role="group"
+                          aria-roledescription="slide"
                           aria-label={`${index + 1} / ${mobileGalleryItems.length}`}
                           key={item.id}
                         >
@@ -398,13 +439,86 @@ export function ProductDetailPage({
                   ) : (
                     activeMediaFallback
                   )}
+                  {isLandingPageTemplate && mobileGalleryItems.length > 1 ? (
+                    <>
+                      <button
+                        className="detail-gallery-arrow is-previous"
+                        type="button"
+                        aria-label="Previous image"
+                        onClick={() => shiftMobileGallery(-1)}
+                      >
+                        <ChevronLeft aria-hidden="true" />
+                      </button>
+                      <button
+                        className="detail-gallery-arrow is-next"
+                        type="button"
+                        aria-label="Next image"
+                        onClick={() => shiftMobileGallery(1)}
+                      >
+                        <ChevronRight aria-hidden="true" />
+                      </button>
+                    </>
+                  ) : null}
                   {mobileGalleryItems.length > 1 ? (
-                    <span className="detail-mobile-media-count" aria-hidden="true">
+                    <span
+                      className="detail-mobile-media-count"
+                      aria-live="polite"
+                      aria-atomic="true"
+                    >
                       {mobileMediaIndex + 1} / {mobileGalleryItems.length}
                     </span>
                   ) : null}
                 </div>
               </div>
+
+              {isLandingPageTemplate && mobileGalleryItems.length > 1 ? (
+                <div
+                  className="detail-mobile-thumbnails"
+                  role="group"
+                  aria-label="Product images"
+                >
+                  {mobileGalleryItems.map((item, index) => {
+                    const video = isVideoMediaUrl(item.url);
+                    const selected = index === mobileMediaIndex;
+                    return (
+                      <button
+                        className={`detail-media-thumbnail${selected ? ' is-active' : ''}`}
+                        type="button"
+                        aria-label={`Show ${item.altText || `image ${index + 1}`}`}
+                        aria-pressed={selected}
+                        key={item.id}
+                        onClick={() => navigateMobileGallery(index)}
+                      >
+                        {video ? (
+                          <>
+                            <ResilientVideo
+                              aria-hidden="true"
+                              fallback={<div className="detail-thumbnail-fallback" />}
+                              muted
+                              playsInline
+                              preload="none"
+                              src={item.url}
+                            />
+                            <span
+                              className="detail-thumbnail-video-mark"
+                              aria-hidden="true"
+                            >
+                              <Play />
+                            </span>
+                          </>
+                        ) : (
+                          <ResilientImage
+                            alt=""
+                            fallback={<div className="detail-thumbnail-fallback" />}
+                            loading="lazy"
+                            src={item.url}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
 
               <div className="detail-desktop-gallery">
                 <div className="detail-media-stage" key={activeMedia?.id ?? 'cover'}>
@@ -428,6 +542,26 @@ export function ProductDetailPage({
                   ) : (
                     activeMediaFallback
                   )}
+                  {isLandingPageTemplate && media.length > 1 ? (
+                    <>
+                      <button
+                        className="detail-gallery-arrow is-previous"
+                        type="button"
+                        aria-label="Previous image"
+                        onClick={() => shiftDesktopGallery(-1)}
+                      >
+                        <ChevronLeft aria-hidden="true" />
+                      </button>
+                      <button
+                        className="detail-gallery-arrow is-next"
+                        type="button"
+                        aria-label="Next image"
+                        onClick={() => shiftDesktopGallery(1)}
+                      >
+                        <ChevronRight aria-hidden="true" />
+                      </button>
+                    </>
+                  ) : null}
                 </div>
 
                 {media.length > 1 ? (
@@ -481,8 +615,14 @@ export function ProductDetailPage({
 
           <div className="product-detail-info">
             <section className="product-detail-summary">
+              {isLandingPageTemplate ? (
+                <p className="product-detail-eyebrow">
+                  Category <span aria-hidden="true">·</span>{' '}
+                  {product.category.name || product.sectionName}
+                </p>
+              ) : null}
               <h1 id="product-detail-title">{product.title}</h1>
-              {address ? (
+              {!isLandingPageTemplate && address ? (
                 <div className="product-detail-address">
                   <MapPin aria-hidden="true" />
                   <span>{address}</span>
@@ -494,7 +634,7 @@ export function ProductDetailPage({
               <div className="product-detail-inline-action">{renderCtaButton()}</div>
             ) : null}
 
-            {body && !bodyIsAddress ? (
+            {body && (isLandingPageTemplate || !bodyIsAddress) ? (
               <section className="product-detail-body">
                 <MarkdownContent source={product.body} />
               </section>
@@ -504,7 +644,11 @@ export function ProductDetailPage({
       </article>
       {ctaVisible ? (
         <StorefrontRouteAction>
-          <div className="product-detail-route-action">{renderCtaButton()}</div>
+          <div
+            className={`product-detail-route-action${isLandingPageTemplate ? ' is-template-a' : ''}`}
+          >
+            {renderCtaButton()}
+          </div>
         </StorefrontRouteAction>
       ) : null}
     </>

@@ -13,7 +13,7 @@ import {
   Link,
   Plus,
   RotateCcw,
-  SendHorizontal,
+  ArrowUp,
 } from 'lucide-react';
 import {
   StorefrontNoAgentNotice,
@@ -607,7 +607,7 @@ export function MessageThreadPageContent({
             aria-label={SYSTEM_UI.send}
             variant="primary"
           >
-            <SendHorizontal aria-hidden="true" />
+            <ArrowUp aria-hidden="true" />
           </StorefrontIconButton>
         </div>
       </section>
@@ -940,7 +940,7 @@ export function MessageThreadPageContent({
           aria-label={SYSTEM_UI.send}
           variant="primary"
         >
-          <SendHorizontal aria-hidden="true" />
+          <ArrowUp aria-hidden="true" />
         </StorefrontIconButton>
       </form>
     </section>
