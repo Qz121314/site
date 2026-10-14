@@ -508,7 +508,6 @@ export function ProductEditorDialog({
                 <option value="current">默认模板</option>
                 <option value="template-a">落地页模板A</option>
               </select>
-              <small>只影响当前商品详情页。</small>
             </label>
           ) : null}
 
