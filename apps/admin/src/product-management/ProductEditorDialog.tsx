@@ -29,8 +29,6 @@ import type {
   ProductStatus,
 } from './api';
 
-type ProductDependencyTarget = 'categories' | 'tags' | 'conversion-pool';
-
 type ProductEditorDialogProps = {
   reviewMode?: boolean;
   editingProduct: AdminProduct | null;
@@ -42,22 +40,18 @@ type ProductEditorDialogProps = {
   groups: AdminConversionGroup[];
   errorMessage: string;
   saveStage: 'idle' | 'saving';
-  handoffBusy?: boolean;
-  resumeNotice?: boolean;
   onFormChange: (next: ProductInput) => void;
   onOpenMediaPicker: () => void;
   onSessionExpired: () => void;
   onRemoveMedia: (key: string) => void;
   onReorderMedia: (draggedKey: string, targetKey: string) => void;
   onSetCover: (key: string | null) => void;
-  onCreateCategory?: (name: string) => Promise<AdminCategory>;
   onCreateTag?: (name: string) => Promise<AdminProductTag>;
-  onConfigureDependency?: (target: ProductDependencyTarget) => void;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
-type InlineCreateKind = 'category' | 'tag' | null;
+type InlineCreateKind = 'tag' | null;
 
 function modeLabel(mode: ProductServiceMode): string {
   return mode === 'online' ? '线上服务' : '线下服务';
@@ -149,24 +143,17 @@ export function ProductEditorDialog({
   groups,
   errorMessage,
   saveStage,
-  handoffBusy = false,
-  resumeNotice = false,
   onFormChange,
   onOpenMediaPicker,
   onSessionExpired,
   onRemoveMedia,
   onReorderMedia,
   onSetCover,
-  onCreateCategory,
   onCreateTag,
-  onConfigureDependency,
   onClose,
   onSubmit,
 }: ProductEditorDialogProps) {
   const contentLabel = reviewMode ? 'Review' : '产品';
-  const [categoryText, setCategoryText] = useState(
-    () => categories.find((category) => category.id === form.categoryId)?.name ?? '',
-  );
   const [tagText, setTagText] = useState('');
   const [creatingInline, setCreatingInline] = useState<InlineCreateKind>(null);
   const [inlineError, setInlineError] = useState('');
@@ -174,15 +161,10 @@ export function ProductEditorDialog({
   const [markdownMediaPickerOpen, setMarkdownMediaPickerOpen] = useState(false);
   const markdownTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const baselineCategoryText = editingProduct?.categoryId
-    ? (categories.find((category) => category.id === editingProduct.categoryId)?.name ??
-      '')
-    : '';
   const editorFingerprint = JSON.stringify({
     form: formWithoutMedia(form),
     media: mediaIds(media),
     coverKey,
-    categoryText,
     tagText,
   });
   const baselineFingerprint = JSON.stringify({
@@ -191,7 +173,6 @@ export function ProductEditorDialog({
     coverKey: editingProduct?.coverAssetId
       ? `remote:${editingProduct.coverAssetId}`
       : null,
-    categoryText: baselineCategoryText,
     tagText: '',
   });
   const editorDirty = editorFingerprint !== baselineFingerprint;
@@ -217,7 +198,7 @@ export function ProductEditorDialog({
   const effectiveCoverKey =
     coverKey ?? media.find(isEditorMediaCoverEligible)?.key ?? null;
   const saving = saveStage !== 'idle';
-  const busy = saving || handoffBusy || creatingInline !== null;
+  const busy = saving || creatingInline !== null;
 
   function patch(patchValue: Partial<ProductInput>) {
     onFormChange({ ...form, ...patchValue });
@@ -268,50 +249,6 @@ export function ProductEditorDialog({
       conversionGroupId:
         currentGroup?.mode === expectedConversionMode(nextMode) ? currentGroup.id : null,
     });
-  }
-
-  function handleCategoryInput(value: string) {
-    setCategoryText(value);
-    setInlineError('');
-    const normalized = normalizeName(value);
-    if (!normalized) {
-      patch({ categoryId: null });
-      return;
-    }
-    const existing = categories.find((category) => sameName(category.name, normalized));
-    patch({ categoryId: existing?.isEnabled ? existing.id : null });
-  }
-
-  async function commitCategory() {
-    const name = normalizeName(categoryText);
-    if (!name) {
-      patch({ categoryId: null });
-      return;
-    }
-
-    const existing = categories.find((category) => sameName(category.name, name));
-    if (existing) {
-      if (!existing.isEnabled) {
-        setInlineError(`分类“${existing.name}”已存在但当前停用。`);
-        return;
-      }
-      setCategoryText(existing.name);
-      patch({ categoryId: existing.id });
-      return;
-    }
-
-    if (!onCreateCategory) return;
-    setCreatingInline('category');
-    setInlineError('');
-    try {
-      const created = await onCreateCategory(name);
-      setCategoryText(created.name);
-      patch({ categoryId: created.id });
-    } catch (error) {
-      setInlineError(error instanceof Error ? error.message : '新增分类失败。');
-    } finally {
-      setCreatingInline(null);
-    }
   }
 
   function removeTag(tagId: string) {
@@ -442,7 +379,7 @@ export function ProductEditorDialog({
               form="product-editor-form"
               variant="primary"
               loading={saveStage === 'saving'}
-              disabled={handoffBusy}
+              disabled={saving}
             >
               {saveButtonLabel(saveStage, editingProduct, reviewMode)}
             </Button>
@@ -458,12 +395,6 @@ export function ProductEditorDialog({
         {errorMessage ? (
           <div className="notice notice-error" role="alert">
             {errorMessage}
-          </div>
-        ) : null}
-
-        {resumeNotice ? (
-          <div className="product-handoff-notice" role="status">
-            {`已返回当前${contentLabel}草稿，可继续编辑后保存。`}
           </div>
         ) : null}
 
@@ -511,51 +442,34 @@ export function ProductEditorDialog({
             </label>
           ) : null}
 
-          <div className="product-field product-core-category">
+          <label className="product-field product-core-category">
             <span>所属分类</span>
-            <div className="product-inline-entry">
-              <input
-                type="text"
-                list="product-category-options"
-                value={categoryText}
-                placeholder="选择或输入新分类"
-                disabled={busy}
-                onChange={(event) => handleCategoryInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key !== 'Enter') return;
-                  event.preventDefault();
-                  void commitCategory();
-                }}
-              />
-              <datalist id="product-category-options">
-                {categories
-                  .filter((category) => category.isEnabled)
-                  .map((category) => (
-                    <option key={category.id} value={category.name} />
-                  ))}
-              </datalist>
-              <button
-                type="button"
-                disabled={busy || !categoryText.trim()}
-                onClick={() => void commitCategory()}
-              >
-                {creatingInline === 'category' ? '新增中…' : '确定'}
-              </button>
-            </div>
-          </div>
+            <select
+              value={form.categoryId ?? ''}
+              disabled={busy}
+              onChange={(event) => patch({ categoryId: event.target.value || null })}
+            >
+              <option value="">暂不选择</option>
+              {categories
+                .filter(
+                  (category) => category.isEnabled || category.id === form.categoryId,
+                )
+                .map((category) => (
+                  <option
+                    key={category.id}
+                    value={category.id}
+                    disabled={!category.isEnabled}
+                  >
+                    {category.name}
+                    {!category.isEnabled ? '（已停用）' : ''}
+                  </option>
+                ))}
+            </select>
+          </label>
 
           <div className="product-field product-core-conversion">
             <div className="product-field-heading">
               <span>{modeLabel(form.serviceMode)}转化分组</span>
-              {onConfigureDependency ? (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => onConfigureDependency('conversion-pool')}
-                >
-                  管理
-                </button>
-              ) : null}
             </div>
             <select
               aria-label={`${modeLabel(form.serviceMode)}转化分组`}
@@ -582,34 +496,27 @@ export function ProductEditorDialog({
               <span>产品标签</span>
               <small>{form.tagIds.length}/12</small>
             </div>
-            <div className="product-inline-entry product-tag-entry">
-              <input
-                type="text"
-                list="product-tag-options"
-                value={tagText}
-                placeholder="选择或输入标签，回车添加"
-                disabled={busy || form.tagIds.length >= 12}
-                onChange={(event) => {
-                  setTagText(event.target.value);
-                  setInlineError('');
-                }}
-                onKeyDown={handleTagKeyDown}
-              />
-              <datalist id="product-tag-options">
-                {tags
-                  .filter((tag) => tag.isEnabled && !form.tagIds.includes(tag.id))
-                  .map((tag) => (
-                    <option key={tag.id} value={tag.name} />
-                  ))}
-              </datalist>
-              <button
-                type="button"
-                disabled={busy || !tagText.trim() || form.tagIds.length >= 12}
-                onClick={() => void commitTag()}
-              >
-                {creatingInline === 'tag' ? '新增中…' : '添加'}
-              </button>
-            </div>
+            <input
+              className="product-tag-entry"
+              type="text"
+              list="product-tag-options"
+              value={tagText}
+              placeholder="选择或输入标签，回车添加"
+              aria-label="产品标签"
+              disabled={busy || form.tagIds.length >= 12}
+              onChange={(event) => {
+                setTagText(event.target.value);
+                setInlineError('');
+              }}
+              onKeyDown={handleTagKeyDown}
+            />
+            <datalist id="product-tag-options">
+              {tags
+                .filter((tag) => tag.isEnabled && !form.tagIds.includes(tag.id))
+                .map((tag) => (
+                  <option key={tag.id} value={tag.name} />
+                ))}
+            </datalist>
             {selectedTags.length > 0 ? (
               <div className="product-selected-tags">
                 {selectedTags.map((tag) => (

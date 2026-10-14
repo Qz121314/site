@@ -16,11 +16,7 @@ import {
 } from './components/ui/segmented-control';
 import { MediaLibraryPickerDialog } from './asset-library/MediaLibraryPickerDialog';
 import type { ManagedMediaAsset } from './asset-library/api';
-import {
-  createCategory,
-  fetchCategories,
-  type AdminCategory,
-} from './category-management/api';
+import { fetchCategories, type AdminCategory } from './category-management/api';
 import { fetchConversionGroups, type AdminConversionGroup } from './conversion-pool/api';
 import { DeleteProductDialog } from './product-management/DeleteProductDialog';
 import { ProductEditorDialog } from './product-management/ProductEditorDialog';
@@ -53,21 +49,8 @@ import {
   type AdminProductTag,
 } from './tag-management/api';
 
-export type ProductDependencyTarget = 'categories' | 'tags' | 'conversion-pool';
-export type ProductResumeRequest = {
-  productId: string;
-  intendedStatus: ProductStatus;
-  wasDowngradedToDraft: boolean;
-};
-
 type ProductManagementViewProps = {
   section: AdminSection;
-  resumeRequest?: ProductResumeRequest | null;
-  onResumeHandled?: () => void;
-  onConfigureDependency?: (
-    target: ProductDependencyTarget,
-    request: ProductResumeRequest,
-  ) => void;
   onSessionExpired: () => void;
 };
 
@@ -170,9 +153,6 @@ function normalizeInlineName(value: string): string {
 
 export function ProductManagementView({
   section,
-  resumeRequest = null,
-  onResumeHandled,
-  onConfigureDependency,
   onSessionExpired,
 }: ProductManagementViewProps) {
   const reviewMode = section.slug.toLowerCase() === 'reviews';
@@ -194,11 +174,7 @@ export function ProductManagementView({
   const [coverKey, setCoverKey] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
-  const [resumeNotice, setResumeNotice] = useState(false);
   const [saveStage, setSaveStage] = useState<SaveStage>('idle');
-  const [handoffTarget, setHandoffTarget] = useState<ProductDependencyTarget | null>(
-    null,
-  );
   const [working, setWorking] = useState(false);
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
   const [pendingPermanentDeleteIds, setPendingPermanentDeleteIds] = useState<string[]>(
@@ -207,7 +183,6 @@ export function ProductManagementView({
   const [emptyTrashPending, setEmptyTrashPending] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [resumeOpenedProductId, setResumeOpenedProductId] = useState<string | null>(null);
 
   const handleError = useCallback(
     (error: unknown) => {
@@ -253,10 +228,8 @@ export function ProductManagementView({
     setTrashProducts([]);
     setEditorOpen(false);
     setMediaPickerOpen(false);
-    setResumeNotice(false);
     setErrorMessage('');
     setSuccessMessage('');
-    setResumeOpenedProductId(null);
     void loadActive();
   }, [loadActive]);
 
@@ -267,47 +240,25 @@ export function ProductManagementView({
   }, [scope]);
 
   const openProductEditor = useCallback(
-    async (productId: string, statusOverride?: ProductStatus): Promise<boolean> => {
+    async (productId: string): Promise<void> => {
       setWorking(true);
       setErrorMessage('');
       setSuccessMessage('');
       try {
         const detailed = await fetchProduct(section.id, productId);
         setEditingProduct(detailed);
-        setForm({
-          ...productToInput(detailed),
-          ...(statusOverride ? { status: statusOverride } : {}),
-        });
+        setForm(productToInput(detailed));
         setMedia(detailed.media.map(toRemoteProductImage));
         setCoverKey(detailed.coverAssetId ? `remote:${detailed.coverAssetId}` : null);
         setEditorOpen(true);
-        return true;
       } catch (error) {
         handleError(error);
-        return false;
       } finally {
         setWorking(false);
       }
     },
     [handleError, section.id],
   );
-
-  useEffect(() => {
-    if (!resumeRequest) {
-      setResumeOpenedProductId(null);
-      return;
-    }
-    if (loading || resumeOpenedProductId === resumeRequest.productId) return;
-
-    setResumeOpenedProductId(resumeRequest.productId);
-    void openProductEditor(resumeRequest.productId, resumeRequest.intendedStatus).then(
-      (opened) => {
-        if (!opened) return;
-        setResumeNotice(resumeRequest.wasDowngradedToDraft);
-        onResumeHandled?.();
-      },
-    );
-  }, [loading, onResumeHandled, openProductEditor, resumeOpenedProductId, resumeRequest]);
 
   const sourceProducts = scope === 'active' ? activeProducts : trashProducts;
   const filteredProducts = useMemo(() => {
@@ -379,7 +330,6 @@ export function ProductManagementView({
     setForm({ ...emptyProductForm, sortOrder });
     setMedia([]);
     setCoverKey(null);
-    setResumeNotice(false);
     setErrorMessage('');
     setSuccessMessage('');
     setEditorOpen(true);
@@ -407,7 +357,6 @@ export function ProductManagementView({
       });
       setMedia([]);
       setCoverKey(null);
-      setResumeNotice(false);
       setEditorOpen(true);
     } catch (error) {
       handleError(error);
@@ -417,11 +366,10 @@ export function ProductManagementView({
   }
 
   function closeEditor() {
-    if (saving || handoffTarget) return;
+    if (saving) return;
     setMediaPickerOpen(false);
     setMedia([]);
     setCoverKey(null);
-    setResumeNotice(false);
     setEditorOpen(false);
   }
 
@@ -552,88 +500,8 @@ export function ProductManagementView({
     );
     setMedia([]);
     setCoverKey(null);
-    setResumeNotice(false);
     setEditorOpen(false);
     setEditingProduct(null);
-  }
-
-  async function handleConfigureDependency(target: ProductDependencyTarget) {
-    if (!onConfigureDependency || handoffTarget || saving) return;
-
-    const intendedStatus = form.status;
-    const currentValidation = validateProductDraft(
-      form,
-      media,
-      categories,
-      tags,
-      groups,
-      reviewMode,
-    );
-    const handoffForm =
-      currentValidation && intendedStatus === 'published'
-        ? { ...form, status: 'draft' as const }
-        : form;
-    const handoffValidation = validateProductDraft(
-      handoffForm,
-      media,
-      categories,
-      tags,
-      groups,
-      reviewMode,
-    );
-    if (handoffValidation) {
-      setErrorMessage(`暂存产品后才能切换配置：${handoffValidation}`);
-      setSuccessMessage('');
-      return;
-    }
-
-    setHandoffTarget(target);
-    const saved = await persistEditor(handoffForm);
-    if (!saved) {
-      setHandoffTarget(null);
-      return;
-    }
-
-    setMediaPickerOpen(false);
-    setMedia([]);
-    setCoverKey(null);
-    setResumeNotice(false);
-    setEditorOpen(false);
-    setEditingProduct(null);
-    setHandoffTarget(null);
-    onConfigureDependency(target, {
-      productId: saved.id,
-      intendedStatus,
-      wasDowngradedToDraft: handoffForm.status !== intendedStatus,
-    });
-  }
-
-  async function handleCreateCategory(name: string): Promise<AdminCategory> {
-    const normalized = normalizeInlineName(name);
-    const existing = categories.find(
-      (category) =>
-        category.name.localeCompare(normalized, undefined, { sensitivity: 'accent' }) ===
-        0,
-    );
-    if (existing) return existing;
-
-    const sortOrder = categories.length
-      ? Math.max(...categories.map((category) => category.sortOrder)) + 10
-      : 0;
-    try {
-      const created = await createCategory(section.id, {
-        name: normalized,
-        sortOrder,
-        isEnabled: true,
-      });
-      setCategories((current) =>
-        [...current, created].sort((a, b) => a.sortOrder - b.sortOrder),
-      );
-      return created;
-    } catch (error) {
-      if (isSessionError(error)) onSessionExpired();
-      throw error;
-    }
   }
 
   async function handleCreateTag(name: string): Promise<AdminProductTag> {
@@ -997,8 +865,6 @@ export function ProductManagementView({
           groups={groups}
           errorMessage={errorMessage}
           saveStage={saveStage}
-          handoffBusy={handoffTarget !== null}
-          resumeNotice={resumeNotice}
           onFormChange={(nextForm) => {
             setErrorMessage('');
             setForm(nextForm);
@@ -1020,9 +886,7 @@ export function ProductManagementView({
             setErrorMessage('');
             setCoverKey(key);
           }}
-          onCreateCategory={handleCreateCategory}
           onCreateTag={handleCreateTag}
-          onConfigureDependency={(target) => void handleConfigureDependency(target)}
           onClose={closeEditor}
           onSubmit={(event) => void handleSave(event)}
         />
