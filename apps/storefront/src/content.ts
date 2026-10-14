@@ -185,6 +185,7 @@ export type CurrentPointerV2 = {
   faq: ModuleReference;
   reviews?: ModuleReference;
   sections: Record<string, ModuleReference>;
+  hiddenSectionIds?: string[];
 };
 
 export type CurrentPointer = CurrentPointerV1 | CurrentPointerV2;
@@ -236,6 +237,7 @@ export type StorefrontBootstrap = {
   pointer: CurrentPointer;
   site: SiteSnapshot;
   home: HomeSnapshot;
+  productSections: PublicSection[];
   theme: StorefrontTheme;
   bottomNavigation: BottomNavigationItemConfig[];
   sectionSnapshots: Record<string, SectionSnapshot>;
@@ -286,27 +288,30 @@ type V2SiteSnapshot = {
   };
 };
 
+type V2SectionsIndexSection = {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  browseButtonLabel?: string | null;
+  conversionGroupId?: string | null;
+  conversionButtonLabel?: string | null;
+  browseBackgroundObjectKey?: string | null;
+  icon: {
+    type: 'image' | 'icon';
+    objectKey: string | null;
+    value: string | null;
+  };
+  sortOrder: number;
+};
+
 type V2SectionsIndexSnapshot = {
   schemaVersion: 2;
   moduleKey: 'sections-index';
   contentVersion: string;
   publishedAt: string;
-  sections: Array<{
-    id: string;
-    slug: string;
-    name: string;
-    description?: string | null;
-    browseButtonLabel?: string | null;
-    conversionGroupId?: string | null;
-    conversionButtonLabel?: string | null;
-    browseBackgroundObjectKey?: string | null;
-    icon: {
-      type: 'image' | 'icon';
-      objectKey: string | null;
-      value: string | null;
-    };
-    sortOrder: number;
-  }>;
+  sections: V2SectionsIndexSection[];
+  hiddenSections?: V2SectionsIndexSection[];
 };
 
 type V2ProductSummary = {
@@ -617,6 +622,14 @@ function validModuleReference(value: unknown): value is ModuleReference {
   return VERSION_PATTERN.test(value.contentVersion);
 }
 
+function validHiddenSectionIds(value: unknown): value is string[] | undefined {
+  return (
+    value === undefined ||
+    (Array.isArray(value) &&
+      value.every((id) => typeof id === 'string' && id.length > 0 && id.length <= 120))
+  );
+}
+
 function parsePointer(value: unknown): CurrentPointer {
   if (!isRecord(value)) {
     throw new PublicContentError(
@@ -653,7 +666,8 @@ function parsePointer(value: unknown): CurrentPointer {
     !validModuleReference(value.sectionsIndex) ||
     !validModuleReference(value.faq) ||
     (value.reviews !== undefined && !validModuleReference(value.reviews)) ||
-    !isRecord(value.sections)
+    !isRecord(value.sections) ||
+    !validHiddenSectionIds(value.hiddenSectionIds)
   ) {
     throw new PublicContentError(
       'INVALID_POINTER',
@@ -680,6 +694,7 @@ function parsePointer(value: unknown): CurrentPointer {
     faq: value.faq,
     ...(value.reviews ? { reviews: value.reviews } : {}),
     sections,
+    ...(value.hiddenSectionIds ? { hiddenSectionIds: value.hiddenSectionIds } : {}),
   };
 }
 
@@ -1262,6 +1277,12 @@ async function loadV2Bootstrap(
   const sections = rawIndex.sections.map((section) =>
     resolveV2Section(section, mediaBaseUrl),
   );
+  const productSections = [
+    ...sections,
+    ...(rawIndex.hiddenSections ?? []).map((section) =>
+      resolveV2Section(section, mediaBaseUrl),
+    ),
+  ];
   const sectionSnapshots: Record<string, SectionSnapshot> = {};
   const productSectionIds: Record<string, string> = {};
 
@@ -1337,6 +1358,7 @@ async function loadV2Bootstrap(
       featuredProducts,
       latestProducts,
     },
+    productSections,
     theme,
     bottomNavigation,
     sectionSnapshots,
@@ -1405,11 +1427,13 @@ async function loadV1Bootstrap(
     loadBottomNavigation(signal),
     loadTheme(signal),
   ]);
+  const home = normalizeV1HomeSnapshot(rawHome);
   return {
     origin,
     pointer,
     site,
-    home: normalizeV1HomeSnapshot(rawHome),
+    home,
+    productSections: home.allSections,
     theme,
     bottomNavigation,
     sectionSnapshots: {},

@@ -92,11 +92,14 @@ async function readDerivedSnapshotSource(
   const pointer = currentPointer;
   if (!pointer) return null;
 
+  const hiddenSectionIds = new Set(pointer.hiddenSectionIds ?? []);
   const products = (
     await Promise.all(
-      Object.entries(pointer.sections).map(([sectionId, reference]) =>
-        readSectionProducts(bucket, sectionId, reference),
-      ),
+      Object.entries(pointer.sections)
+        .filter(([sectionId]) => !hiddenSectionIds.has(sectionId))
+        .map(([sectionId, reference]) =>
+          readSectionProducts(bucket, sectionId, reference),
+        ),
     )
   ).flat();
 

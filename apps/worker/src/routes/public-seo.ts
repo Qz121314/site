@@ -61,6 +61,7 @@ type PublishedContent = {
   pointer: PublicPointer;
   site: PublishedSite;
   sections: PublishedSection[];
+  hiddenSections: PublishedSection[];
 };
 
 type SeoPage = {
@@ -189,10 +190,10 @@ function parseSite(value: unknown): PublishedSite | null {
     : null;
 }
 
-function parseSections(value: unknown): PublishedSection[] | null {
-  if (!isRecord(value) || !Array.isArray(value.sections)) return null;
+function parseSectionList(value: unknown): PublishedSection[] | null {
+  if (!Array.isArray(value)) return null;
   const sections: PublishedSection[] = [];
-  for (const item of value.sections) {
+  for (const item of value) {
     if (!isRecord(item)) return null;
     const id = cleanRouteValue(item.id);
     const slug = cleanRouteValue(item.slug);
@@ -212,6 +213,15 @@ function parseSections(value: unknown): PublishedSection[] | null {
   return sections;
 }
 
+function parseSections(value: unknown): PublishedSection[] | null {
+  return isRecord(value) ? parseSectionList(value.sections) : null;
+}
+
+function parseHiddenSections(value: unknown): PublishedSection[] | null {
+  if (!isRecord(value)) return null;
+  return value.hiddenSections === undefined ? [] : parseSectionList(value.hiddenSections);
+}
+
 async function loadPublishedContent(bucket: R2Bucket): Promise<PublishedContent | null> {
   const pointer = parsePointer(await readJson(bucket, 'public/current.json'));
   if (!pointer) return null;
@@ -221,7 +231,10 @@ async function loadPublishedContent(bucket: R2Bucket): Promise<PublishedContent 
   ]);
   const site = parseSite(siteValue);
   const sections = parseSections(sectionsValue);
-  return site && sections ? { pointer, site, sections } : null;
+  const hiddenSections = parseHiddenSections(sectionsValue);
+  return site && sections && hiddenSections
+    ? { pointer, site, sections, hiddenSections }
+    : null;
 }
 
 function decodeRoutePart(value: string): string | null {
@@ -613,7 +626,12 @@ async function resolveSeoPage(
   if (productMatch) {
     const sectionRef = decodeRoutePart(productMatch[1] ?? '');
     const productRef = decodeRoutePart(productMatch[2] ?? '');
-    const section = sectionRef ? findSection(content, sectionRef) : null;
+    const section =
+      (sectionRef ? findSection(content, sectionRef) : null) ??
+      content.hiddenSections.find(
+        (item) => item.id === sectionRef || item.slug === sectionRef,
+      ) ??
+      null;
     const reference = section ? content.pointer.sections[section.id] : null;
     if (!section || !reference || !productRef) return notFoundPage(origin, content);
     const products = await loadSectionProducts(bucket, content, section);

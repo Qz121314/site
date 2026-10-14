@@ -86,6 +86,15 @@ test('product listing visibility does not prevent publishing direct product deta
   assert.match(productQuery, /p\.is_visible/u);
   assert.match(productQuery, /WHERE p\.deleted_at IS NULL AND p\.status = 'published'/u);
   assert.doesNotMatch(productQuery, /AND p\.is_visible\s*=\s*1/u);
+  assert.doesNotMatch(productQuery, /s\.is_visible\s*=\s*1/u);
+  assert.match(
+    modularPublisher,
+    /hiddenSections:\s*source\.sections[\s\S]*?is_visible !== 1/u,
+  );
+  assert.match(
+    modularPublisher,
+    /hiddenSectionIds:\s*source\.sections[\s\S]*?is_visible !== 1/u,
+  );
   assert.match(modularPublisher, /isVisible: product\.is_visible === 1/u);
   assert.match(
     modularPublisher,

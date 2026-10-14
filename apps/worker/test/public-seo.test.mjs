@@ -32,7 +32,14 @@ const pointer = {
       manifestKey: 'public/modules/sections/section-1/section-v1/manifest.json',
       publishedAt: '2026-08-12T10:00:00.000Z',
     },
+    'section-hidden': {
+      contentVersion: 'section-hidden-v1',
+      manifestKey:
+        'public/modules/sections/section-hidden/section-hidden-v1/manifest.json',
+      publishedAt: '2026-08-12T10:00:00.000Z',
+    },
   },
+  hiddenSectionIds: ['section-hidden'],
 };
 
 const objects = new Map([
@@ -53,6 +60,14 @@ const objects = new Map([
           name: 'Escorts',
           description: 'Curated private services.',
           browseBackgroundObjectKey: 'media/section.webp',
+        },
+      ],
+      hiddenSections: [
+        {
+          id: 'section-hidden',
+          slug: 'hidden-offers',
+          name: 'Hidden offers',
+          description: 'Direct link only.',
         },
       ],
     },
@@ -113,6 +128,33 @@ const objects = new Map([
         coverObjectKey: 'media/hidden.webp',
         isVisible: false,
         body: 'Available by direct link.',
+        media: [],
+      },
+    },
+  ],
+  [
+    'public/modules/sections/section-hidden/section-hidden-v1/section.json',
+    {
+      products: [
+        {
+          id: 'hidden-direct-product',
+          slug: 'hidden-service',
+          sectionId: 'section-hidden',
+          title: 'Hidden direct service',
+          isVisible: true,
+        },
+      ],
+    },
+  ],
+  [
+    'public/modules/sections/section-hidden/section-hidden-v1/products/hidden-direct-product.json',
+    {
+      product: {
+        id: 'hidden-direct-product',
+        slug: 'hidden-service',
+        sectionId: 'section-hidden',
+        title: 'Hidden direct service',
+        body: 'Accessible only by a direct link.',
         media: [],
       },
     },
@@ -206,7 +248,27 @@ test('hidden published products remain available by direct URL without entering 
   );
 
   const sitemap = await app.request('https://example.com/sitemap.xml', {}, env());
-  assert.doesNotMatch(await sitemap.text(), /unlisted-service/u);
+  const sitemapXml = await sitemap.text();
+  assert.doesNotMatch(sitemapXml, /unlisted-service/u);
+
+  const hiddenSectionProduct = await app.request(
+    'https://example.com/sections/hidden-offers/products/hidden-service/',
+    {},
+    env(),
+  );
+  assert.equal(hiddenSectionProduct.status, 200);
+  assert.match(
+    await hiddenSectionProduct.text(),
+    /<title>Hidden direct service · EROSDOOR<\/title>/u,
+  );
+  assert.doesNotMatch(sitemapXml, /hidden-offers|hidden-service/u);
+
+  const hiddenSectionListing = await app.request(
+    'https://example.com/sections/hidden-offers/',
+    {},
+    env(),
+  );
+  assert.equal(hiddenSectionListing.status, 404);
 });
 
 test('Browse HTML preloads the responsive LCP image before client rendering', async () => {
