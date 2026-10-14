@@ -45,10 +45,6 @@ import {
 } from './admin-navigation-preferences';
 import { useAdminUnsavedState } from './admin-unsaved-state';
 import { Button } from './components/ui/button';
-import type {
-  ProductDependencyTarget,
-  ProductResumeRequest,
-} from './ProductManagementView';
 import {
   fetchPublishStatus,
   publishStorefront,
@@ -111,11 +107,6 @@ type DashboardProps = {
   logoutError: string;
   onLogout: () => void;
   onSessionExpired: () => void;
-};
-
-type ProductHandoff = ProductResumeRequest & {
-  sectionId: string;
-  target: ProductDependencyTarget;
 };
 
 type PublishFeedback = { type: 'success' | 'error'; message: string } | null;
@@ -331,7 +322,6 @@ export function Dashboard({
   const [rollingBack, setRollingBack] = useState(false);
   const [pendingDiscardAction, setPendingDiscardAction] =
     useState<PendingDiscardAction>(null);
-  const [productHandoff, setProductHandoff] = useState<ProductHandoff | null>(null);
   const [messagesActions, setMessagesActions] = useState<ReactNode>(null);
   const [themeActions, setThemeActions] = useState<ReactNode>(null);
   const unsaved = useAdminUnsavedState();
@@ -595,11 +585,6 @@ export function Dashboard({
       ? `未保存：${unsaved.labels.join('、')}`
       : '当前有未保存修改';
   const contextPublishKey = publishKeyForView(activeView);
-  const currentSectionHandoff =
-    currentSection && productHandoff?.sectionId === currentSection.section.id
-      ? productHandoff
-      : null;
-
   const publishingActions = contextPublishKey ? (
     <WorkspacePublishMenu
       key={activeView}
@@ -629,17 +614,6 @@ export function Dashboard({
       </>
     ) : null;
 
-  const pageSecondaryAction =
-    currentSectionHandoff && currentSection?.kind !== 'products' ? (
-      <Button
-        variant="secondary"
-        type="button"
-        onClick={() => requestView(`products:${currentSectionHandoff.sectionId}`)}
-      >
-        返回产品草稿
-      </Button>
-    ) : null;
-
   return (
     <>
       <AdminShell
@@ -648,7 +622,6 @@ export function Dashboard({
         context={context}
         onNavigate={requestView}
         workspaceActions={workspaceActions}
-        pageSecondaryAction={pageSecondaryAction}
         workspaceWidth={workspaceWidthForView(activeView)}
         navigationPreferences={navigationPreferences}
         onNavigationPreferencesChange={updateNavigationPreferences}
@@ -725,16 +698,6 @@ export function Dashboard({
             <ProductManagementView
               key={activeView}
               section={currentSection.section}
-              resumeRequest={currentSectionHandoff}
-              onResumeHandled={() => setProductHandoff(null)}
-              onConfigureDependency={(target, request) => {
-                setProductHandoff({
-                  ...request,
-                  sectionId: currentSection.section.id,
-                  target,
-                });
-                commitView(`${target}:${currentSection.section.id}`);
-              }}
               onSessionExpired={onSessionExpired}
             />
           ) : currentSection?.kind === 'categories' ? (
