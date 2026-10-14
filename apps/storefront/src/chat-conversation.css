@@ -231,7 +231,7 @@
   position: relative;
   min-width: 82px;
   max-width: min(76%, 540px);
-  padding: 7px 9px 5px;
+  padding: 9px 12px 7px;
   border: 0;
   border-radius: 14px;
 }
