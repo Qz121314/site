@@ -65,6 +65,11 @@
   touch-action: manipulation;
 }
 
+.chat-message-row.is-agent-attachment-part .chat-contact-card {
+  width: min(260px, 100%);
+  min-width: 0;
+}
+
 .chat-contact-card:active {
   transform: scale(0.985);
 }
