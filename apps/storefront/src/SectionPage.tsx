@@ -73,7 +73,8 @@ export function SectionCatalogPage({
   });
 
   const filteredProducts = useMemo(() => {
-    const source = query.data?.products ?? [];
+    const source =
+      query.data?.products.filter((product) => product.isVisible !== false) ?? [];
     const keyword = search.trim().toLowerCase();
     return source.filter((product) => {
       if (categoryId && product.category.id !== categoryId) return false;
@@ -185,7 +186,7 @@ export function SectionCatalogPage({
     );
   }
 
-  const hasProducts = query.data.products.length > 0;
+  const hasProducts = query.data.products.some((product) => product.isVisible !== false);
 
   return (
     <section className="section-catalog" aria-labelledby="section-catalog-title">

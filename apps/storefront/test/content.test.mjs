@@ -221,7 +221,7 @@ function bottomNavigation() {
 
 function installModularFetch(
   requests = [],
-  { homeAvailable = true, bootstrapAvailable = false } = {},
+  { homeAvailable = true, bootstrapAvailable = false, includeHiddenProduct = false } = {},
 ) {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (input, init) => {
@@ -260,7 +260,17 @@ function installModularFetch(
     if (
       url.endsWith(`/public/modules/sections/section-a/${SECTION_A_VERSION}/section.json`)
     ) {
-      return jsonResponse(sectionModule('section-a', SECTION_A_VERSION, 'product-a', 2));
+      const snapshot = sectionModule('section-a', SECTION_A_VERSION, 'product-a', 2);
+      if (includeHiddenProduct) {
+        snapshot.products.push({
+          ...snapshot.products[0],
+          id: 'product-hidden',
+          slug: 'product-hidden-slug',
+          title: 'Hidden product',
+          isVisible: false,
+        });
+      }
+      return jsonResponse(snapshot);
     }
     if (
       url.endsWith(`/public/modules/sections/section-b/${SECTION_B_VERSION}/section.json`)
@@ -290,6 +300,28 @@ function installModularFetch(
               sortOrder: 0,
             },
           ],
+        },
+      });
+    }
+    if (
+      includeHiddenProduct &&
+      url.endsWith(
+        `/public/modules/sections/section-a/${SECTION_A_VERSION}/products/product-hidden.json`,
+      )
+    ) {
+      return jsonResponse({
+        schemaVersion: 2,
+        moduleKey: 'section:section-a',
+        contentVersion: SECTION_A_VERSION,
+        publishedAt: '2026-08-07T08:53:00.000Z',
+        product: {
+          ...sectionModule('section-a', SECTION_A_VERSION, 'product-a', 2).products[0],
+          id: 'product-hidden',
+          slug: 'product-hidden-slug',
+          title: 'Hidden product',
+          isVisible: false,
+          body: 'Direct link remains available.',
+          media: [],
         },
       });
     }
@@ -669,6 +701,32 @@ test('product detail keeps the section fallback when no remembered summary is av
       requests.filter((request) => request.url.endsWith('/products/product-a.json'))
         .length,
       1,
+    );
+  } finally {
+    restore();
+  }
+});
+
+test('a published product hidden from storefront listings remains resolvable by its direct link', async () => {
+  const requests = [];
+  const restore = installModularFetch(requests, { includeHiddenProduct: true });
+  try {
+    const bootstrap = await loadStorefrontBootstrap('https://content.example.com');
+    bootstrap.productSummaries = {};
+    bootstrap.productReferenceIds = {};
+
+    const product = await loadProductSnapshot(
+      bootstrap,
+      'product-hidden-slug',
+      undefined,
+      'alpha',
+    );
+
+    assert.equal(product.product.id, 'product-hidden');
+    assert.equal(product.product.isVisible, false);
+    assert.equal(product.product.body, 'Direct link remains available.');
+    assert.ok(
+      requests.some((request) => request.url.endsWith('/products/product-hidden.json')),
     );
   } finally {
     restore();

@@ -104,6 +104,7 @@ export type PublicProductSummary = {
   tags: Array<Pick<PublicTag, 'id' | 'name' | 'sortOrder'>>;
   coverUrl: string | null;
   coverObjectKey?: string | null;
+  isVisible?: boolean;
   isFeatured: boolean;
   featuredOrder: number;
   publishedAt: string | null;
@@ -320,6 +321,7 @@ type V2ProductSummary = {
   category: { id: string | null; name: string | null };
   tags: Array<Pick<PublicTag, 'id' | 'name' | 'sortOrder'>>;
   coverObjectKey: string | null;
+  isVisible?: boolean;
   isFeatured: boolean;
   featuredOrder: number;
   publishedAt: string | null;
@@ -1072,6 +1074,7 @@ export function resolveV2Summary(
     tags: normalizeTags(product.tags),
     coverUrl: mediaUrl(mediaBaseUrl, product.coverObjectKey),
     coverObjectKey: product.coverObjectKey,
+    isVisible: product.isVisible !== false,
     isFeatured: product.isFeatured,
     featuredOrder: product.featuredOrder,
     publishedAt: product.publishedAt,
@@ -1129,6 +1132,7 @@ function composeHomeProducts(
   const sectionsById = new Map(sections.map((section) => [section.id, section]));
   const products: PublicProductSummary[] = [];
   for (const product of rawProducts) {
+    if (product.isVisible === false) continue;
     const section = sectionsById.get(product.sectionId);
     if (!section) continue;
     products.push(resolveV2Summary(product, section, mediaBaseUrl));

@@ -43,6 +43,7 @@ type PublishedProduct = {
   title: string;
   address: string | null;
   coverObjectKey: string | null;
+  isVisible: boolean;
 };
 
 type ProductDetail = PublishedProduct & {
@@ -265,6 +266,7 @@ function parseProducts(value: unknown): PublishedProduct[] {
         address: cleanText(item.address, 180),
         coverObjectKey:
           typeof item.coverObjectKey === 'string' ? item.coverObjectKey : null,
+        isVisible: item.isVisible !== false,
       },
     ];
   });
@@ -304,6 +306,7 @@ async function loadProductDetail(
     address: cleanText(product.address, 180),
     coverObjectKey:
       typeof product.coverObjectKey === 'string' ? product.coverObjectKey : null,
+    isVisible: product.isVisible !== false,
     body: typeof product.body === 'string' ? product.body : '',
     media: Array.isArray(product.media)
       ? product.media.flatMap((item) =>
@@ -846,6 +849,7 @@ export async function serveSitemap(context: Context<AppEnvironment>) {
       reference.publishedAt,
     );
     for (const product of productLists[index] ?? []) {
+      if (!product.isVisible) continue;
       entries.set(
         `/sections/${routePart(section.slug || section.id)}/products/${routePart(product.slug || product.id)}/`,
         reference.publishedAt,
