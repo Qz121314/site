@@ -75,9 +75,9 @@
 :is(html, .storefront-theme-root)
   .chat-message-row.is-agent-attachment-part
   .chat-message-bubble {
-  width: min(100%, 360px);
+  width: min(100%, 280px);
   min-width: 0;
-  max-width: min(100%, 360px);
+  max-width: min(100%, 280px);
   padding: 0;
   border: 0;
   border-radius: 0;
