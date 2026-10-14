@@ -201,7 +201,7 @@ export async function installLocalCustomerServiceCtaFixture(
     },
   };
   const fixtureProduct =
-    productLayout === 'template-a'
+    detailLayout === 'template-a'
       ? {
           ...product,
           product: {
