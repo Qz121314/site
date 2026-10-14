@@ -2,7 +2,6 @@ export const storefrontLayoutPages = [
   'home',
   'browse',
   'section',
-  'product',
   'article',
   'messages',
 ] as const;
@@ -16,7 +15,6 @@ export const defaultStorefrontLayoutConfig: StorefrontLayoutConfig = {
   home: 'current',
   browse: 'current',
   section: 'current',
-  product: 'current',
   article: 'current',
   messages: 'current',
 };

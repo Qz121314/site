@@ -32,7 +32,6 @@ import { pushStorefrontLocation } from './storefront-navigation-runtime';
 import { startStorefrontSharedElementTransition } from './storefront-shared-transition';
 import { StorefrontRouteAction } from './StorefrontRouteAction';
 import { SYSTEM_UI } from './system-ui';
-import { layoutForPage } from './layout-config';
 import './product-detail-ui.css';
 import './product-detail-content-flow.css';
 import '@site/storefront-ui/product-detail-theme-contract.css';
@@ -130,7 +129,6 @@ export function ProductDetailPage({
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const [mobileMediaIndex, setMobileMediaIndex] = useState(0);
   const mobileMediaTrackRef = useRef<HTMLDivElement | null>(null);
-  const isLandingPageTemplate = layoutForPage(bootstrap, 'product') === 'template-a';
   const isEscortCityDetail = bootstrap.home.allSections.some(
     (section) =>
       section.slug === 'escorts' &&
@@ -153,6 +151,7 @@ export function ProductDetailPage({
     gcTime: 30 * 60_000,
   });
   const product = query.data?.product ?? null;
+  const isLandingPageTemplate = product?.detailLayout === 'template-a';
   const ctaQuery = useQuery({
     queryKey: ['storefront-product-cta', product?.id],
     enabled: Boolean(product?.id),

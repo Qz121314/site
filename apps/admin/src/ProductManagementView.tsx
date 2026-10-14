@@ -79,6 +79,7 @@ type ProductDropPosition = 'before' | 'after';
 const emptyProductForm: ProductInput = {
   isVisible: true,
   serviceMode: 'offline',
+  detailLayout: 'current',
   title: '',
   body: '',
   address: null,
@@ -118,6 +119,7 @@ function productToInput(product: AdminProduct): ProductInput {
   return {
     isVisible: product.isVisible,
     serviceMode: product.serviceMode,
+    detailLayout: product.detailLayout,
     title: product.title,
     body: product.body,
     address: product.address,

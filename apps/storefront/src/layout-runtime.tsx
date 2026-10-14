@@ -9,14 +9,16 @@ export function StorefrontPageLayout({
   children,
 }: {
   bootstrap: StorefrontBootstrap;
-  page: StorefrontLayoutPage;
+  page: StorefrontLayoutPage | 'product';
   children: ReactNode;
 }) {
   return (
     <div
       className="storefront-page-layout"
       data-layout-page={page}
-      data-layout-variant={layoutForPage(bootstrap, page)}
+      data-layout-variant={
+        page === 'product' ? undefined : layoutForPage(bootstrap, page)
+      }
     >
       {children}
     </div>

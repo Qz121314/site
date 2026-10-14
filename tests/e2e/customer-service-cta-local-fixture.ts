@@ -21,6 +21,7 @@ const productSummary = {
   slug: PRODUCT_ID,
   sectionId: SECTION_ID,
   title: 'CTA Test Product',
+  detailLayout: 'current',
   serviceMode: 'online',
   address: null,
   category: { id: null, name: null },
@@ -126,7 +127,7 @@ const bootstrap = {
         showFaq: true,
         messageArticles: [],
       },
-      storefrontLayout: { product: 'current' },
+      storefrontLayout: {},
       runtime: {
         mediaBaseUrl: null,
         theme,
@@ -181,25 +182,31 @@ const product = {
 
 export async function installLocalCustomerServiceCtaFixture(
   page: Page,
-  productLayout: 'current' | 'template-a' = 'current',
+  detailLayout: 'current' | 'template-a' = 'current',
 ): Promise<string> {
+  const fixtureSummary = { ...productSummary, detailLayout };
   const fixtureBootstrap = {
     ...bootstrap,
     mediaBaseUrl: 'https://media.test',
+    home: {
+      ...bootstrap.home,
+      featuredProducts: [fixtureSummary],
+      latestProducts: [fixtureSummary],
+    },
     site: {
       ...bootstrap.site,
       site: {
         ...bootstrap.site.site,
-        storefrontLayout: { product: productLayout },
       },
     },
   };
   const fixtureProduct =
-    productLayout === 'template-a'
+    detailLayout === 'template-a'
       ? {
           ...product,
           product: {
             ...product.product,
+            detailLayout,
             address: 'Hidden address metadata',
             category: { id: 'massage', name: 'Massage' },
             body: 'Location: Downtown Studio',

@@ -69,7 +69,6 @@ const siteSettings = {
       home: 'current',
       browse: 'current',
       section: 'current',
-      product: 'current',
       article: 'current',
       messages: 'current',
     },

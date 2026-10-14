@@ -17,7 +17,6 @@ const PAGES: Array<{ key: StorefrontLayoutPage; label: string; description: stri
   { key: 'home', label: 'Home', description: '服务类型目录与城市入口。' },
   { key: 'browse', label: 'Browse', description: 'Hero、快捷分区与推荐内容。' },
   { key: 'section', label: '分区页', description: '单个服务分区的产品目录。' },
-  { key: 'product', label: '产品详情', description: '产品信息、媒体与 CTA 转化。' },
   { key: 'article', label: '文章页', description: 'Article 与兼容 FAQ 内容。' },
   { key: 'messages', label: 'Messages', description: '消息入口与客服相关页面。' },
 ];
@@ -81,7 +80,7 @@ export function LayoutCenterView({ onSessionExpired }: { onSessionExpired: () =>
             <span className="admin-layout-center-eyebrow">STOREFRONT EXPERIENCE</span>
             <h2>页面布局方案</h2>
             <p>
-              管理各页面使用的布局方案。当前线上布局已安全注册为默认方案，后续可逐页切换测试。
+              管理站点级页面布局。商品详情模板请在对应分区的新增或编辑商品表单中逐个选择。
             </p>
           </div>
         </div>
@@ -124,9 +123,6 @@ export function LayoutCenterView({ onSessionExpired }: { onSessionExpired: () =>
                 <option value="current">当前布局（默认）</option>
                 {page.key === 'browse' ? (
                   <option value="template-a">模板 A · 主分区聚焦</option>
-                ) : null}
-                {page.key === 'product' ? (
-                  <option value="template-a">落地页模板A</option>
                 ) : null}
               </select>
             </label>
