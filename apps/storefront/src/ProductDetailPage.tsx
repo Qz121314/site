@@ -66,7 +66,7 @@ function findKnownProductSummary(
   sectionRef: string,
   productRef: string,
 ): PublicProductSummary | null {
-  const section = bootstrap.home.allSections.find(
+  const section = bootstrap.productSections.find(
     (item) => item.id === sectionRef || item.slug === sectionRef,
   );
   if (!section) return null;
@@ -129,7 +129,7 @@ export function ProductDetailPage({
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const [mobileMediaIndex, setMobileMediaIndex] = useState(0);
   const mobileMediaTrackRef = useRef<HTMLDivElement | null>(null);
-  const isEscortCityDetail = bootstrap.home.allSections.some(
+  const isEscortCityDetail = bootstrap.productSections.some(
     (section) =>
       section.slug === 'escorts' &&
       (section.id === sectionRef || section.slug === sectionRef),

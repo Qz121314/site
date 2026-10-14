@@ -81,26 +81,11 @@ function findPublishedArticle(
   return article;
 }
 
-export async function loadSectionSnapshot(
+async function loadSectionSnapshotForPublishedSection(
   bootstrap: StorefrontBootstrap,
-  sectionRef: string,
+  section: PublicSection,
   signal?: AbortSignal,
 ): Promise<SectionSnapshot> {
-  if (!sectionRef || sectionRef.length > 120) {
-    throw new PublicContentError(
-      'INVALID_SECTION',
-      'The requested service section is invalid.',
-    );
-  }
-  const section = bootstrap.home.allSections.find(
-    (item) => item.id === sectionRef || item.slug === sectionRef,
-  );
-  if (!section) {
-    throw new PublicContentError(
-      'CONTENT_NOT_PUBLISHED',
-      'This service section has not been published yet.',
-    );
-  }
   const sectionId = section.id;
   if (bootstrap.pointer.schemaVersion === 2) {
     const cached = bootstrap.sectionSnapshots[sectionId];
@@ -123,6 +108,29 @@ export async function loadSectionSnapshot(
     signal,
   );
   return normalizeV1SectionSnapshot(snapshot);
+}
+
+export async function loadSectionSnapshot(
+  bootstrap: StorefrontBootstrap,
+  sectionRef: string,
+  signal?: AbortSignal,
+): Promise<SectionSnapshot> {
+  if (!sectionRef || sectionRef.length > 120) {
+    throw new PublicContentError(
+      'INVALID_SECTION',
+      'The requested service section is invalid.',
+    );
+  }
+  const section = bootstrap.home.allSections.find(
+    (item) => item.id === sectionRef || item.slug === sectionRef,
+  );
+  if (!section) {
+    throw new PublicContentError(
+      'CONTENT_NOT_PUBLISHED',
+      'This service section has not been published yet.',
+    );
+  }
+  return loadSectionSnapshotForPublishedSection(bootstrap, section, signal);
 }
 
 function findPublishedProduct(
@@ -177,7 +185,7 @@ export async function loadProductSnapshot(
 
   if (sectionRef) {
     section =
-      bootstrap.home.allSections.find(
+      bootstrap.productSections.find(
         (item) => item.id === sectionRef || item.slug === sectionRef,
       ) ?? null;
     if (!section) {
@@ -188,7 +196,11 @@ export async function loadProductSnapshot(
     }
     matchedProduct = findRememberedProduct(bootstrap, section.id, productRef);
     if (!matchedProduct) {
-      const sectionSnapshot = await loadSectionSnapshot(bootstrap, sectionRef, signal);
+      const sectionSnapshot = await loadSectionSnapshotForPublishedSection(
+        bootstrap,
+        section,
+        signal,
+      );
       matchedProduct = findPublishedProduct(sectionSnapshot.products, productRef);
       section = sectionSnapshot.section;
     }

@@ -20,6 +20,7 @@ const INDEX_VERSION = '20260807085100-index1234567-acde1235';
 const FAQ_VERSION = '20260807085200-faq123456789-acde1236';
 const SECTION_A_VERSION = '20260807085300-sectiona12345-acde1237';
 const SECTION_B_VERSION = '20260807085400-sectionb12345-acde1238';
+const SECTION_HIDDEN_VERSION = '20260807085500-sectionhidden-acde1239';
 
 function jsonResponse(value, status = 200) {
   return new Response(JSON.stringify(value), {
@@ -48,7 +49,12 @@ function modularPointer() {
     sections: {
       'section-a': reference(SECTION_A_VERSION, 'public/modules/sections/section-a'),
       'section-b': reference(SECTION_B_VERSION, 'public/modules/sections/section-b'),
+      'section-hidden': reference(
+        SECTION_HIDDEN_VERSION,
+        'public/modules/sections/section-hidden',
+      ),
     },
+    hiddenSectionIds: ['section-hidden'],
   };
 }
 
@@ -99,6 +105,15 @@ function sectionsIndexModule() {
         name: 'Beta',
         icon: { type: 'icon', objectKey: null, value: 'B' },
         sortOrder: 10,
+      },
+    ],
+    hiddenSections: [
+      {
+        id: 'section-hidden',
+        slug: 'hidden',
+        name: 'Hidden section',
+        icon: { type: 'icon', objectKey: null, value: null },
+        sortOrder: 20,
       },
     ],
   };
@@ -279,6 +294,22 @@ function installModularFetch(
     }
     if (
       url.endsWith(
+        '/public/modules/sections/section-hidden/' +
+          SECTION_HIDDEN_VERSION +
+          '/section.json',
+      )
+    ) {
+      return jsonResponse(
+        sectionModule(
+          'section-hidden',
+          SECTION_HIDDEN_VERSION,
+          'hidden-section-product',
+          3,
+        ),
+      );
+    }
+    if (
+      url.endsWith(
         `/public/modules/sections/section-a/${SECTION_A_VERSION}/products/product-a.json`,
       )
     ) {
@@ -321,6 +352,30 @@ function installModularFetch(
           title: 'Hidden product',
           isVisible: false,
           body: 'Direct link remains available.',
+          media: [],
+        },
+      });
+    }
+    if (
+      url.endsWith(
+        '/public/modules/sections/section-hidden/' +
+          SECTION_HIDDEN_VERSION +
+          '/products/hidden-section-product.json',
+      )
+    ) {
+      return jsonResponse({
+        schemaVersion: 2,
+        moduleKey: 'section:section-hidden',
+        contentVersion: SECTION_HIDDEN_VERSION,
+        publishedAt: '2026-08-07T08:55:00.000Z',
+        product: {
+          ...sectionModule(
+            'section-hidden',
+            SECTION_HIDDEN_VERSION,
+            'hidden-section-product',
+            3,
+          ).products[0],
+          body: 'Hidden section products remain available by direct link.',
           media: [],
         },
       });
@@ -727,6 +782,44 @@ test('a published product hidden from storefront listings remains resolvable by 
     assert.equal(product.product.body, 'Direct link remains available.');
     assert.ok(
       requests.some((request) => request.url.endsWith('/products/product-hidden.json')),
+    );
+  } finally {
+    restore();
+  }
+});
+
+test('a product in a hidden section remains directly accessible but the section stays out of listings', async () => {
+  const requests = [];
+  const restore = installModularFetch(requests);
+  try {
+    const bootstrap = await loadStorefrontBootstrap('https://content.example.com');
+    assert.deepEqual(
+      bootstrap.home.allSections.map((section) => section.id),
+      ['section-a', 'section-b'],
+    );
+    assert.ok(bootstrap.productSections.some((section) => section.slug === 'hidden'));
+    await assert.rejects(
+      loadSectionSnapshot(bootstrap, 'hidden'),
+      (error) =>
+        error instanceof PublicContentError && error.code === 'CONTENT_NOT_PUBLISHED',
+    );
+
+    const product = await loadProductSnapshot(
+      bootstrap,
+      'hidden-section-product-slug',
+      undefined,
+      'hidden',
+    );
+    assert.equal(product.product.id, 'hidden-section-product');
+    assert.equal(product.product.sectionName, 'Hidden section');
+    assert.equal(
+      product.product.body,
+      'Hidden section products remain available by direct link.',
+    );
+    assert.ok(
+      requests.some((request) =>
+        request.url.endsWith('/products/hidden-section-product.json'),
+      ),
     );
   } finally {
     restore();

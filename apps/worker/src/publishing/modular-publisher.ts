@@ -38,6 +38,7 @@ export type ModularStorefrontPointer = {
   faq: ModuleReference;
   reviews?: ModuleReference;
   sections: Record<string, ModuleReference>;
+  hiddenSectionIds?: string[];
 };
 
 export type PublishModuleVersion = {
@@ -165,6 +166,7 @@ type SectionRow = {
   browse_background_asset_id: string | null;
   browse_background_object_key: string | null;
   sort_order: number;
+  is_visible: number;
 };
 
 type CategoryRow = {
@@ -429,6 +431,14 @@ function validModuleReference(value: unknown): value is ModuleReference {
   );
 }
 
+function validHiddenSectionIds(value: unknown): value is string[] | undefined {
+  return (
+    value === undefined ||
+    (Array.isArray(value) &&
+      value.every((id) => typeof id === 'string' && id.length > 0 && id.length <= 120))
+  );
+}
+
 export async function readModularPointer(bucket: R2Bucket): Promise<{
   pointer: ModularStorefrontPointer | null;
   body: string | null;
@@ -449,7 +459,8 @@ export async function readModularPointer(bucket: R2Bucket): Promise<{
       !validModuleReference(value.sectionsIndex) ||
       !validModuleReference(value.faq) ||
       (value.reviews !== undefined && !validModuleReference(value.reviews)) ||
-      !isRecord(value.sections)
+      !isRecord(value.sections) ||
+      !validHiddenSectionIds(value.hiddenSectionIds)
     ) {
       return { pointer: null, body, legacyDetected: false };
     }
@@ -470,6 +481,7 @@ export async function readModularPointer(bucket: R2Bucket): Promise<{
         faq: value.faq,
         ...(value.reviews ? { reviews: value.reviews } : {}),
         sections,
+        ...(value.hiddenSectionIds ? { hiddenSectionIds: value.hiddenSectionIds } : {}),
       },
       body,
       legacyDetected: false,
@@ -582,7 +594,8 @@ async function loadSource(db: D1Database): Promise<Source> {
            icon.object_key AS icon_object_key,
            s.browse_background_asset_id,
            background.object_key AS browse_background_object_key,
-           s.sort_order
+           s.sort_order,
+           s.is_visible
          FROM sections s
          LEFT JOIN conversion_groups conversion_group
            ON conversion_group.id = s.conversion_group_id
@@ -596,7 +609,7 @@ async function loadSource(db: D1Database): Promise<Source> {
            ON background.id = s.browse_background_asset_id
           AND background.status = 'ready'
           AND background.deleted_at IS NULL
-         WHERE s.deleted_at IS NULL AND s.is_enabled = 1 AND s.is_visible = 1
+         WHERE s.deleted_at IS NULL AND s.is_enabled = 1
          ORDER BY s.sort_order ASC, s.name COLLATE NOCASE ASC`,
       )
       .all<SectionRow>()
@@ -612,7 +625,6 @@ async function loadSource(db: D1Database): Promise<Source> {
            AND c.is_enabled = 1
            AND s.deleted_at IS NULL
            AND s.is_enabled = 1
-           AND s.is_visible = 1
          ORDER BY c.section_id, c.sort_order ASC, c.name COLLATE NOCASE ASC`,
       )
       .all<CategoryRow>()
@@ -645,7 +657,6 @@ async function loadSource(db: D1Database): Promise<Source> {
            ON s.id = p.section_id
           AND s.deleted_at IS NULL
           AND s.is_enabled = 1
-          AND s.is_visible = 1
          LEFT JOIN categories c ON c.id = p.category_id AND c.deleted_at IS NULL
          LEFT JOIN conversion_groups conversion_group
            ON conversion_group.id = p.conversion_group_id
@@ -681,7 +692,6 @@ async function loadSource(db: D1Database): Promise<Source> {
            AND p.status = 'published'
            AND s.deleted_at IS NULL
            AND s.is_enabled = 1
-           AND s.is_visible = 1
            AND ma.deleted_at IS NULL
            AND ma.status = 'ready'
          ORDER BY pm.product_id, pm.sort_order ASC`,
@@ -851,7 +861,7 @@ function sitePublicModel(
 }
 
 function sectionsIndexModel(source: Source) {
-  return source.sections.map((section) => ({
+  const toIndexSection = (section: SectionRow) => ({
     id: section.id,
     slug: section.slug,
     name: section.name,
@@ -865,7 +875,15 @@ function sectionsIndexModel(source: Source) {
         : { type: 'icon' as const, objectKey: null, value: section.icon_value },
     browseBackgroundObjectKey: section.browse_background_object_key,
     sortOrder: section.sort_order,
-  }));
+  });
+  return {
+    sections: source.sections
+      .filter((section) => section.is_visible === 1)
+      .map(toIndexSection),
+    hiddenSections: source.sections
+      .filter((section) => section.is_visible !== 1)
+      .map(toIndexSection),
+  };
 }
 
 function sectionPublicData(source: Source, sectionId: string) {
@@ -1006,13 +1024,13 @@ function modulePayload(source: Source, moduleKey: string): ModulePayload {
   }
 
   if (moduleKey === 'sections-index') {
-    const sections = sectionsIndexModel(source);
+    const sectionsIndex = sectionsIndexModel(source);
     return {
       moduleKey,
       kind: 'sections-index',
       sectionId: null,
       label: '分区导航',
-      stateModel: sections,
+      stateModel: sectionsIndex,
       mediaKeys: uniqueStrings(
         source.sections.flatMap((section) => [
           section.icon_object_key,
@@ -1022,7 +1040,13 @@ function modulePayload(source: Source, moduleKey: string): ModulePayload {
       buildFiles: (contentVersion, publishedAt) => [
         {
           relativePath: 'sections.json',
-          value: { schemaVersion: 2, moduleKey, contentVersion, publishedAt, sections },
+          value: {
+            schemaVersion: 2,
+            moduleKey,
+            contentVersion,
+            publishedAt,
+            ...sectionsIndex,
+          },
         },
       ],
     };
@@ -1165,7 +1189,7 @@ function validatePayload(source: Source, payload: ModulePayload): void {
   }
 
   if (payload.kind === 'sections-index') {
-    for (const section of source.sections) {
+    for (const section of source.sections.filter((item) => item.is_visible === 1)) {
       if (section.icon_type === 'asset' && !section.icon_object_key) {
         throw new ModularPublicationError(
           'SECTION_ICON_INVALID',
@@ -1248,6 +1272,9 @@ function blankPointer(
     faq,
     reviews,
     sections,
+    hiddenSectionIds: source.sections
+      .filter((section) => section.is_visible !== 1)
+      .map((section) => section.id),
   };
 }
 
@@ -1729,6 +1756,13 @@ export async function publishModularStorefront(
           404,
         );
       }
+      const sectionsIndex = modulePayload(source, 'sections-index');
+      if (
+        pointerResult.pointer?.sectionsIndex.sourceRevision !==
+        (await payloadRevision(sectionsIndex))
+      ) {
+        requestedKeys.add('sections-index');
+      }
     }
     requestedKeys.add(normalized);
   }
@@ -1828,7 +1862,13 @@ export async function publishModularStorefront(
       const reference = references.get(sectionModuleKey(section.id));
       if (reference) sections[section.id] = reference;
     }
-    nextPointer = { ...nextPointer, sections };
+    nextPointer = {
+      ...nextPointer,
+      sections,
+      hiddenSectionIds: source.sections
+        .filter((section) => section.is_visible !== 1)
+        .map((section) => section.id),
+    };
   }
 
   await beforePointerCommit?.(nextPointer);

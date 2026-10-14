@@ -12,6 +12,13 @@ const SECTION_REFERENCE = {
   publishedAt: '2026-08-07T09:00:00.000Z',
 };
 
+const HIDDEN_SECTION_REFERENCE = {
+  contentVersion: 'hidden-section-v1',
+  manifestKey: 'public/modules/sections/section-hidden/hidden-section-v1/manifest.json',
+  sourceRevision: 'hidden-source-v1',
+  publishedAt: '2026-08-07T09:00:00.000Z',
+};
+
 const pointer = {
   schemaVersion: 2,
   contentVersion: 'pointer-v1',
@@ -19,7 +26,11 @@ const pointer = {
   site: SECTION_REFERENCE,
   sectionsIndex: SECTION_REFERENCE,
   faq: SECTION_REFERENCE,
-  sections: { 'section-a': SECTION_REFERENCE },
+  sections: {
+    'section-a': SECTION_REFERENCE,
+    'section-hidden': HIDDEN_SECTION_REFERENCE,
+  },
+  hiddenSectionIds: ['section-hidden'],
 };
 
 const sectionSnapshot = {
@@ -71,10 +82,31 @@ function createBucket() {
       'public/modules/sections/section-a/section-v1/section.json',
       JSON.stringify(sectionSnapshot),
     ],
+    [
+      'public/modules/sections/section-hidden/hidden-section-v1/section.json',
+      JSON.stringify({
+        schemaVersion: 2,
+        moduleKey: 'section:section-hidden',
+        contentVersion: HIDDEN_SECTION_REFERENCE.contentVersion,
+        publishedAt: HIDDEN_SECTION_REFERENCE.publishedAt,
+        sectionId: 'section-hidden',
+        products: [
+          {
+            ...sectionSnapshot.products[0],
+            id: 'hidden-section-product',
+            sectionId: 'section-hidden',
+            title: 'Hidden section product',
+          },
+        ],
+      }),
+    ],
   ]);
+  const reads = [];
   return {
     objects,
+    reads,
     async get(key) {
+      reads.push(key);
       const body = objects.get(key);
       return body === undefined ? null : { text: async () => body };
     },
@@ -87,7 +119,7 @@ function createBucket() {
   };
 }
 
-test('hidden products stay out of derived home and search listings', async () => {
+test('hidden products and hidden sections stay out of derived home and search listings', async () => {
   const bucket = createBucket();
   const homeKey = await materializeDerivedHomeSnapshot(bucket);
   const searchKey = await materializeDerivedSearchSnapshot(bucket);
@@ -105,5 +137,11 @@ test('hidden products stay out of derived home and search listings', async () =>
   assert.deepEqual(
     search.products.map((product) => product.id),
     ['visible-product'],
+  );
+  assert.equal(
+    bucket.reads.includes(
+      'public/modules/sections/section-hidden/hidden-section-v1/section.json',
+    ),
+    false,
   );
 });
