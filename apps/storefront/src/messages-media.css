@@ -50,17 +50,19 @@
 
 .chat-contact-card {
   display: grid;
-  min-width: min(260px, 72vw);
+  width: 100%;
+  min-width: 0;
   max-width: 100%;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: 42px minmax(0, 1fr) 18px;
   align-items: center;
-  gap: 10px;
-  min-height: 58px;
-  padding: 10px 12px;
-  border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
-  border-radius: 14px;
-  color: inherit;
-  background: color-mix(in srgb, currentColor 6%, transparent);
+  gap: 12px;
+  min-height: 68px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--line) 76%, transparent);
+  border-radius: 15px;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: 0 2px 9px color-mix(in srgb, var(--text) 5%, transparent);
   text-decoration: none;
   transition:
     transform 150ms ease,
@@ -70,9 +72,29 @@
   touch-action: manipulation;
 }
 
-.chat-message-row.is-agent-attachment-part .chat-contact-card {
-  width: min(260px, 100%);
+:is(html, .storefront-theme-root)
+  .chat-message-row.is-agent-attachment-part
+  .chat-message-bubble {
+  width: min(100%, 360px);
   min-width: 0;
+  max-width: min(100%, 360px);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.chat-message-row.is-agent-attachment-part.is-group-end .chat-message-bubble::after {
+  display: none;
+}
+
+.chat-message-row.is-agent-attachment-part .chat-message-meta {
+  margin-top: 5px;
+}
+
+.chat-message-row.is-agent-attachment-part .chat-contact-card {
+  width: 100%;
 }
 
 .chat-contact-card:active {
@@ -87,18 +109,18 @@
 .chat-contact-card:hover,
 .chat-message-row.is-agent .chat-contact-card:hover {
   border-color: color-mix(in srgb, var(--brand) 34%, var(--line));
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--text) 8%, transparent);
+  box-shadow: 0 5px 16px color-mix(in srgb, var(--text) 8%, transparent);
 }
 
 .chat-contact-card-icon {
   display: grid;
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   place-items: center;
-  flex: 0 0 38px;
-  border-radius: 11px;
-  color: inherit;
-  background: color-mix(in srgb, currentColor 10%, transparent);
+  flex: 0 0 42px;
+  border-radius: 12px;
+  color: var(--brand-strong, var(--brand));
+  background: color-mix(in srgb, var(--surface-soft) 82%, var(--surface));
 }
 
 .chat-contact-card-icon svg {
@@ -119,47 +141,25 @@
 }
 
 .chat-contact-card small {
-  display: -webkit-box;
-  overflow: hidden;
-  opacity: 0.76;
-  font-size: 0.75rem;
-  font-weight: 650;
-  line-height: 1.3;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 580;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .chat-contact-card strong {
   overflow-wrap: anywhere;
-  font-size: 0.8rem;
-  font-weight: 760;
+  font-size: 0.84rem;
+  font-weight: 720;
   line-height: 1.25;
 }
 
 .chat-contact-card-chevron {
-  width: 18px;
-  height: 18px;
-  opacity: 0.76;
-}
-
-.chat-message-row.is-agent .chat-contact-card {
-  border-color: color-mix(in srgb, var(--line) 72%, transparent);
-  color: var(--text);
-  background: var(--surface);
-  box-shadow: 0 3px 10px color-mix(in srgb, var(--text) 6%, transparent);
-}
-
-.chat-message-row.is-agent .chat-contact-card-icon {
-  color: var(--brand-strong, var(--brand));
-  background: color-mix(in srgb, var(--brand) 9%, var(--surface-soft));
-}
-
-.chat-message-row.is-agent .chat-contact-card small {
+  width: 17px;
+  height: 17px;
   color: var(--muted);
-}
-
-.chat-message-row.is-agent .chat-contact-card strong {
-  color: var(--text);
+  opacity: 0.72;
 }
 
 @media (prefers-reduced-motion: reduce) {
