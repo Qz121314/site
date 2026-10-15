@@ -104,6 +104,7 @@
 }
 
 .chat-timeline {
+  position: relative;
   gap: 2px;
   padding: 14px clamp(8px, 2.4vw, 24px) 16px;
   scrollbar-gutter: stable;
@@ -128,57 +129,98 @@
 }
 
 .chat-connecting-message {
-  max-width: min(100%, 300px);
-  padding: 0 12px;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  line-height: 1.5;
+  position: relative;
+  z-index: 1;
+  max-width: min(100%, 360px);
+  padding: 0 16px;
+  color: var(--text);
+  font-size: clamp(1.08rem, 2.7vw, 1.22rem);
+  font-weight: 720;
+  line-height: 1.55;
   text-align: center;
+  text-shadow: 0 1px 18px color-mix(in srgb, var(--surface) 72%, transparent);
+  animation: chat-connection-message-in 360ms ease-out both;
 }
 
-.chat-loading-skeleton {
-  display: grid;
-  width: min(100%, 300px);
-  gap: 8px;
-  padding: 0 8px;
+.chat-connection-transition {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  padding: 24px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  backdrop-filter: blur(3px);
+  isolation: isolate;
 }
 
-.chat-loading-skeleton-bubble {
-  display: block;
-  width: 68%;
-  height: 42px;
-  border-radius: 14px 14px 14px 5px;
+.chat-connection-transition::before,
+.chat-connection-transition::after {
+  position: absolute;
+  z-index: 0;
+  inset: -30% -20%;
+  border-radius: 50%;
+  content: '';
+  pointer-events: none;
+}
+
+.chat-connection-transition::before {
+  background:
+    radial-gradient(
+      ellipse at 31% 52%,
+      color-mix(in srgb, var(--brand) 18%, transparent),
+      transparent 54%
+    ),
+    radial-gradient(
+      ellipse at 69% 45%,
+      color-mix(in srgb, var(--brand-strong) 11%, transparent),
+      transparent 56%
+    );
+  filter: blur(30px);
+  animation: chat-connection-light-flow 6s ease-in-out infinite alternate;
+}
+
+.chat-connection-transition::after {
+  inset: -10% -35%;
   background: linear-gradient(
-    105deg,
-    color-mix(in srgb, var(--surface-soft) 78%, transparent) 28%,
-    color-mix(in srgb, var(--surface) 94%, transparent) 45%,
-    color-mix(in srgb, var(--surface-soft) 78%, transparent) 62%
+    108deg,
+    transparent 38%,
+    color-mix(in srgb, var(--surface) 34%, transparent) 50%,
+    transparent 62%
   );
-  background-size: 220% 100%;
-  box-shadow: 0 5px 16px color-mix(in srgb, var(--shadow) 6%, transparent);
-  animation: chat-skeleton-shimmer 1.8s ease-in-out infinite;
+  animation: chat-connection-light-sweep 4.8s ease-in-out infinite;
 }
 
-.chat-loading-skeleton-bubble.is-short {
-  width: 46%;
-  height: 30px;
+@keyframes chat-connection-light-flow {
+  from {
+    transform: translate3d(-4%, 2%, 0) scale(0.96);
+  }
+  to {
+    transform: translate3d(4%, -2%, 0) scale(1.04);
+  }
 }
 
-.chat-loading-skeleton-bubble.is-customer {
-  width: 58%;
-  justify-self: end;
-  border-radius: 14px 14px 5px 14px;
-  animation-delay: 120ms;
-}
-
-@keyframes chat-skeleton-shimmer {
+@keyframes chat-connection-light-sweep {
   0%,
   100% {
-    background-position: 100% 0;
+    transform: translateX(-26%);
+    opacity: 0.35;
   }
-
   50% {
-    background-position: 0 0;
+    transform: translateX(26%);
+    opacity: 0.72;
+  }
+}
+
+@keyframes chat-connection-message-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -407,7 +449,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chat-loading-skeleton-bubble {
+  .chat-connection-transition::before,
+  .chat-connection-transition::after,
+  .chat-connecting-message {
     animation: none;
   }
 }
