@@ -131,7 +131,9 @@ test('customer-service CTA opens the chat shell before the Worker handoff resolv
   await expect(page.locator('.chat-header')).toBeVisible();
   await expect(page.locator('.chat-product-card')).toBeVisible();
   await expect(page.locator('.chat-composer')).toBeVisible();
-  await expect(page.locator('.chat-connection-state .loading-halo')).toBeVisible();
+  const connectionStatus = page.getByRole('log').getByRole('status');
+  await expect(connectionStatus).toBeVisible();
+  await expect(connectionStatus).toContainText(/\S/u);
   await page.locator('.chat-page').evaluate(async (element) => {
     await Promise.all(element.getAnimations().map((animation) => animation.finished));
   });
