@@ -3,7 +3,7 @@ import test from 'node:test';
 import app from '../src/index.ts';
 
 const NOW = '2026-08-09T12:00:00.000Z';
-const CONNECTING_MESSAGE = 'Connecting you with a real customer service agent…';
+const CONNECTING_MESSAGE = '后台设置的连接提示';
 
 function siteSettingsRow() {
   return {

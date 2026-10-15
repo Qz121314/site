@@ -51,7 +51,7 @@ function ConnectingMessageSettings({
     <form className="messages-connecting-settings" onSubmit={handleSubmit}>
       <div className="messages-connecting-settings-copy">
         <h2>会话连接提示</h2>
-        <p>全站共用。访客发起新会话、客服接入前会显示这条提示。</p>
+        <p>全站共用。访客发起新会话、客服接入前会显示这条提示；留空则不显示。</p>
       </div>
       <label className="messages-connecting-settings-field">
         <span>连接中显示文案</span>
@@ -60,8 +60,7 @@ function ConnectingMessageSettings({
           maxLength={200}
           rows={2}
           onChange={(event) => setDraft(event.target.value)}
-          placeholder="例如：正在为你连接真人客服…"
-          required
+          placeholder="留空则不显示"
         />
         <span className="messages-connecting-settings-count">{draft.length}/200</span>
       </label>

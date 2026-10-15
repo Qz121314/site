@@ -260,9 +260,7 @@ export function MessagesPage({
   const [notificationState, setNotificationState] =
     useState<SupportPushState>('unsupported');
   const [notificationBusy, setNotificationBusy] = useState(false);
-  const [connectingMessage, setConnectingMessage] = useState(
-    'Connecting you with a real customer service agent…',
-  );
+  const [connectingMessage, setConnectingMessage] = useState('');
   const supportConnectionsQuery = useQuery({
     queryKey: ['support-connections'],
     queryFn: ({ signal }) => loadPublicSupportConnections(signal),

@@ -221,7 +221,7 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
   const messagesConnectingText = readTrimmedString(
     value.messagesConnectingText,
     'messagesConnectingText',
-    1,
+    0,
     200,
   );
   if (!messagesConnectingText.ok) return messagesConnectingText;

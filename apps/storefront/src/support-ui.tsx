@@ -479,7 +479,7 @@ export function MessageThreadPageContent({
   onLoadEarlier,
   loadingEarlier = false,
   loadingConversation = false,
-  connectingMessage = 'Connecting you with a real customer service agent…',
+  connectingMessage = '',
   connectionError = false,
   noAgentNotice = null,
   onRetryConnection,
@@ -738,7 +738,9 @@ export function MessageThreadPageContent({
             role="status"
             aria-live="polite"
           >
-            <span className="chat-connecting-message">{connectingMessage}</span>
+            {connectingMessage.trim() ? (
+              <span className="chat-connecting-message">{connectingMessage}</span>
+            ) : null}
           </div>
         ) : noAgentNotice && pendingConversation && !conversation ? (
           <StorefrontNoAgentNotice
