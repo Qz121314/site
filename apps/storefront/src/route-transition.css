@@ -37,6 +37,21 @@ html[data-storefront-transition] .storefront-route-view > * {
   animation: storefront-content-enter 520ms var(--route-transition-ease) 45ms both;
 }
 
+html[data-storefront-transition='message-drawer'] .storefront-route-view {
+  animation: none;
+}
+
+html[data-storefront-transition='message-drawer'] .storefront-route-view > * {
+  animation: none;
+}
+
+@media (max-width: 767px) {
+  html[data-storefront-transition='message-drawer'] .storefront-route-view .chat-page {
+    animation: storefront-message-drawer-enter 420ms cubic-bezier(0.22, 0.75, 0.25, 1)
+      both;
+  }
+}
+
 @keyframes storefront-tab-enter {
   from {
     opacity: 0;
@@ -91,6 +106,20 @@ html[data-storefront-transition] .storefront-route-view > * {
   }
 }
 
+@keyframes storefront-message-drawer-enter {
+  from {
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -14px 38px rgb(30 20 24 / 15%);
+    transform: translate3d(0, 100%, 0);
+  }
+
+  to {
+    border-radius: 0;
+    box-shadow: none;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 @media (min-width: 768px) {
   :root {
     --route-push-shift: 0px;
@@ -106,6 +135,14 @@ html[data-storefront-transition] .storefront-route-view > * {
   }
 
   html[data-storefront-transition] .storefront-route-view > * {
+    animation: none;
+  }
+
+  html[data-storefront-transition='message-drawer'] .storefront-route-view {
+    animation: none;
+  }
+
+  html[data-storefront-transition='message-drawer'] .storefront-route-view .chat-page {
     animation: none;
   }
 }

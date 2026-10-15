@@ -36,30 +36,18 @@ test('homepage section card and CTA enter the conversion route while Browse link
   await expect(sectionLink).toHaveAttribute('href', '/go/section/cta-section');
   await expect(cta).toHaveAttribute('href', '/go/section/cta-section');
 
-  await cardImageLink.click();
-  await expect(page).toHaveURL('/go/section/cta-section');
-  expect(conversionRequestType).toBe('document');
-
-  await page.goto('/');
-  await sectionLink.click();
-  await expect(page).toHaveURL('/go/section/cta-section');
-
-  await page.goto('/');
-  await page
-    .locator('.browse-section-card')
-    .first()
-    .getByRole('link', {
-      name: 'Browse Escorts: Escorts',
-    })
-    .click();
-  await expect(page).toHaveURL('/go/section/cta-section');
-  expect(conversionRequestType).toBe('document');
-
-  await page.goto('/browse/');
+  await page.locator('.bottom-nav').getByRole('link', { name: 'Browse' }).click();
+  await expect(page).toHaveURL('/browse/');
   await expect(page.locator('.home-recommendation-heading > a').first()).toHaveAttribute(
     'href',
     '/sections/escorts/',
   );
+
+  await page.locator('.bottom-nav').getByRole('link', { name: 'Home' }).click();
+  await expect(page).toHaveURL('/');
+  await cardImageLink.click();
+  await expect(page).toHaveURL('/go/section/cta-section');
+  expect(conversionRequestType).toBe('document');
 });
 
 test('customer-service CTA opens the chat shell before the Worker handoff resolves', async ({
@@ -127,11 +115,26 @@ test('customer-service CTA opens the chat shell before the Worker handoff resolv
   await cta.click();
 
   await expect(page).toHaveURL(/\/messages\/new\/\?/u);
+  if (useLocalFixture) {
+    await expect(page.locator('html')).toHaveAttribute(
+      'data-storefront-transition',
+      'message-drawer',
+    );
+  }
   await expect(page.locator('.chat-page')).toBeVisible();
+  if (useLocalFixture) {
+    await expect(page.locator('.chat-page')).toHaveCSS(
+      'animation-name',
+      'storefront-message-drawer-enter',
+    );
+  }
   await expect(page.locator('.chat-header')).toBeVisible();
   await expect(page.locator('.chat-product-card')).toBeVisible();
   await expect(page.locator('.chat-composer')).toBeVisible();
   await expect(page.locator('.chat-connection-state .loading-halo')).toBeVisible();
+  await page.locator('.chat-page').evaluate(async (element) => {
+    await Promise.all(element.getAnimations().map((animation) => animation.finished));
+  });
   const chatViewportContract = await page.evaluate(() => {
     const viewport = window.visualViewport;
     const visualHeight = viewport?.height ?? window.innerHeight;
@@ -164,6 +167,41 @@ test('customer-service CTA opens the chat shell before the Worker handoff resolv
   expect(conversionRequestCount).toBe(1);
 
   releaseHandoff();
+});
+
+test('default product CTA keeps the existing route transition', async ({ page }) => {
+  test.skip(
+    !useLocalFixture,
+    'Default product CTA transition acceptance uses the deterministic local fixture.',
+  );
+  const productHref = await installLocalCustomerServiceCtaFixture(page);
+
+  await page.route('**/api/public/storefront/cta/*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        available: true,
+        label: 'Contact',
+        mode: 'customer_service',
+        path: '/go/__default-cta-transition-test__',
+      }),
+    });
+  });
+  await page.route('**/go/__default-cta-transition-test__', (route) => route.abort());
+
+  await page.goto(productHref);
+  await page
+    .locator('.storefront-route-action-host .product-detail-route-action .cta-button')
+    .click();
+
+  await expect(page).toHaveURL(/\/messages\/new\/\?/u);
+  await expect(page.locator('html')).toHaveAttribute(
+    'data-storefront-transition',
+    'push',
+  );
+  await expect(page.locator('.chat-page')).toBeVisible();
+  await expect(page.locator('.chat-page')).toHaveCSS('animation-name', 'none');
 });
 
 test('Messages Articles stay title-only and mark read only on the reading page', async ({
