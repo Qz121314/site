@@ -2,7 +2,7 @@ import type { StorefrontLayoutKey } from '@site/shared';
 import { buildAssetPublicUrl, getMediaBaseUrl } from '../assets/asset-library';
 import { getCategory } from '../categories/categories';
 import {
-  getConversionGroup,
+  getAuthorizedConversionGroup,
   type ConversionMode,
 } from '../conversion-pool/conversion-pool';
 
@@ -310,13 +310,17 @@ export async function validateProductDependencies(
   }
 
   if (input.conversionGroupId) {
-    const group = await getConversionGroup(db, sectionId, input.conversionGroupId);
+    const group = await getAuthorizedConversionGroup(
+      db,
+      sectionId,
+      input.conversionGroupId,
+    );
     if (!group || group.deletedAt) {
       return {
         ok: false,
         field: 'conversionGroupId',
         code: 'CONVERSION_GROUP_NOT_FOUND',
-        message: '所选转化分组不存在于当前分区。',
+        message: '当前分区尚未获得该转化分组的授权。',
       };
     }
     const requiredMode: ConversionMode =

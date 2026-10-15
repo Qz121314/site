@@ -1,5 +1,6 @@
 import { Hono, type Context } from 'hono';
 import {
+  getAuthorizedConversionGroup,
   getConversionGroup,
   selectNextConversionTarget,
 } from '../conversion-pool/conversion-pool';
@@ -75,7 +76,7 @@ publicConversionRoutes.get('/section/:sectionId', async (context) => {
   if (!section?.conversion_group_id) {
     return unavailable(context, 404, 'This contact option is unavailable.');
   }
-  const group = await getConversionGroup(
+  const group = await getAuthorizedConversionGroup(
     context.env.DB,
     section.id,
     section.conversion_group_id,
@@ -120,7 +121,7 @@ publicConversionRoutes.get('/:code', async (context) => {
     return unavailable(context, 409, 'This contact option is temporarily unavailable.');
   }
 
-  const group = await getConversionGroup(
+  const group = await getAuthorizedConversionGroup(
     context.env.DB,
     product.sectionId,
     product.conversionGroupId,

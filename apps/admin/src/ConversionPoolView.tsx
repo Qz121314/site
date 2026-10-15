@@ -53,6 +53,7 @@ type DeleteState =
 
 const emptyGroupForm: ConversionGroupInput = {
   name: '',
+  authorizedSectionIds: [],
   mode: 'customer_service',
   buttonLabel: 'Contact Us',
   sortOrder: 0,
@@ -323,7 +324,7 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
       ? Math.max(...activeGroups.map((group) => group.sortOrder)) + 10
       : 0;
     setEditingGroup(null);
-    setGroupForm({ ...emptyGroupForm, sortOrder });
+    setGroupForm({ ...emptyGroupForm, authorizedSectionIds: [section.id], sortOrder });
     setGroupEditorOpen(true);
     setErrorMessage('');
     setSuccessMessage('');
@@ -333,6 +334,7 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
     setEditingGroup(group);
     setGroupForm({
       name: group.name,
+      authorizedSectionIds: group.authorizedSectionIds,
       mode: group.mode,
       buttonLabel: group.buttonLabel,
       sortOrder: group.sortOrder,
@@ -384,6 +386,7 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
     try {
       const updated = await updateConversionGroup(section.id, group.id, {
         name: group.name,
+        authorizedSectionIds: group.authorizedSectionIds,
         mode: group.mode,
         buttonLabel: group.buttonLabel,
         sortOrder: group.sortOrder,
@@ -1144,6 +1147,7 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
 
       {groupEditorOpen ? (
         <ConversionGroupEditorDialog
+          sectionId={section.id}
           sectionName={section.name}
           editingGroup={editingGroup}
           form={groupForm}

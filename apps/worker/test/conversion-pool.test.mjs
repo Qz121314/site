@@ -162,6 +162,7 @@ test('online support group requires only a customer-service connection', () => {
 
   const valid = validateConversionGroupInput({
     name: ' Main ',
+    authorizedSectionIds: [' section-2 ', 'section-2'],
     mode: 'customer_service',
     buttonLabel: ' Contact ',
     sortOrder: 0,
@@ -174,6 +175,7 @@ test('online support group requires only a customer-service connection', () => {
   if (!valid.ok) return;
   assert.deepEqual(valid.value, {
     name: 'Main',
+    authorizedSectionIds: ['section-2'],
     mode: 'customer_service',
     buttonLabel: 'Contact',
     sortOrder: 0,

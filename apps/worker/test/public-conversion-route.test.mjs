@@ -8,6 +8,8 @@ function groupRow({ mode = 'link', activeTargetCount = 1 } = {}) {
   return {
     id: 'group-1',
     section_id: 'section-1',
+    owner_section_name: 'Section One',
+    authorized_section_ids: 'section-1',
     name: mode === 'link' ? 'Links' : 'Support',
     mode,
     button_label: 'Contact',
@@ -51,6 +53,7 @@ function createConversionDb({
     conversion_group_id: 'group-1',
   },
   group = groupRow(),
+  authorizedSectionIds = ['section-1'],
   targets = [],
 } = {}) {
   let nextIndex = 0;
@@ -71,13 +74,21 @@ function createConversionDb({
         },
         async first() {
           statements.push({ kind: 'first', sql: this.sql, args: this.args });
-          if (
-            this.sql.includes('FROM products p') &&
-            this.sql.includes('JOIN sections s')
-          ) {
+          if (this.sql.startsWith('SELECT p.id, p.section_id, s.name AS section_name')) {
             return product;
           }
-          if (this.sql.includes('FROM conversion_groups g')) return group;
+          if (this.sql.includes('FROM conversion_groups g')) {
+            if (this.sql.includes('WHERE g.id = ? AND EXISTS')) {
+              const [groupId, sectionId] = this.args;
+              return group?.id === groupId && authorizedSectionIds.includes(sectionId)
+                ? group
+                : null;
+            }
+            const [sectionId, groupId] = this.args;
+            return group?.section_id === sectionId && group?.id === groupId
+              ? group
+              : null;
+          }
           if (this.sql.includes('INSERT INTO conversion_group_rotation')) {
             const selected = nextIndex;
             nextIndex += 1;
@@ -160,6 +171,35 @@ test('GET /go/:code keeps link targets on production round-robin without a Site 
   ]);
   assert.equal(db.cursor, 4);
   assert.equal(trafficWrites(db).length, 0);
+});
+
+test('GET /go/:code rejects a product outside the conversion group authorization', async () => {
+  const db = createConversionDb({
+    product: {
+      id: 'product-1',
+      section_id: 'section-2',
+      title: 'Product One',
+      conversion_group_id: 'group-1',
+    },
+    authorizedSectionIds: ['section-1'],
+    targets: [
+      targetRow({
+        id: 'a',
+        name: 'A',
+        sortOrder: 10,
+        endpointUrl: 'https://a.example/path',
+      }),
+    ],
+  });
+
+  const response = await app.request(
+    'http://local.test/go/product-1',
+    undefined,
+    env(db),
+  );
+
+  assert.equal(response.status, 409);
+  assert.equal(db.cursor, 0);
 });
 
 test('GET realtime CTA state reads current configuration without consuming round-robin', async () => {

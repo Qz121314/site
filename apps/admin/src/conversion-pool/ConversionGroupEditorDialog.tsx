@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { AdminApiError } from '../api';
+import { AdminApiError, fetchSections, type AdminSection } from '../api';
 import { Button } from '../components/ui/button';
 import { AdminDialog } from '../components/ui/dialog';
 import {
@@ -9,6 +9,7 @@ import {
 import type { AdminConversionGroup, ConversionGroupInput, ConversionMode } from './api';
 
 type Props = {
+  sectionId: string;
   sectionName: string;
   editingGroup: AdminConversionGroup | null;
   form: ConversionGroupInput;
@@ -42,6 +43,7 @@ function isSessionError(error: unknown): boolean {
 }
 
 export function ConversionGroupEditorDialog({
+  sectionId,
   sectionName,
   editingGroup,
   form,
@@ -57,8 +59,35 @@ export function ConversionGroupEditorDialog({
   );
   const isCustomerService = form.mode === 'customer_service';
   const [connections, setConnections] = useState<CustomerServiceConnection[]>([]);
+  const [sections, setSections] = useState<AdminSection[]>([]);
+  const [sectionsLoading, setSectionsLoading] = useState(false);
+  const [sectionsError, setSectionsError] = useState('');
   const [connectionsLoading, setConnectionsLoading] = useState(false);
   const [integrationError, setIntegrationError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    setSectionsLoading(true);
+    setSectionsError('');
+    void fetchSections('active')
+      .then((items) => {
+        if (active) setSections(items);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        if (isSessionError(error)) {
+          onSessionExpired();
+          return;
+        }
+        setSectionsError(error instanceof Error ? error.message : '读取分区失败。');
+      })
+      .finally(() => {
+        if (active) setSectionsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [onSessionExpired]);
 
   useEffect(() => {
     if (!isCustomerService) return;
@@ -118,6 +147,50 @@ export function ConversionGroupEditorDialog({
           />
           <small>产品录入时直接选择这个转化分组。</small>
         </label>
+
+        <fieldset className="conversion-authorized-sections">
+          <legend>授权分区</legend>
+          <div className="conversion-authorized-sections-list">
+            <label className="conversion-authorized-section is-owner">
+              <input type="checkbox" checked disabled readOnly />
+              <span>
+                {sectionName}
+                <small>所属分区，默认授权</small>
+              </span>
+            </label>
+            {sections
+              .filter((section) => section.id !== sectionId)
+              .map((section) => (
+                <label className="conversion-authorized-section" key={section.id}>
+                  <input
+                    type="checkbox"
+                    checked={form.authorizedSectionIds.includes(section.id)}
+                    disabled={saving || sectionsLoading}
+                    onChange={(event) => {
+                      const next = new Set([sectionId, ...form.authorizedSectionIds]);
+                      if (event.target.checked) next.add(section.id);
+                      else next.delete(section.id);
+                      onFormChange({
+                        ...form,
+                        authorizedSectionIds: [...next],
+                      });
+                    }}
+                  />
+                  <span>
+                    {section.name}
+                    {!section.isVisible ? <small>前端隐藏</small> : null}
+                    {!section.isEnabled ? <small>已停用</small> : null}
+                  </span>
+                </label>
+              ))}
+            {sectionsLoading ? <small>正在读取分区…</small> : null}
+            {sectionsError ? (
+              <p className="inline-status is-error" role="alert">
+                {sectionsError}
+              </p>
+            ) : null}
+          </div>
+        </fieldset>
 
         <fieldset>
           <legend>分组类型</legend>

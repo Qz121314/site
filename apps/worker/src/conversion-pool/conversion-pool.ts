@@ -6,6 +6,8 @@ export type ConversionTargetBindingKind =
 export type ConversionGroupRecord = {
   id: string;
   sectionId: string;
+  ownerSectionName: string;
+  authorizedSectionIds: string[];
   name: string;
   mode: ConversionMode;
   buttonLabel: string;
@@ -44,6 +46,7 @@ export type ConversionTargetRecord = {
 
 export type ConversionGroupInput = {
   name: string;
+  authorizedSectionIds: string[];
   mode: ConversionMode;
   buttonLabel: string;
   sortOrder: number;
@@ -66,6 +69,8 @@ export type ConversionTargetInput = {
 type ConversionGroupRow = {
   id: string;
   section_id: string;
+  owner_section_name: string;
+  authorized_section_ids: string | null;
   name: string;
   mode: ConversionMode;
   button_label: string;
@@ -198,6 +203,20 @@ export function validateConversionGroupInput(
   if (typeof value.isEnabled !== 'boolean') {
     return { ok: false, field: 'isEnabled', message: '必须选择启用或停用。' };
   }
+  const authorizedSectionIdsValue =
+    'authorizedSectionIds' in value ? value.authorizedSectionIds : [];
+  if (
+    !Array.isArray(authorizedSectionIdsValue) ||
+    authorizedSectionIdsValue.length > 200 ||
+    authorizedSectionIdsValue.some(
+      (id) => typeof id !== 'string' || !id.trim() || id.trim().length > 100,
+    )
+  ) {
+    return { ok: false, field: 'authorizedSectionIds', message: '授权分区数据无效。' };
+  }
+  const authorizedSectionIds = [
+    ...new Set(authorizedSectionIdsValue.map((id) => (id as string).trim())),
+  ];
 
   if (value.mode === 'customer_service') {
     const connectionId = readRequiredText(
@@ -212,6 +231,7 @@ export function validateConversionGroupInput(
       ok: true,
       value: {
         name: name.value,
+        authorizedSectionIds,
         mode: 'customer_service',
         buttonLabel: buttonLabel.value,
         sortOrder: sortOrder.value,
@@ -227,6 +247,7 @@ export function validateConversionGroupInput(
     ok: true,
     value: {
       name: name.value,
+      authorizedSectionIds,
       mode: 'link',
       buttonLabel: buttonLabel.value,
       sortOrder: sortOrder.value,
@@ -294,9 +315,14 @@ export function validateConversionTargetInput(
 }
 
 function mapGroup(row: ConversionGroupRow): ConversionGroupRecord {
+  const authorizedSectionIds = row.authorized_section_ids
+    ? row.authorized_section_ids.split(',').filter(Boolean)
+    : [];
   return {
     id: row.id,
     sectionId: row.section_id,
+    ownerSectionName: row.owner_section_name,
+    authorizedSectionIds: [...new Set([row.section_id, ...authorizedSectionIds])],
     name: row.name,
     mode: row.mode,
     buttonLabel: row.button_label,
@@ -346,6 +372,10 @@ function mapTarget(row: ConversionTargetRow): ConversionTargetRecord {
 const GROUP_SELECT = `SELECT
   g.id,
   g.section_id,
+  s.name AS owner_section_name,
+  (SELECT group_concat(authorized.section_id, ',')
+    FROM conversion_group_sections authorized WHERE authorized.group_id = g.id)
+    AS authorized_section_ids,
   g.name,
   g.mode,
   g.button_label,
@@ -386,6 +416,7 @@ const GROUP_SELECT = `SELECT
   g.remote_group_id,
   g.remote_group_name
 FROM conversion_groups g
+JOIN sections s ON s.id = g.section_id
 LEFT JOIN customer_service_connections c
   ON c.id = g.customer_service_connection_id`;
 
@@ -432,6 +463,25 @@ export async function listConversionGroups(
   return result.results.map(mapGroup);
 }
 
+export async function listAvailableConversionGroups(
+  db: D1Database,
+  sectionId: string,
+): Promise<ConversionGroupRecord[]> {
+  const result = await db
+    .prepare(
+      `${GROUP_SELECT}
+       WHERE g.deleted_at IS NULL
+         AND EXISTS (
+           SELECT 1 FROM conversion_group_sections authorized
+           WHERE authorized.group_id = g.id AND authorized.section_id = ?
+         )
+       ORDER BY g.sort_order ASC, g.name COLLATE NOCASE ASC`,
+    )
+    .bind(sectionId)
+    .all<ConversionGroupRow>();
+  return result.results.map(mapGroup);
+}
+
 export async function getConversionGroup(
   db: D1Database,
   sectionId: string,
@@ -440,6 +490,24 @@ export async function getConversionGroup(
   const row = await db
     .prepare(`${GROUP_SELECT} WHERE g.section_id = ? AND g.id = ?`)
     .bind(sectionId, groupId)
+    .first<ConversionGroupRow>();
+  return row ? mapGroup(row) : null;
+}
+
+export async function getAuthorizedConversionGroup(
+  db: D1Database,
+  sectionId: string,
+  groupId: string,
+): Promise<ConversionGroupRecord | null> {
+  const row = await db
+    .prepare(
+      `${GROUP_SELECT}
+       WHERE g.id = ? AND EXISTS (
+         SELECT 1 FROM conversion_group_sections authorized
+         WHERE authorized.group_id = g.id AND authorized.section_id = ?
+       )`,
+    )
+    .bind(groupId, sectionId)
     .first<ConversionGroupRow>();
   return row ? mapGroup(row) : null;
 }
@@ -453,6 +521,8 @@ export function createConversionGroup(
   const group: ConversionGroupRecord = {
     id: crypto.randomUUID(),
     sectionId,
+    ownerSectionName: '',
+    authorizedSectionIds: [...new Set([sectionId, ...input.authorizedSectionIds])],
     name: input.name,
     mode: input.mode,
     buttonLabel: input.buttonLabel,
@@ -497,6 +567,31 @@ export function createConversionGroup(
         group.updatedAt,
       ),
   };
+}
+
+export function createConversionGroupSectionStatements(
+  db: D1Database,
+  groupId: string,
+  sectionIds: string[],
+  now: string,
+): D1PreparedStatement[] {
+  return sectionIds.map((sectionId) =>
+    db
+      .prepare(
+        `INSERT INTO conversion_group_sections (group_id, section_id, created_at)
+         VALUES (?, ?, ?)`,
+      )
+      .bind(groupId, sectionId, now),
+  );
+}
+
+export function deleteConversionGroupSectionsStatement(
+  db: D1Database,
+  groupId: string,
+): D1PreparedStatement {
+  return db
+    .prepare('DELETE FROM conversion_group_sections WHERE group_id = ?')
+    .bind(groupId);
 }
 
 export function createUpdateConversionGroupStatement(

@@ -1,6 +1,6 @@
 import { AdminApiError, fetchSections } from '../api';
 import { adminFetch } from '../admin-fetch';
-import { fetchConversionGroups } from '../conversion-pool/api';
+import { fetchAvailableConversionGroups } from '../conversion-pool/api';
 import { fetchProducts } from '../product-management/api';
 
 export type CustomerServiceScope = 'active' | 'trash' | 'all';
@@ -242,7 +242,7 @@ async function loadProductCatalog(connectionId: string): Promise<ProductCatalog>
     sections.map(async (section) => {
       const [sectionProducts, conversionGroups] = await Promise.all([
         fetchProducts(section.id, 'active'),
-        fetchConversionGroups(section.id, 'active'),
+        fetchAvailableConversionGroups(section.id),
       ]);
       const groupById = new Map(conversionGroups.map((group) => [group.id, group]));
 
