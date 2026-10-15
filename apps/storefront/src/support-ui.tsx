@@ -733,13 +733,11 @@ export function MessageThreadPageContent({
 
       <div className="chat-timeline" role="log" aria-live="polite" ref={timelineRef}>
         {loadingConversation && pendingConversation && !conversation ? (
-          <div className="chat-connection-state" role="status" aria-live="polite">
-            <div className="chat-loading-skeleton" aria-hidden="true">
-              <span className="chat-loading-skeleton-bubble is-agent" />
-              <span className="chat-loading-skeleton-bubble is-agent is-short" />
-              <span className="chat-loading-skeleton-bubble is-customer" />
-            </div>
-            <LoadingHalo size="small" />
+          <div
+            className="chat-connection-state chat-connection-transition"
+            role="status"
+            aria-live="polite"
+          >
             <span className="chat-connecting-message">{connectingMessage}</span>
           </div>
         ) : noAgentNotice && pendingConversation && !conversation ? (
