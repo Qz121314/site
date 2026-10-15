@@ -155,64 +155,6 @@
   isolation: isolate;
 }
 
-.chat-connection-transition::before,
-.chat-connection-transition::after {
-  position: absolute;
-  z-index: 0;
-  inset: -30% -20%;
-  border-radius: 50%;
-  content: '';
-  pointer-events: none;
-}
-
-.chat-connection-transition::before {
-  background:
-    radial-gradient(
-      ellipse at 31% 52%,
-      color-mix(in srgb, var(--brand) 18%, transparent),
-      transparent 54%
-    ),
-    radial-gradient(
-      ellipse at 69% 45%,
-      color-mix(in srgb, var(--brand-strong) 11%, transparent),
-      transparent 56%
-    );
-  filter: blur(30px);
-  animation: chat-connection-light-flow 6s ease-in-out infinite alternate;
-}
-
-.chat-connection-transition::after {
-  inset: -10% -35%;
-  background: linear-gradient(
-    108deg,
-    transparent 38%,
-    color-mix(in srgb, var(--surface) 34%, transparent) 50%,
-    transparent 62%
-  );
-  animation: chat-connection-light-sweep 4.8s ease-in-out infinite;
-}
-
-@keyframes chat-connection-light-flow {
-  from {
-    transform: translate3d(-4%, 2%, 0) scale(0.96);
-  }
-  to {
-    transform: translate3d(4%, -2%, 0) scale(1.04);
-  }
-}
-
-@keyframes chat-connection-light-sweep {
-  0%,
-  100% {
-    transform: translateX(-26%);
-    opacity: 0.35;
-  }
-  50% {
-    transform: translateX(26%);
-    opacity: 0.72;
-  }
-}
-
 @keyframes chat-connection-message-in {
   from {
     opacity: 0;
@@ -449,8 +391,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chat-connection-transition::before,
-  .chat-connection-transition::after,
   .chat-connecting-message {
     animation: none;
   }
