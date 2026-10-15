@@ -313,7 +313,10 @@ export function ProductDetailPage({
         sectionId: currentProduct.sectionId,
         ctaPath: cta.path,
       });
-      pushStorefrontLocation(`/messages/new/?${params.toString()}`);
+      pushStorefrontLocation(
+        `/messages/new/?${params.toString()}`,
+        isLandingPageTemplate ? 'message-drawer' : undefined,
+      );
       return;
     }
     window.open(cta.path, '_blank', 'noopener');

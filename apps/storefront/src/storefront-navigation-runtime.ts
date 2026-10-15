@@ -7,6 +7,12 @@ import {
 export const STOREFRONT_NAVIGATION_EVENT = 'storefront:navigate';
 export const STOREFRONT_REPLACE_EVENT = 'storefront:replace';
 
+export type StorefrontNavigationTransition = 'message-drawer';
+
+export type StorefrontNavigationEventDetail = {
+  transition?: StorefrontNavigationTransition;
+};
+
 type StorefrontLinkClickEvent = {
   altKey: boolean;
   button: number;
@@ -26,15 +32,30 @@ function isMessagesThread(pathname: string): boolean {
   return /^\/messages\/[^/]+\/?$/u.test(pathname);
 }
 
-export function pushStorefrontLocation(href: string): void {
+export function pushStorefrontLocation(
+  href: string,
+  transition?: StorefrontNavigationTransition,
+): void {
   const target = new URL(href, window.location.href);
   const current = new URL(window.location.href);
   if (target.origin !== current.origin) return;
   if (normalizedLocationKey(target) === normalizedLocationKey(current)) return;
 
-  saveCurrentStorefrontScrollPosition();
-  window.history.pushState(null, '', `${target.pathname}${target.search}${target.hash}`);
-  window.dispatchEvent(new Event(STOREFRONT_NAVIGATION_EVENT));
+  const navigate = () => {
+    saveCurrentStorefrontScrollPosition();
+    window.history.pushState(
+      null,
+      '',
+      `${target.pathname}${target.search}${target.hash}`,
+    );
+    window.dispatchEvent(
+      new CustomEvent<StorefrontNavigationEventDetail>(STOREFRONT_NAVIGATION_EVENT, {
+        detail: transition ? { transition } : {},
+      }),
+    );
+  };
+
+  navigate();
 }
 
 export function replaceStorefrontLocation(href: string): void {

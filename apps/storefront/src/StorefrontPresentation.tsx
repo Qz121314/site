@@ -11,6 +11,7 @@ import { publishStorefrontLocationChange } from './storefront-location-runtime';
 import {
   STOREFRONT_NAVIGATION_EVENT,
   STOREFRONT_REPLACE_EVENT,
+  type StorefrontNavigationEventDetail,
 } from './storefront-navigation-runtime';
 import {
   storefrontPresentationMode,
@@ -67,9 +68,13 @@ export function StorefrontPresentation() {
     ensureStorefrontHistoryState();
     applyPresentationMode();
 
-    function handleStorefrontNavigation() {
+    function handleStorefrontNavigation(event: Event) {
+      const detail = (event as CustomEvent<StorefrontNavigationEventDetail>).detail;
       recordStorefrontHistoryPush();
       flushSync(() => commitStorefrontLocation('forward'));
+      if (detail?.transition) {
+        document.documentElement.dataset.storefrontTransition = detail.transition;
+      }
     }
 
     function handleStorefrontReplace() {
