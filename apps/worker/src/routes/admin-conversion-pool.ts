@@ -2,8 +2,10 @@ import { Hono } from 'hono';
 import { createAuditLogStatement } from '../audit/write-audit-log';
 import {
   createConversionGroup,
+  createConversionGroupSectionStatements,
   createConversionTarget,
   createDeleteConversionGroupStatement,
+  deleteConversionGroupSectionsStatement,
   createDeleteConversionTargetStatement,
   createReorderConversionGroupStatement,
   createReorderConversionTargetStatement,
@@ -17,6 +19,7 @@ import {
   isConversionGroupConflictError,
   isConversionTargetConflictError,
   listConversionGroups,
+  listAvailableConversionGroups,
   listConversionTargets,
   selectNextConversionTarget,
   validateConversionGroupInput,
@@ -161,6 +164,42 @@ async function requireActiveGroup(
   return !group || group.deletedAt ? groupNotFound(context) : group;
 }
 
+async function resolveAuthorizedSectionIds(
+  db: D1Database,
+  ownerSectionId: string,
+  requestedSectionIds: string[],
+  existingSectionIds: string[] = [],
+): Promise<string[] | null> {
+  const ids = [...new Set([ownerSectionId, ...requestedSectionIds])];
+  const placeholders = ids.map(() => '?').join(', ');
+  const rows = await db
+    .prepare(`SELECT id, deleted_at FROM sections WHERE id IN (${placeholders})`)
+    .bind(...ids)
+    .all<{ id: string; deleted_at: string | null }>();
+  const sections = new Map(rows.results.map((row) => [row.id, row]));
+  return ids.every((id) => {
+    const section = sections.get(id);
+    return section && (!section.deleted_at || existingSectionIds.includes(id));
+  })
+    ? ids
+    : null;
+}
+
+async function getAuthorizedSectionReferences(
+  db: D1Database,
+  groupId: string,
+): Promise<string[]> {
+  const rows = await db
+    .prepare(
+      `SELECT section_id FROM products WHERE conversion_group_id = ?
+       UNION SELECT id AS section_id FROM sections WHERE conversion_group_id = ?
+       UNION SELECT section_id FROM message_cta_cards WHERE conversion_group_id = ?`,
+    )
+    .bind(groupId, groupId, groupId)
+    .all<{ section_id: string }>();
+  return rows.results.map((row) => row.section_id);
+}
+
 function isResponse(value: unknown): value is Response {
   return value instanceof Response;
 }
@@ -180,6 +219,19 @@ adminConversionPoolRoutes.get('/:sectionId/conversion-groups', async (context) =
     groups: await listConversionGroups(context.env.DB, sectionId, scope),
   });
 });
+
+adminConversionPoolRoutes.get(
+  '/:sectionId/available-conversion-groups',
+  async (context) => {
+    context.header('Cache-Control', 'no-store');
+    const sectionId = context.req.param('sectionId');
+    const sectionError = await requireSection(context, sectionId);
+    if (sectionError) return sectionError;
+    return context.json({
+      groups: await listAvailableConversionGroups(context.env.DB, sectionId),
+    });
+  },
+);
 
 adminConversionPoolRoutes.post(
   '/:sectionId/conversion-groups/batch-delete',
@@ -353,11 +405,32 @@ adminConversionPoolRoutes.post('/:sectionId/conversion-groups', async (context) 
       field: validation.field,
     });
   }
+  const authorizedSectionIds = await resolveAuthorizedSectionIds(
+    context.env.DB,
+    sectionId,
+    validation.value.authorizedSectionIds,
+  );
+  if (!authorizedSectionIds) {
+    return apiError(
+      context,
+      400,
+      'INVALID_CONVERSION_GROUP_AUTHORIZATION',
+      '授权分区不存在或已进入回收站。',
+      { field: 'authorizedSectionIds' },
+    );
+  }
   const now = new Date().toISOString();
   const created = createConversionGroup(context.env.DB, sectionId, validation.value, now);
+  created.group.authorizedSectionIds = authorizedSectionIds;
   try {
     await context.env.DB.batch([
       created.statement,
+      ...createConversionGroupSectionStatements(
+        context.env.DB,
+        created.group.id,
+        authorizedSectionIds,
+        now,
+      ),
       createAuditLogStatement(context.env.DB, {
         action: 'conversion-group.created',
         entityType: 'conversion_group',
@@ -414,9 +487,45 @@ adminConversionPoolRoutes.put(
       );
     }
     const now = new Date().toISOString();
+    const requestedAuthorizedSectionIds =
+      isRecord(body) && body.authorizedSectionIds === undefined
+        ? current.authorizedSectionIds
+        : validation.value.authorizedSectionIds;
+    const authorizedSectionIds = await resolveAuthorizedSectionIds(
+      context.env.DB,
+      sectionId,
+      requestedAuthorizedSectionIds,
+      current.authorizedSectionIds,
+    );
+    if (!authorizedSectionIds) {
+      return apiError(
+        context,
+        400,
+        'INVALID_CONVERSION_GROUP_AUTHORIZATION',
+        '授权分区不存在或已进入回收站。',
+        { field: 'authorizedSectionIds' },
+      );
+    }
+    const inUseSections = new Set(
+      await getAuthorizedSectionReferences(context.env.DB, current.id),
+    );
+    const revokedSectionInUse = current.authorizedSectionIds.find(
+      (id) => !authorizedSectionIds.includes(id) && inUseSections.has(id),
+    );
+    if (revokedSectionInUse) {
+      const section = await getSection(context.env.DB, revokedSectionInUse);
+      return apiError(
+        context,
+        409,
+        'CONVERSION_GROUP_AUTHORIZATION_IN_USE',
+        `分区“${section?.name ?? revokedSectionInUse}”仍有商品、分区 CTA 或消息卡片使用此分组，请先解除引用。`,
+        { field: 'authorizedSectionIds' },
+      );
+    }
     const updated: ConversionGroupRecord = {
       ...current,
       ...validation.value,
+      authorizedSectionIds,
       updatedAt: now,
     };
     try {
@@ -426,6 +535,13 @@ adminConversionPoolRoutes.put(
           sectionId,
           current.id,
           validation.value,
+          now,
+        ),
+        deleteConversionGroupSectionsStatement(context.env.DB, current.id),
+        ...createConversionGroupSectionStatements(
+          context.env.DB,
+          current.id,
+          authorizedSectionIds,
           now,
         ),
         createAuditLogStatement(context.env.DB, {

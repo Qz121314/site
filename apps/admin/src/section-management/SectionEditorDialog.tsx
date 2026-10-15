@@ -130,7 +130,7 @@ export function SectionEditorDialog({
                 <option value="">不绑定（进入产品列表）</option>
                 {conversionGroups.map((group) => (
                   <option key={group.id} value={group.id}>
-                    {group.name} · {group.buttonLabel} ·{' '}
+                    {group.ownerSectionName} / {group.name} · {group.buttonLabel} ·{' '}
                     {group.mode === 'customer_service' ? '在线客服' : '链接'}
                   </option>
                 ))}

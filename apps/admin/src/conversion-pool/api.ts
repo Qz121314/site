@@ -9,6 +9,8 @@ export type ConversionTargetBindingKind =
 export type AdminConversionGroup = {
   id: string;
   sectionId: string;
+  ownerSectionName: string;
+  authorizedSectionIds: string[];
   name: string;
   mode: ConversionMode;
   buttonLabel: string;
@@ -47,6 +49,7 @@ export type AdminConversionTarget = {
 
 export type ConversionGroupInput = {
   name: string;
+  authorizedSectionIds: string[];
   mode: ConversionMode;
   buttonLabel: string;
   sortOrder: number;
@@ -138,6 +141,9 @@ function parseGroup(value: unknown): AdminConversionGroup {
     !group ||
     typeof group.id !== 'string' ||
     typeof group.sectionId !== 'string' ||
+    typeof group.ownerSectionName !== 'string' ||
+    !Array.isArray(group.authorizedSectionIds) ||
+    !group.authorizedSectionIds.every((id) => typeof id === 'string') ||
     typeof group.name !== 'string' ||
     (group.mode !== 'customer_service' && group.mode !== 'link') ||
     typeof group.buttonLabel !== 'string' ||
@@ -228,6 +234,14 @@ export function fetchConversionGroups(
   return requestJson(`${basePath(sectionId)}?scope=${encodeURIComponent(scope)}`).then(
     (value) => parseList(value, 'groups', parseGroup),
   );
+}
+
+export function fetchAvailableConversionGroups(
+  sectionId: string,
+): Promise<AdminConversionGroup[]> {
+  return requestJson(
+    `/api/admin/sections/${encodeURIComponent(sectionId)}/available-conversion-groups`,
+  ).then((value) => parseList(value, 'groups', parseGroup));
 }
 
 export function createConversionGroup(

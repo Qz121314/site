@@ -17,7 +17,10 @@ import {
 import { MediaLibraryPickerDialog } from './asset-library/MediaLibraryPickerDialog';
 import type { ManagedMediaAsset } from './asset-library/api';
 import { fetchCategories, type AdminCategory } from './category-management/api';
-import { fetchConversionGroups, type AdminConversionGroup } from './conversion-pool/api';
+import {
+  fetchAvailableConversionGroups,
+  type AdminConversionGroup,
+} from './conversion-pool/api';
 import { DeleteProductDialog } from './product-management/DeleteProductDialog';
 import { ProductEditorDialog } from './product-management/ProductEditorDialog';
 import { ProductTable } from './product-management/ProductTable';
@@ -203,7 +206,7 @@ export function ProductManagementView({
         fetchProducts(section.id, 'active'),
         reviewMode ? Promise.resolve([]) : fetchCategories(section.id, 'active'),
         reviewMode ? Promise.resolve([]) : fetchProductTags(section.id, 'active'),
-        reviewMode ? Promise.resolve([]) : fetchConversionGroups(section.id, 'active'),
+        reviewMode ? Promise.resolve([]) : fetchAvailableConversionGroups(section.id),
       ]);
       setActiveProducts(sortProducts(products));
       setCategories(nextCategories);

@@ -1,6 +1,6 @@
 import { Hono, type Context } from 'hono';
 import { getMediaBaseUrl } from '../assets/asset-library';
-import { getConversionGroup } from '../conversion-pool/conversion-pool';
+import { getAuthorizedConversionGroup } from '../conversion-pool/conversion-pool';
 import { getRoutableProduct, resolvePublicCta } from '../conversion-pool/public-cta';
 import {
   getCustomerServiceConnection,
@@ -215,7 +215,7 @@ publicStorefrontConfigRoutes.get('/support/route/:productId', async (context) =>
     return context.json({ available: false });
   }
 
-  const group = await getConversionGroup(
+  const group = await getAuthorizedConversionGroup(
     context.env.DB,
     product.sectionId,
     product.conversionGroupId,
@@ -274,7 +274,7 @@ publicStorefrontConfigRoutes.get('/support/route/section/:sectionId', async (con
     }>();
   if (!section?.conversion_group_id) return context.json({ available: false });
 
-  const group = await getConversionGroup(
+  const group = await getAuthorizedConversionGroup(
     context.env.DB,
     sectionId,
     section.conversion_group_id,

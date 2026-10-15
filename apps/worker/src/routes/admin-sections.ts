@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { createAuditLogStatement } from '../audit/write-audit-log';
 import { apiError } from '../http/api-response';
-import { getConversionGroup } from '../conversion-pool/conversion-pool';
+import { getAuthorizedConversionGroup } from '../conversion-pool/conversion-pool';
 import {
   createDeleteSectionStatement,
   createRestoreSectionStatement,
@@ -180,7 +180,7 @@ adminSectionRoutes.put('/:id', async (context) => {
     });
   }
   if (validation.value.conversionGroupId) {
-    const group = await getConversionGroup(
+    const group = await getAuthorizedConversionGroup(
       context.env.DB,
       current.id,
       validation.value.conversionGroupId,
@@ -190,7 +190,7 @@ adminSectionRoutes.put('/:id', async (context) => {
         context,
         409,
         'INVALID_SECTION_CONVERSION_GROUP',
-        '请选择当前分区中有效的转化池。',
+        '当前分区尚未获得该转化分组的授权。',
         { field: 'conversionGroupId' },
       );
     }

@@ -1,4 +1,4 @@
-import { getConversionGroup, type ConversionMode } from './conversion-pool';
+import { getAuthorizedConversionGroup, type ConversionMode } from './conversion-pool';
 
 export type RoutableProduct = {
   id: string;
@@ -68,7 +68,7 @@ export async function resolvePublicCta(
   const product = await getRoutableProduct(db, productId);
   if (!product?.conversionGroupId) return { product, cta: null };
 
-  const group = await getConversionGroup(
+  const group = await getAuthorizedConversionGroup(
     db,
     product.sectionId,
     product.conversionGroupId,

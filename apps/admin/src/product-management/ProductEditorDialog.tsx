@@ -485,7 +485,7 @@ export function ProductEditorDialog({
                   value={group.id}
                   disabled={!group.isEnabled || group.activeTargetCount < 1}
                 >
-                  {group.name} · {group.buttonLabel}
+                  {group.ownerSectionName} / {group.name} · {group.buttonLabel}
                 </option>
               ))}
             </select>

@@ -33,7 +33,10 @@ import {
   AdminSegmentedItem,
 } from './components/ui/segmented-control';
 import { DeleteSectionDialog } from './section-management/DeleteSectionDialog';
-import { fetchConversionGroups, type AdminConversionGroup } from './conversion-pool/api';
+import {
+  fetchAvailableConversionGroups,
+  type AdminConversionGroup,
+} from './conversion-pool/api';
 import { testCustomerServiceConnection } from './customer-service/api';
 import { SectionEditorDialog } from './section-management/SectionEditorDialog';
 import { SectionTable } from './section-management/SectionTable';
@@ -165,7 +168,7 @@ export function SectionManagementView({
 
   async function openEditEditor(section: AdminSection) {
     try {
-      setConversionGroups(await fetchConversionGroups(section.id, 'active'));
+      setConversionGroups(await fetchAvailableConversionGroups(section.id));
     } catch (error) {
       handleOperationError(error);
       return;

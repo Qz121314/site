@@ -508,6 +508,62 @@
   border: 0;
 }
 
+.conversion-editor-form fieldset.conversion-authorized-sections {
+  padding: 10px;
+  border: 1px solid var(--admin-border, #e2e6ec);
+  border-radius: 8px;
+}
+
+.conversion-authorized-sections-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 8px;
+}
+
+.conversion-editor-form label.conversion-authorized-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  padding: 6px 7px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.conversion-editor-form .conversion-authorized-section > input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  margin: 1px 0 0;
+}
+
+.conversion-editor-form .conversion-authorized-section > span {
+  min-width: 0;
+  margin: 0;
+  color: #344054;
+  font-size: 0.75rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.conversion-editor-form .conversion-authorized-section > span small {
+  display: block;
+  margin-top: 2px;
+  color: var(--admin-text-muted, #667085);
+  font-size: 0.65rem;
+  font-weight: 400;
+}
+
+.conversion-editor-form .conversion-authorized-section.is-owner {
+  background: #f8fafc;
+  cursor: default;
+}
+
+.conversion-authorized-sections-list > small,
+.conversion-authorized-sections-list > .inline-status {
+  grid-column: 1 / -1;
+}
+
 .conversion-mode-options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -609,6 +665,10 @@
   }
 
   .conversion-mode-options {
+    grid-template-columns: 1fr;
+  }
+
+  .conversion-authorized-sections-list {
     grid-template-columns: 1fr;
   }
 }
