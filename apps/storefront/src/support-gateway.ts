@@ -101,11 +101,14 @@ type ErrorEnvelope = {
 };
 
 const CONNECTION_CACHE_MS = 30_000;
-const DEFAULT_CONNECTING_MESSAGE = 'Connecting you with a real customer service agent…';
 let connectionCache: {
   expiresAt: number;
   config: PublicSupportConfig;
 } | null = null;
+
+function parseConnectingMessage(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
 let connectionRequest: Promise<PublicSupportConfig> | null = null;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -213,11 +216,7 @@ export async function loadPublicSupportConfig(
       const connections = envelope.connections.map(parseConnection);
       const config = {
         connections,
-        connectingMessage:
-          typeof envelope.connectingMessage === 'string' &&
-          envelope.connectingMessage.trim()
-            ? envelope.connectingMessage.trim()
-            : 'Connecting you with a real customer service agent…',
+        connectingMessage: parseConnectingMessage(envelope.connectingMessage),
       };
       connectionCache = {
         expiresAt: Date.now() + CONNECTION_CACHE_MS,
@@ -258,10 +257,7 @@ async function resolveSupportRoute(
   return {
     available: true,
     connection: parseConnection(envelope.connection),
-    connectingMessage:
-      typeof envelope.connectingMessage === 'string' && envelope.connectingMessage.trim()
-        ? envelope.connectingMessage.trim()
-        : DEFAULT_CONNECTING_MESSAGE,
+    connectingMessage: parseConnectingMessage(envelope.connectingMessage),
     product: parseResolvedProduct(envelope.product),
   };
 }
@@ -293,10 +289,7 @@ async function resolveSectionSupportRoute(
   return {
     available: true,
     connection: parseConnection(envelope.connection),
-    connectingMessage:
-      typeof envelope.connectingMessage === 'string' && envelope.connectingMessage.trim()
-        ? envelope.connectingMessage.trim()
-        : DEFAULT_CONNECTING_MESSAGE,
+    connectingMessage: parseConnectingMessage(envelope.connectingMessage),
     section: section as ResolvedSupportSection,
   };
 }
