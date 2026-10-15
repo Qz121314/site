@@ -259,8 +259,79 @@
   }
 }
 
+.product-detail-page.is-template-a,
+.product-detail-route-action.is-template-a {
+  --template-a-font-body: 'Trebuchet MS', 'Avenir Next', sans-serif;
+  --template-a-font-display: Georgia, 'Times New Roman', serif;
+  --template-a-page: #f7f0ec;
+  --template-a-ink: #38282d;
+  --template-a-accent: #a74463;
+  --storefront-font-ui: var(--template-a-font-body);
+  --storefront-font-display: var(--template-a-font-display);
+  --app-motion-fast: 160ms;
+  --app-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --theme-press-brightness: 0.94;
+  --theme-press-scale: 0.985;
+  --theme-detail-cta-height: 58px;
+  --theme-detail-cta-radius: 14px;
+  --theme-primary-detail-cta-background: var(--template-a-accent);
+  --theme-primary-detail-cta-color: #fffaf7;
+  --theme-primary-detail-cta-shadow: 0 10px 26px rgb(127 48 71 / 25%);
+  --theme-primary-detail-cta-focus-ring: 0 0 0 3px rgb(167 68 99 / 38%);
+  --theme-primary-detail-cta-arrow-background: rgb(255 250 247 / 16%);
+  color: var(--template-a-ink);
+  font-family: var(--template-a-font-body);
+}
+
 .product-detail-page.is-template-a {
+  --template-a-surface: #fffaf7;
+  --template-a-surface-soft: #f1e7e3;
+  --template-a-muted: #6f5c60;
+  --template-a-line: #e6d8d5;
+  --template-a-accent-strong: #8e3452;
+  --template-a-media-canvas: #eee5e1;
+  --template-a-media-shadow: 0 12px 30px rgb(56 40 45 / 10%);
+  --template-a-media-control: rgb(255 250 247 / 94%);
+  --storefront-font-brand: var(--template-a-font-display);
+  --storefront-text-body: 0.9375rem;
+  --text: var(--template-a-ink);
+  --muted: var(--template-a-muted);
+  --line: var(--template-a-line);
+  --surface: var(--template-a-surface);
+  --surface-soft: var(--template-a-surface-soft);
+  --page-bg: var(--template-a-page);
+  --brand: var(--template-a-accent);
+  --brand-strong: var(--template-a-accent-strong);
+  --theme-on-brand: #fffaf7;
+  --theme-radius-media: 12px;
+  --theme-radius-card: 16px;
+  --theme-radius-control: 12px;
+  --theme-detail-media-ratio: 0.88 / 1;
+  --theme-detail-desktop-media-ratio: 0.88 / 1;
+  --theme-detail-media-radius: 12px;
+  --theme-detail-inline-media-radius: 12px;
+  --theme-detail-cta-height: 58px;
+  --theme-detail-cta-radius: 14px;
+  --theme-primary-detail-media-background: var(--template-a-media-canvas);
+  --theme-primary-detail-media-shadow: var(--template-a-media-shadow);
+  --theme-art-media-filter: none;
+  --theme-art-media-frame: var(--template-a-line);
+  --theme-art-media-canvas: var(--template-a-media-canvas);
+  --theme-art-media-control-background: var(--template-a-media-control);
+  --theme-art-media-control-border: rgb(56 40 45 / 12%);
+  --theme-art-media-control-color: var(--template-a-ink);
+  --theme-art-media-control-shadow: 0 4px 14px rgb(56 40 45 / 12%);
+  --theme-art-media-control-backdrop: blur(8px);
+  --theme-art-text-primary: var(--template-a-ink);
+  --theme-art-text-secondary: var(--template-a-muted);
+  --theme-art-heading-weight: 500;
+  --theme-art-heading-tracking: -0.02em;
+  --theme-art-heading-transform: none;
+  --theme-art-product-title-weight: 500;
+  --theme-art-product-title-tracking: -0.015em;
+
   width: min(100%, 1120px);
+  background: var(--template-a-page);
 }
 
 .product-detail-page.is-template-a .product-detail-info {
@@ -285,7 +356,7 @@
 }
 
 .product-detail-page.is-template-a .product-detail-summary h1 {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: var(--template-a-font-display);
   font-size: clamp(2.3rem, 7vw, 3.4rem);
   font-weight: 400;
   letter-spacing: -0.045em;
@@ -299,11 +370,28 @@
 
 .product-detail-route-action.is-template-a .cta-button,
 .product-detail-inline-action .cta-button.is-template-a {
-  min-height: max(var(--theme-detail-cta-height, 58px), 58px);
-  border-radius: var(--theme-detail-cta-radius, 14px);
+  min-height: 58px;
+  border-radius: 14px;
   font-size: 0.88rem;
   letter-spacing: 0.055em;
   text-transform: uppercase;
+}
+
+.product-detail-route-action.is-template-a {
+  --theme-primary-detail-cta-bar-background: linear-gradient(
+    180deg,
+    rgb(247 240 236 / 88%),
+    rgb(247 240 236 / 98%)
+  );
+  --theme-primary-detail-cta-bar-shadow: 0 -8px 24px rgb(56 40 45 / 9%);
+}
+
+.product-detail-page.is-template-a .product-detail-info .product-detail-summary,
+.product-detail-page.is-template-a .product-detail-info .product-detail-body,
+.storefront-bottom-chrome
+  .storefront-route-action-host
+  .product-detail-route-action.is-template-a {
+  backdrop-filter: none;
 }
 
 .product-detail-route-action.is-template-a .product-detail-cta-arrow,
