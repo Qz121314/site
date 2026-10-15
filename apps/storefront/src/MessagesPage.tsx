@@ -260,6 +260,9 @@ export function MessagesPage({
   const [notificationState, setNotificationState] =
     useState<SupportPushState>('unsupported');
   const [notificationBusy, setNotificationBusy] = useState(false);
+  const [connectingMessage, setConnectingMessage] = useState(
+    'Connecting you with a real customer service agent…',
+  );
   const supportConnectionsQuery = useQuery({
     queryKey: ['support-connections'],
     queryFn: ({ signal }) => loadPublicSupportConnections(signal),
@@ -380,7 +383,7 @@ export function MessagesPage({
             sectionName: pendingConversation.productTitle,
             sectionHref: pendingConversation.productHref,
           };
-      return siteSupportGateway.startConversation(input, signal);
+      return siteSupportGateway.startConversation(input, signal, setConnectingMessage);
     },
     staleTime: Number.POSITIVE_INFINITY,
     retry: false,
@@ -821,6 +824,7 @@ export function MessagesPage({
           }
           loadingEarlier={conversationQuery.isFetchingNextPage}
           loadingConversation={conversationLoading || composeConnecting}
+          connectingMessage={connectingMessage}
           connectionError={composeConnectionError}
           noAgentNotice={noAgentNotice}
           onRetryConnection={

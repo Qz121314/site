@@ -35,6 +35,7 @@ export function toSiteSettingsUpdateInput(
     showLatest: settings.showLatest,
     showMore: settings.showMore,
     showFaq: settings.showFaq,
+    messagesConnectingText: settings.messagesConnectingText,
     installPrompt: { ...settings.installPrompt },
     heroSlides: settings.heroSlides.map((slide, index) => ({
       id: slide.id,

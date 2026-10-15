@@ -132,9 +132,14 @@ test('workspace ownership is decomposed by domain', () => {
   assert.match(advanced, /ga4MeasurementId/);
 
   assert.match(messages, /MessagesArticlesSection/);
+  assert.match(messages, /ConnectingMessageSettings/);
+  assert.match(messages, /saveSettings/);
   assert.match(messagesArticles, /Messages CTA|CTA 卡片/u);
   assert.doesNotMatch(messages, /ArticlePicker|background_media_id|messageArticleApi/i);
-  assert.doesNotMatch(messages, /saveSettings/);
+  assert.doesNotMatch(
+    messagesArticles,
+    /updateSiteSettingsWithHero|useSiteSettingsController/,
+  );
 });
 
 test('dirty ownership is workspace-specific', () => {

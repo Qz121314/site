@@ -479,6 +479,7 @@ export function MessageThreadPageContent({
   onLoadEarlier,
   loadingEarlier = false,
   loadingConversation = false,
+  connectingMessage = 'Connecting you with a real customer service agent…',
   connectionError = false,
   noAgentNotice = null,
   onRetryConnection,
@@ -502,6 +503,7 @@ export function MessageThreadPageContent({
   onLoadEarlier?: (() => Promise<void>) | undefined;
   loadingEarlier?: boolean;
   loadingConversation?: boolean;
+  connectingMessage?: string | undefined;
   connectionError?: boolean;
   noAgentNotice?: NoAgentNotice | null;
   onRetryConnection?: (() => void) | undefined;
@@ -738,7 +740,7 @@ export function MessageThreadPageContent({
               <span className="chat-loading-skeleton-bubble is-customer" />
             </div>
             <LoadingHalo size="small" />
-            <span className="sr-only">{SYSTEM_UI.loading}</span>
+            <span className="chat-connecting-message">{connectingMessage}</span>
           </div>
         ) : noAgentNotice && pendingConversation && !conversation ? (
           <StorefrontNoAgentNotice
@@ -1029,6 +1031,7 @@ export function MessagesWorkspace({
   onLoadEarlier,
   loadingEarlier = false,
   loadingConversation = false,
+  connectingMessage,
   connectionError = false,
   noAgentNotice = null,
   onRetryConnection,
@@ -1055,6 +1058,7 @@ export function MessagesWorkspace({
   onLoadEarlier?: (() => Promise<void>) | undefined;
   loadingEarlier?: boolean;
   loadingConversation?: boolean;
+  connectingMessage?: string | undefined;
   connectionError?: boolean;
   noAgentNotice?: NoAgentNotice | null;
   onRetryConnection?: (() => void) | undefined;
@@ -1093,6 +1097,7 @@ export function MessagesWorkspace({
             onLoadEarlier={onLoadEarlier}
             loadingEarlier={loadingEarlier}
             loadingConversation={loadingConversation}
+            connectingMessage={connectingMessage}
             connectionError={connectionError}
             noAgentNotice={noAgentNotice}
             onRetryConnection={onRetryConnection}

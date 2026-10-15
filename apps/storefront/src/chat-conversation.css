@@ -127,6 +127,15 @@
   pointer-events: none;
 }
 
+.chat-connecting-message {
+  max-width: min(100%, 300px);
+  padding: 0 12px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
 .chat-loading-skeleton {
   display: grid;
   width: min(100%, 300px);

@@ -123,6 +123,7 @@ export interface SupportGateway {
   startConversation(
     input: StartSupportConversationInput,
     signal?: AbortSignal,
+    onConnectingMessage?: (message: string) => void,
   ): Promise<SupportConversationDetail>;
   sendMessage(
     conversationRef: string,
