@@ -3,6 +3,27 @@ import test from 'node:test';
 import app from '../src/index.ts';
 
 const NOW = '2026-08-09T12:00:00.000Z';
+const CONNECTING_MESSAGE = 'Connecting you with a real customer service agent…';
+
+function siteSettingsRow() {
+  return {
+    site_name: 'Service Catalog',
+    location_label: 'Location / City',
+    media_base_url: null,
+    logo_asset_id: null,
+    logo_object_key: null,
+    pwa_icon_asset_id: null,
+    ga4_measurement_id: null,
+    home_section_limit: 5,
+    show_hot: 1,
+    show_latest: 1,
+    show_more: 1,
+    show_faq: 1,
+    storefront_layout_json: null,
+    messages_connecting_text: CONNECTING_MESSAGE,
+    updated_at: NOW,
+  };
+}
 
 function connectionRow(overrides = {}) {
   return {
@@ -57,6 +78,7 @@ function productRow() {
     category_name: 'CRM',
     title: 'Product One',
     conversion_group_id: 'group-1',
+    messages_connecting_text: CONNECTING_MESSAGE,
   };
 }
 
@@ -97,7 +119,10 @@ function createDb(steps) {
 }
 
 function connectionListDb(connection = connectionRow()) {
-  return createDb([{ kind: 'all', result: { results: [connection] } }]);
+  return createDb([
+    { kind: 'all', result: { results: [connection] } },
+    { kind: 'first', result: siteSettingsRow() },
+  ]);
 }
 
 function supportRouteDb({ connection = connectionRow(), group = groupRow() } = {}) {
@@ -136,8 +161,12 @@ test('Storefront exposes only verified public support runtime endpoints', async 
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), {
     connections: [publicConnection],
+    connectingMessage: CONNECTING_MESSAGE,
   });
-  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.equal(
+    response.headers.get('cache-control'),
+    'public, max-age=30, must-revalidate',
+  );
   assert.equal(db.remainingSteps, 0);
 });
 
@@ -156,7 +185,10 @@ test('Storefront hides unverified support connections', async () => {
   );
 
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { connections: [] });
+  assert.deepEqual(await response.json(), {
+    connections: [],
+    connectingMessage: CONNECTING_MESSAGE,
+  });
   assert.equal(db.remainingSteps, 0);
 });
 
@@ -172,6 +204,7 @@ test('Product support route returns customer-service connection and demand conte
   assert.deepEqual(await response.json(), {
     available: true,
     connection: publicConnection,
+    connectingMessage: CONNECTING_MESSAGE,
     product: {
       id: 'product-1',
       sectionId: 'section-1',

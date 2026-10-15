@@ -28,7 +28,7 @@ test('support connection discovery deduplicates cold concurrent consumers and co
 
   assert.ok(
     gateway.includes(
-      'let connectionRequest: Promise<PublicSupportConnection[]> | null = null;',
+      'let connectionRequest: Promise<PublicSupportConfig> | null = null;',
     ),
   );
   assert.ok(gateway.includes('if (!connectionRequest)'));
@@ -38,6 +38,8 @@ test('support connection discovery deduplicates cold concurrent consumers and co
   assert.ok(root.includes("conversationListEnabled={route.type !== 'message-compose'}"));
   assert.ok(runtime.includes("queryKey: ['support-conversations']"));
   assert.ok(runtime.includes('enabled: conversationListEnabled'));
+  assert.ok(source('../src/MessagesPage.tsx').includes('enabled: !compose'));
+  assert.ok(source('../src/MessagesPage.tsx').includes('setConnectingMessage'));
 });
 
 test('product detail and compose reuse one versioned immutable product cache', () => {

@@ -9,6 +9,7 @@ import {
 } from '../customer-service/customer-service-connections';
 import { loadStorefrontPublishedBootstrap } from '../publishing/storefront-bootstrap-snapshot';
 import { materializeDerivedSearchSnapshot } from '../publishing/storefront-publisher';
+import { getSiteSettings } from '../settings/site-settings';
 import type { AppEnvironment } from '../types';
 
 export const publicStorefrontConfigRoutes = new Hono<AppEnvironment>();
@@ -175,18 +176,26 @@ publicStorefrontConfigRoutes.get('/cta/:productId', async (context) => {
 });
 
 /**
- * Safe configuration discovery only. Storefront receives only the verified
- * public client endpoints needed to connect directly to customer-service.
+ * Safe, bounded-cached configuration discovery. Storefront receives only the
+ * verified public client endpoints and connection copy needed by Messages.
  * Verification tokens are never exposed.
  */
-publicStorefrontConfigRoutes.get('/support/connections', async (context) => {
-  setPublicRuntimeHeaders(context);
-  const connections = (await listCustomerServiceConnections(context.env.DB, 'active'))
-    .filter((connection) => connection.isEnabled && !connection.deletedAt)
-    .map(toPublicSupportConnection)
-    .filter((connection): connection is PublicSupportConnection => Boolean(connection));
-  return context.json({ connections });
-});
+publicStorefrontConfigRoutes.get('/support/connections', (context) =>
+  cachedPublicJson(context, async () => {
+    const [allConnections, settings] = await Promise.all([
+      listCustomerServiceConnections(context.env.DB, 'active'),
+      getSiteSettings(context.env.DB),
+    ]);
+    const connections = allConnections
+      .filter((connection) => connection.isEnabled && !connection.deletedAt)
+      .map(toPublicSupportConnection)
+      .filter((connection): connection is PublicSupportConnection => Boolean(connection));
+    return {
+      connections,
+      connectingMessage: settings.messagesConnectingText,
+    };
+  }),
+);
 
 /**
  * Resolve Product -> online support conversion group -> customer-service
@@ -251,6 +260,7 @@ publicStorefrontConfigRoutes.get('/support/route/:productId', async (context) =>
       categoryName: product.categoryName,
       title: product.title,
     },
+    connectingMessage: product.messagesConnectingText,
   });
 });
 
@@ -260,7 +270,9 @@ publicStorefrontConfigRoutes.get('/support/route/section/:sectionId', async (con
   if (!validPublicId(sectionId)) return context.json({ available: false });
 
   const section = await context.env.DB.prepare(
-    `SELECT id, name, slug, conversion_group_id
+    `SELECT id, name, slug, conversion_group_id,
+       (SELECT messages_connecting_text FROM site_settings WHERE id = 1)
+         AS messages_connecting_text
      FROM sections
      WHERE id = ? AND is_enabled = 1 AND is_visible = 1
        AND deleted_at IS NULL AND conversion_group_id IS NOT NULL`,
@@ -271,6 +283,7 @@ publicStorefrontConfigRoutes.get('/support/route/section/:sectionId', async (con
       name: string;
       slug: string;
       conversion_group_id: string;
+      messages_connecting_text: string;
     }>();
   if (!section?.conversion_group_id) return context.json({ available: false });
 
@@ -301,6 +314,7 @@ publicStorefrontConfigRoutes.get('/support/route/section/:sectionId', async (con
   return context.json({
     available: true,
     connection: publicConnection,
+    connectingMessage: section.messages_connecting_text,
     section: {
       id: section.id,
       name: section.name,

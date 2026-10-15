@@ -8,6 +8,7 @@ export type RoutableProduct = {
   categoryName: string | null;
   title: string;
   conversionGroupId: string | null;
+  messagesConnectingText: string;
 };
 
 export type PublicCta = {
@@ -24,6 +25,7 @@ type RoutableProductRow = {
   category_name: string | null;
   title: string;
   conversion_group_id: string | null;
+  messages_connecting_text: string;
 };
 
 export async function getRoutableProduct(
@@ -34,7 +36,9 @@ export async function getRoutableProduct(
     .prepare(
       `SELECT p.id, p.section_id, s.name AS section_name,
          p.category_id, c.name AS category_name,
-         p.title, p.conversion_group_id
+         p.title, p.conversion_group_id,
+         (SELECT messages_connecting_text FROM site_settings WHERE id = 1)
+           AS messages_connecting_text
        FROM products p
        JOIN sections s ON s.id = p.section_id
        LEFT JOIN categories c
@@ -57,6 +61,7 @@ export async function getRoutableProduct(
         categoryName: row.category_id && row.category_name ? row.category_name : null,
         title: row.title,
         conversionGroupId: row.conversion_group_id,
+        messagesConnectingText: row.messages_connecting_text,
       }
     : null;
 }

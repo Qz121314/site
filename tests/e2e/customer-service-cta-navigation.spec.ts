@@ -108,6 +108,8 @@ test('customer-service CTA opens the chat shell before the Worker handoff resolv
 
   await page.goto(productHref!);
   if (useLocalFixture) {
+    await expect(page.getByRole('heading', { name: 'CTA Test Product' })).toBeVisible();
+    await expect(page.getByText(/Category\s*·/u)).toHaveCount(0);
     await expect(
       page.getByText('Location: Downtown Studio', { exact: true }),
     ).toBeVisible();

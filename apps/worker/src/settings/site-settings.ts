@@ -14,6 +14,7 @@ export type SiteSettings = {
   showLatest: boolean;
   showMore: boolean;
   showFaq: boolean;
+  messagesConnectingText: string;
   storefrontLayout: StorefrontLayoutConfig;
   updatedAt: string;
 };
@@ -34,6 +35,7 @@ type SiteSettingsRow = {
   show_more: number;
   show_faq: number;
   storefront_layout_json: string | null;
+  messages_connecting_text: string;
   updated_at: string;
 };
 
@@ -216,6 +218,13 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
   if (!showMore.ok) return showMore;
   const showFaq = readBoolean(value.showFaq, 'showFaq');
   if (!showFaq.ok) return showFaq;
+  const messagesConnectingText = readTrimmedString(
+    value.messagesConnectingText,
+    'messagesConnectingText',
+    1,
+    200,
+  );
+  if (!messagesConnectingText.ok) return messagesConnectingText;
 
   const storefrontLayout = resolveStorefrontLayoutConfig(value.storefrontLayout);
 
@@ -233,6 +242,7 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
       showLatest: showLatest.value,
       showMore: showMore.value,
       showFaq: showFaq.value,
+      messagesConnectingText: messagesConnectingText.value,
       storefrontLayout,
     },
   };
@@ -252,6 +262,7 @@ function fromRow(row: SiteSettingsRow): SiteSettings {
     showLatest: row.show_latest === 1,
     showMore: row.show_more === 1,
     showFaq: row.show_faq === 1,
+    messagesConnectingText: row.messages_connecting_text,
     storefrontLayout: parseStorefrontLayout(row.storefront_layout_json),
     updatedAt: row.updated_at,
   };
@@ -283,6 +294,7 @@ export async function getSiteSettings(db: D1Database): Promise<SiteSettings> {
          s.show_more,
          s.show_faq,
          s.storefront_layout_json,
+         s.messages_connecting_text,
          s.updated_at
        FROM site_settings s
        LEFT JOIN media_assets logo
@@ -317,6 +329,7 @@ export function createUpdateSiteSettingsStatement(
            show_more = ?,
            show_faq = ?,
            storefront_layout_json = ?,
+           messages_connecting_text = ?,
            updated_at = ?
        WHERE id = 1`,
     )
@@ -333,6 +346,7 @@ export function createUpdateSiteSettingsStatement(
       input.showMore ? 1 : 0,
       input.showFaq ? 1 : 0,
       JSON.stringify(input.storefrontLayout),
+      input.messagesConnectingText,
       updatedAt,
     );
 }

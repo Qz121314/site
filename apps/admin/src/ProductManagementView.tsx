@@ -21,6 +21,7 @@ import {
   fetchAvailableConversionGroups,
   type AdminConversionGroup,
 } from './conversion-pool/api';
+import { testCustomerServiceConnection } from './customer-service/api';
 import { DeleteProductDialog } from './product-management/DeleteProductDialog';
 import { ProductEditorDialog } from './product-management/ProductEditorDialog';
 import { ProductTable } from './product-management/ProductTable';
@@ -498,9 +499,37 @@ export function ProductManagementView({
     const saved = await persistEditor(form);
     if (!saved) return;
 
-    setSuccessMessage(
-      `${reviewMode ? 'Review' : '产品'}“${saved.title}”已${wasEditing ? '更新' : '创建'}。`,
+    const customerServiceConnectionIds = new Set(
+      [editingProduct, saved].flatMap((product) => {
+        if (product?.status !== 'published' || !product.conversionGroupId) return [];
+        const group = groups.find((item) => item.id === product.conversionGroupId);
+        return group?.mode === 'customer_service' && group.customerServiceConnectionId
+          ? [group.customerServiceConnectionId]
+          : [];
+      }),
     );
+    let customerServiceSyncFailed = false;
+    if (customerServiceConnectionIds.size > 0) {
+      setSaveStage('saving');
+      const syncResults = await Promise.allSettled(
+        [...customerServiceConnectionIds].map(testCustomerServiceConnection),
+      );
+      customerServiceSyncFailed = syncResults.some(
+        (result) => result.status === 'rejected',
+      );
+      setSaveStage('idle');
+    }
+
+    if (customerServiceSyncFailed) {
+      setErrorMessage(
+        '商品已保存，但在线客服目录同步失败。请到“客服接入”重新验证连接后再试。',
+      );
+      setSuccessMessage('');
+    } else {
+      setSuccessMessage(
+        `${reviewMode ? 'Review' : '产品'}“${saved.title}”已${wasEditing ? '更新' : '创建'}。${customerServiceConnectionIds.size > 0 ? '在线客服目录已同步。' : ''}`,
+      );
+    }
     setMedia([]);
     setCoverKey(null);
     setEditorOpen(false);

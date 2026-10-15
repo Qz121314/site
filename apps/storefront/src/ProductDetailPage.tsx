@@ -614,12 +614,6 @@ export function ProductDetailPage({
 
           <div className="product-detail-info">
             <section className="product-detail-summary">
-              {isLandingPageTemplate ? (
-                <p className="product-detail-eyebrow">
-                  Category <span aria-hidden="true">·</span>{' '}
-                  {product.category.name || product.sectionName}
-                </p>
-              ) : null}
               <h1 id="product-detail-title">{product.title}</h1>
               {!isLandingPageTemplate && address ? (
                 <div className="product-detail-address">

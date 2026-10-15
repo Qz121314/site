@@ -44,6 +44,11 @@ export type PublicSupportConnection = {
   protocolVersion: 'v1';
 };
 
+export type PublicSupportConfig = {
+  connections: PublicSupportConnection[];
+  connectingMessage: string;
+};
+
 type ResolvedSupportProduct = {
   id: string;
   sectionId: string;
@@ -62,12 +67,14 @@ type ResolvedSupportSection = {
 type ResolvedSupportRoute = {
   available: true;
   connection: PublicSupportConnection;
+  connectingMessage: string;
   product: ResolvedSupportProduct;
 };
 
 type ResolvedSectionSupportRoute = {
   available: true;
   connection: PublicSupportConnection;
+  connectingMessage: string;
   section: ResolvedSupportSection;
 };
 
@@ -94,11 +101,12 @@ type ErrorEnvelope = {
 };
 
 const CONNECTION_CACHE_MS = 30_000;
+const DEFAULT_CONNECTING_MESSAGE = 'Connecting you with a real customer service agent…';
 let connectionCache: {
   expiresAt: number;
-  connections: PublicSupportConnection[];
+  config: PublicSupportConfig;
 } | null = null;
-let connectionRequest: Promise<PublicSupportConnection[]> | null = null;
+let connectionRequest: Promise<PublicSupportConfig> | null = null;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -176,12 +184,11 @@ function parseResolvedProduct(value: unknown): ResolvedSupportProduct {
   return item as ResolvedSupportProduct;
 }
 
-export async function loadPublicSupportConnections(
+export async function loadPublicSupportConfig(
   signal?: AbortSignal,
-): Promise<PublicSupportConnection[]> {
+): Promise<PublicSupportConfig> {
   const now = Date.now();
-  if (connectionCache && connectionCache.expiresAt > now)
-    return connectionCache.connections;
+  if (connectionCache && connectionCache.expiresAt > now) return connectionCache.config;
   if (signal?.aborted) {
     throw new DOMException('The operation was aborted.', 'AbortError');
   }
@@ -191,7 +198,12 @@ export async function loadPublicSupportConnections(
     connectionRequest = (async () => {
       const value = await siteRequestJson('/api/public/storefront/support/connections');
       const envelope = isRecord(value) ? value : null;
-      if (!envelope || !Array.isArray(envelope.connections)) {
+      if (
+        !envelope ||
+        !Array.isArray(envelope.connections) ||
+        (typeof envelope.connectingMessage !== 'string' &&
+          envelope.connectingMessage !== undefined)
+      ) {
         throw new SupportApiError(
           500,
           'INVALID_SUPPORT_CONFIG',
@@ -199,16 +211,30 @@ export async function loadPublicSupportConnections(
         );
       }
       const connections = envelope.connections.map(parseConnection);
+      const config = {
+        connections,
+        connectingMessage:
+          typeof envelope.connectingMessage === 'string' &&
+          envelope.connectingMessage.trim()
+            ? envelope.connectingMessage.trim()
+            : 'Connecting you with a real customer service agent…',
+      };
       connectionCache = {
         expiresAt: Date.now() + CONNECTION_CACHE_MS,
-        connections,
+        config,
       };
-      return connections;
+      return config;
     })().finally(() => {
       connectionRequest = null;
     });
   }
   return connectionRequest;
+}
+
+export async function loadPublicSupportConnections(
+  signal?: AbortSignal,
+): Promise<PublicSupportConnection[]> {
+  return (await loadPublicSupportConfig(signal)).connections;
 }
 
 async function resolveSupportRoute(
@@ -232,6 +258,10 @@ async function resolveSupportRoute(
   return {
     available: true,
     connection: parseConnection(envelope.connection),
+    connectingMessage:
+      typeof envelope.connectingMessage === 'string' && envelope.connectingMessage.trim()
+        ? envelope.connectingMessage.trim()
+        : DEFAULT_CONNECTING_MESSAGE,
     product: parseResolvedProduct(envelope.product),
   };
 }
@@ -263,6 +293,10 @@ async function resolveSectionSupportRoute(
   return {
     available: true,
     connection: parseConnection(envelope.connection),
+    connectingMessage:
+      typeof envelope.connectingMessage === 'string' && envelope.connectingMessage.trim()
+        ? envelope.connectingMessage.trim()
+        : DEFAULT_CONNECTING_MESSAGE,
     section: section as ResolvedSupportSection,
   };
 }
@@ -691,11 +725,16 @@ export const siteSupportGateway: SupportGateway = {
     }
   },
 
-  async startConversation(input: StartSupportConversationInput, signal) {
+  async startConversation(
+    input: StartSupportConversationInput,
+    signal,
+    onConnectingMessage?: (message: string) => void,
+  ) {
     const route =
       input.contextType === 'product'
         ? await resolveSupportRoute(input.productId, input.sectionId, signal)
         : await resolveSectionSupportRoute(input.sectionId, signal);
+    onConnectingMessage?.(route.connectingMessage);
     const value = await remoteRequestJson(
       remoteUrl(route.connection, '/conversations'),
       {

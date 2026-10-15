@@ -18,6 +18,7 @@ export type SiteSettings = {
   showLatest: boolean;
   showMore: boolean;
   showFaq: boolean;
+  messagesConnectingText: string;
   storefrontLayout: StorefrontLayoutConfig;
   installPrompt: {
     enabled: boolean;
@@ -214,6 +215,7 @@ function parseSiteSettings(value: unknown): SiteSettings {
     typeof settings.showLatest === 'boolean' &&
     typeof settings.showMore === 'boolean' &&
     typeof settings.showFaq === 'boolean' &&
+    typeof settings.messagesConnectingText === 'string' &&
     settings.storefrontLayout !== undefined &&
     Boolean(installPrompt) &&
     typeof installPrompt?.enabled === 'boolean' &&

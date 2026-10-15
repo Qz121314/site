@@ -66,6 +66,7 @@ function createDraft(settings: SiteSettingsWithHero): SettingsDraft {
     showLatest: settings.showLatest,
     showMore: settings.showMore,
     showFaq: settings.showFaq,
+    messagesConnectingText: settings.messagesConnectingText,
     installPrompt: { ...settings.installPrompt },
     heroSlides: settings.heroSlides.map((slide) => ({ ...slide })),
     bottomNavigation: settings.bottomNavigation.map((item) => ({ ...item })),
@@ -95,6 +96,7 @@ function toInput(draft: SettingsDraft): SettingsPayload {
     showLatest: draft.showLatest,
     showMore: draft.showMore,
     showFaq: draft.showFaq,
+    messagesConnectingText: draft.messagesConnectingText,
     installPrompt: { ...draft.installPrompt },
     heroSlides: draft.heroSlides.map((slide, index) => ({
       id: slide.id,

@@ -13,9 +13,7 @@ test('CTA compose creates the remote conversation without inventing a visitor te
 
   const startQuery = messages.indexOf("queryKey: ['support-compose-start'");
   const sendMutation = messages.indexOf('const sendMutation = useMutation');
-  const startConversation = gateway.indexOf(
-    'async startConversation(input: StartSupportConversationInput, signal)',
-  );
+  const startConversation = gateway.indexOf('async startConversation(');
   const sendMessage = gateway.indexOf('async sendMessage(conversationRef: string');
 
   assert.ok(startQuery >= 0);
@@ -28,6 +26,10 @@ test('CTA compose creates the remote conversation without inventing a visitor te
   assert.doesNotMatch(contract, /clientMessageId: string;\s*message: string;/u);
 
   const conversationCreation = gateway.slice(startConversation, sendMessage);
+  assert.match(
+    conversationCreation,
+    /onConnectingMessage\?\.\(route\.connectingMessage\)/u,
+  );
   assert.match(conversationCreation, /sourceHandoffId: input\.handoffId/u);
   assert.doesNotMatch(conversationCreation, /clientMessageId: input\.clientMessageId/u);
   assert.doesNotMatch(conversationCreation, /message: input\.message/u);
