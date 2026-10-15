@@ -49,6 +49,7 @@ const siteSettings = {
     showLatest: true,
     showMore: true,
     showFaq: true,
+    messagesConnectingText: '正在为你连接真人客服',
     installPrompt: {
       enabled: false,
       delaySeconds: 30,
