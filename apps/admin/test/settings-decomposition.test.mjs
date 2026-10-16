@@ -114,9 +114,7 @@ test('workspace ownership is decomposed by domain', () => {
     '../src/experience/messages-articles/MessagesArticlesSection.tsx',
   );
   const pwa = source('../src/experience/PwaSettingsView.tsx');
-  const general = source('../src/system/SystemGeneralView.tsx');
-  const infrastructure = source('../src/system/SystemInfrastructureView.tsx');
-  const advanced = source('../src/system/SystemAdvancedView.tsx');
+  const system = source('../src/system/SystemSettingsView.tsx');
 
   assert.match(home, /SiteHeroSettingsSection/);
   assert.match(home, /HomeLayoutSettingsSection/);
@@ -124,12 +122,12 @@ test('workspace ownership is decomposed by domain', () => {
   assert.match(navigation, /BottomNavigationSettingsSection/);
   assert.match(pwa, /installPrompt/);
   assert.match(pwa, /pwaIconAssetId/);
-  assert.match(general, /siteName/);
-  assert.match(general, /locationLabel/);
-  assert.match(general, /logoAssetId/);
-  assert.match(infrastructure, /mediaBaseUrl/);
-  assert.match(infrastructure, /testMediaDomain/);
-  assert.match(advanced, /ga4MeasurementId/);
+  assert.match(system, /siteName/);
+  assert.match(system, /locationLabel/);
+  assert.match(system, /logoAssetId/);
+  assert.match(system, /mediaBaseUrl/);
+  assert.match(system, /testMediaDomain/);
+  assert.match(system, /ga4MeasurementId/);
 
   assert.match(messages, /MessagesArticlesSection/);
   assert.match(messages, /ConnectingMessageSettings/);
@@ -151,9 +149,7 @@ test('dirty ownership is workspace-specific', () => {
       'messages-articles',
     ],
     ['../src/experience/PwaSettingsView.tsx', 'pwa-settings'],
-    ['../src/system/SystemGeneralView.tsx', 'system-general'],
-    ['../src/system/SystemInfrastructureView.tsx', 'system-infrastructure'],
-    ['../src/system/SystemAdvancedView.tsx', 'system-advanced'],
+    ['../src/system/SystemSettingsView.tsx', 'system-settings'],
   ];
 
   for (const [path, owner] of sources) {

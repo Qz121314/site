@@ -145,6 +145,7 @@ async function validateTargets(
   cards: MessageCardInput[],
 ): Promise<string | null> {
   for (const card of cards) {
+    if (card.conversionGroupId) continue;
     if (card.targetKind === 'link') {
       try {
         const url = new URL(card.targetRef);

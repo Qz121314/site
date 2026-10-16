@@ -92,6 +92,14 @@ export type StartSupportConversationInput =
       sectionId: string;
       sectionName: string;
       sectionHref: string;
+    }
+  | {
+      contextType: 'message_card';
+      handoffId: string;
+      cardId: string;
+      sectionId: string;
+      sectionName: string;
+      sectionHref: string;
     };
 
 export type SendSupportMessageInput = {

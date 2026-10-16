@@ -15,6 +15,12 @@ export const MESSAGE_ARTICLE_IDS = {
   gamma: 'article-gamma',
 } as const;
 
+export const MESSAGE_CARD_IDS = {
+  alpha: 'card-alpha',
+  beta: 'card-beta',
+  gamma: 'card-gamma',
+} as const;
+
 const moduleReference = (contentVersion: string) => ({
   contentVersion,
   manifestKey: `test/${contentVersion}`,
@@ -24,7 +30,7 @@ const moduleReference = (contentVersion: string) => ({
 
 const messageArticles = [
   {
-    cardId: MESSAGE_ARTICLE_IDS.beta,
+    cardId: MESSAGE_CARD_IDS.beta,
     title: 'Beta guide',
     preview: 'A neutral card without background media.',
     targetKind: 'article',
@@ -35,7 +41,7 @@ const messageArticles = [
     sortOrder: 20,
   },
   {
-    cardId: MESSAGE_ARTICLE_IDS.alpha,
+    cardId: MESSAGE_CARD_IDS.alpha,
     title: ALPHA_TITLE,
     preview: 'The first recommended article from bootstrap metadata.',
     targetKind: 'article',
@@ -46,7 +52,7 @@ const messageArticles = [
     sortOrder: 10,
   },
   {
-    cardId: MESSAGE_ARTICLE_IDS.gamma,
+    cardId: MESSAGE_CARD_IDS.gamma,
     title: 'Gamma guide',
     preview: 'A card that remains usable when its background cannot load.',
     targetKind: 'article',

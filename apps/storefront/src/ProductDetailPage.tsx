@@ -294,7 +294,7 @@ export function ProductDetailPage({
     if (ctaQuery.isFetching) return;
     const currentProduct = product;
     if (!currentProduct) return;
-    const cta = ctaQuery.data ?? (await ctaQuery.refetch()).data;
+    const cta = (await ctaQuery.refetch()).data;
     if (!cta) return;
     if (cta.mode === 'customer_service') {
       if (query.data) {
@@ -312,6 +312,7 @@ export function ProductDetailPage({
         productId: currentProduct.id,
         sectionId: currentProduct.sectionId,
         ctaPath: cta.path,
+        attemptId: crypto.randomUUID(),
       });
       pushStorefrontLocation(
         `/messages/new/?${params.toString()}`,

@@ -155,6 +155,9 @@ function CardEditor({
                   </option>
                 ))}
               </Select>
+              {card.conversionGroupId ? (
+                <small>实际点击使用所选转化池；上方文章或链接不会被打开。</small>
+              ) : null}
             </label>
             <div className="messages-card-field">
               <span>卡片背景图</span>
@@ -317,8 +320,21 @@ export function MessagesArticlesSection({
               <div className="messages-articles-article">
                 <strong>{card.title || '未命名 CTA'}</strong>
                 <small>
-                  {targetLabel(card)}：{card.targetLabel || card.targetRef}
+                  {card.conversionGroupId
+                    ? `转化池：${options?.conversionGroups.find((group) => group.id === card.conversionGroupId)?.name ?? '已停用或不存在'}`
+                    : `${targetLabel(card)}：${card.targetLabel || card.targetRef}`}
                 </small>
+                {card.conversionGroupId &&
+                !options?.conversionGroups.some(
+                  (group) => group.id === card.conversionGroupId,
+                ) ? (
+                  <small role="alert">所选转化池已停用或不存在，请更换目标。</small>
+                ) : null}
+                {!card.conversionGroupId &&
+                card.targetKind === 'article' &&
+                !options?.articles.some((article) => article.id === card.targetRef) ? (
+                  <small role="alert">目标文章已删除或停用，请更换目标。</small>
+                ) : null}
               </div>
               <div className="messages-articles-background">
                 <div className="messages-articles-thumb">

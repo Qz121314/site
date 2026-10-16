@@ -7,7 +7,7 @@ function source(path) {
 }
 
 test('system general and PWA keep logo and app icon as separate assets', () => {
-  const generalSource = source('../src/system/SystemGeneralView.tsx');
+  const generalSource = source('../src/system/SystemSettingsView.tsx');
   const pwaSource = source('../src/experience/PwaSettingsView.tsx');
   const brandingHookSource = source('../src/settings/useBrandingImageDraft.ts');
   const settingsApiSource = source('../src/site-hero-settings-api.ts');

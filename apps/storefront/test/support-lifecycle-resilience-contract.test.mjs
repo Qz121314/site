@@ -11,7 +11,7 @@ test('support lifecycle keeps side-effect retries explicit and realtime recovery
   const messages = source('../src/MessagesPage.tsx');
   const realtime = source('../src/support-realtime.ts');
 
-  const handoffStart = messages.indexOf("queryKey: ['support-compose-handoff'");
+  const handoffStart = messages.search(/queryKey:\s*\[\s*'support-compose-handoff'/u);
   const handoffEnd = messages.indexOf('const resolvedComposeContext', handoffStart);
   const startStart = messages.indexOf("queryKey: ['support-compose-start'");
   const startEnd = messages.indexOf('const conversationsQuery', startStart);
@@ -20,6 +20,7 @@ test('support lifecycle keeps side-effect retries explicit and realtime recovery
 
   assert.ok(handoffStart >= 0);
   assert.ok(startStart >= 0);
+  assert.match(handoffQuery, /composeContext\?\.attemptId/u);
   assert.match(handoffQuery, /retry: false/u);
   assert.match(startQuery, /retry: false/u);
   assert.match(messages, /retryComposeConnection/u);

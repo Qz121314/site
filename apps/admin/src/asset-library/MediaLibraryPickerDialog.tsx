@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AdminApiError } from '../api';
 import { brandingAssetPreviewUrl } from '../branding-media/api';
+import { AdminDialog } from '../components/ui/dialog';
 import {
   fetchMediaFolders,
   type ManagedMediaAsset,
@@ -55,6 +56,7 @@ function mediaKindsFromKey(value: string): MediaKind[] {
 }
 
 export function MediaLibraryPickerDialog({
+  title,
   role,
   allowedKinds,
   selectedIds = [],
@@ -64,8 +66,6 @@ export function MediaLibraryPickerDialog({
   onClose,
   onSessionExpired,
 }: MediaLibraryPickerDialogProps) {
-  const dialogRef = useRef<HTMLElement>(null);
-  const previousFocusRef = useRef<HTMLElement | null>(null);
   const [assets, setAssets] = useState<ManagedMediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,19 +80,6 @@ export function MediaLibraryPickerDialog({
   const [errorMessage, setErrorMessage] = useState('');
   const requestVersionRef = useRef(0);
   const allowedKindsKey = allowedKinds.join(',');
-
-  useEffect(() => {
-    previousFocusRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    dialogRef.current?.focus();
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      previousFocusRef.current?.focus();
-    };
-  }, []);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedQuery(query.trim()), 220);
@@ -214,179 +201,179 @@ export function MediaLibraryPickerDialog({
   }
 
   const dialog = (
-    <div className="admin-dialog-backdrop media-picker-backdrop" role="presentation">
-      <section
-        ref={dialogRef}
-        className="admin-dialog media-picker-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-label="素材选择"
-        tabIndex={-1}
-      >
-        <div className="admin-dialog-header media-picker-header">
-          <button
-            type="button"
-            aria-label="关闭"
-            disabled={workingId !== null}
-            onClick={onClose}
+    <AdminDialog
+      open
+      title={title}
+      ariaLabel={title}
+      onClose={onClose}
+      closeDisabled={workingId !== null}
+      showClose={false}
+      showHeading={false}
+      initialFocus="dialog"
+      className="media-picker-dialog"
+      backdropClassName="media-picker-backdrop"
+    >
+      <div className="admin-dialog-header media-picker-header">
+        <button
+          type="button"
+          aria-label="关闭"
+          disabled={workingId !== null}
+          onClick={onClose}
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="media-picker-body">
+        <div className="media-picker-filters">
+          <input
+            className="media-picker-search"
+            type="search"
+            value={query}
+            placeholder="搜索文件名、分组或格式"
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <select
+            value={folderFilter}
+            onChange={(event) => setFolderFilter(event.target.value)}
+            aria-label="素材分组"
           >
-            ×
-          </button>
+            <option value="all">全部分组</option>
+            <option value="unfiled">未分组</option>
+            {folders.map((folder) => (
+              <option key={folder.id} value={folder.id}>
+                {folder.name} ({folder.assetCount})
+              </option>
+            ))}
+          </select>
+          {allowedKinds.length > 1 ? (
+            <select
+              value={kindFilter}
+              onChange={(event) => setKindFilter(event.target.value as MediaKind | 'all')}
+              aria-label="素材类型"
+            >
+              <option value="all">全部格式</option>
+              {allowedKinds.includes('image') ? (
+                <option value="image">图片</option>
+              ) : null}
+              {allowedKinds.includes('animated_image') ? (
+                <option value="animated_image">GIF</option>
+              ) : null}
+              {allowedKinds.includes('video') ? (
+                <option value="video">视频</option>
+              ) : null}
+            </select>
+          ) : null}
         </div>
 
-        <div className="media-picker-body">
-          <div className="media-picker-filters">
-            <input
-              className="media-picker-search"
-              type="search"
-              value={query}
-              placeholder="搜索文件名、分组或格式"
-              onChange={(event) => setQuery(event.target.value)}
-            />
-            <select
-              value={folderFilter}
-              onChange={(event) => setFolderFilter(event.target.value)}
-              aria-label="素材分组"
-            >
-              <option value="all">全部分组</option>
-              <option value="unfiled">未分组</option>
-              {folders.map((folder) => (
-                <option key={folder.id} value={folder.id}>
-                  {folder.name} ({folder.assetCount})
-                </option>
-              ))}
-            </select>
-            {allowedKinds.length > 1 ? (
-              <select
-                value={kindFilter}
-                onChange={(event) =>
-                  setKindFilter(event.target.value as MediaKind | 'all')
-                }
-                aria-label="素材类型"
-              >
-                <option value="all">全部格式</option>
-                {allowedKinds.includes('image') ? (
-                  <option value="image">图片</option>
-                ) : null}
-                {allowedKinds.includes('animated_image') ? (
-                  <option value="animated_image">GIF</option>
-                ) : null}
-                {allowedKinds.includes('video') ? (
-                  <option value="video">视频</option>
-                ) : null}
-              </select>
-            ) : null}
-          </div>
-
-          <div className="media-picker-selection-status">
-            <span>
-              已选择 {selectedIds.length}
-              {maxSelections !== undefined ? ` / ${maxSelections}` : ''}
-            </span>
-            {selectionLimitReached ? (
-              <strong>已达到选择上限</strong>
-            ) : (
-              <small>点击缩略图加入产品</small>
-            )}
-          </div>
-
-          {errorMessage ? (
-            <div className="notice notice-error" role="alert">
-              {errorMessage}
-            </div>
-          ) : null}
-
-          {loading ? (
-            <div className="media-picker-empty">正在读取素材…</div>
-          ) : assets.length > 0 ? (
-            <>
-              <div className="media-picker-grid">
-                {assets.map((asset) => {
-                  const isSelected = selected.has(asset.id);
-                  return (
-                    <button
-                      className={`media-picker-card${isSelected ? ' is-selected' : ''}`}
-                      type="button"
-                      key={asset.id}
-                      disabled={workingId !== null || isSelected || selectionLimitReached}
-                      onClick={() => void choose(asset)}
-                    >
-                      <span className="media-picker-preview">
-                        {asset.mediaKind === 'video' ? (
-                          <i>视频</i>
-                        ) : (
-                          <img
-                            src={brandingAssetPreviewUrl(asset.id)}
-                            alt=""
-                            width={asset.width ?? undefined}
-                            height={asset.height ?? undefined}
-                            loading="lazy"
-                          />
-                        )}
-                        <b>{kindLabel(asset.mediaKind)}</b>
-                        {isSelected ? (
-                          <em className="media-picker-selected-mark">✓</em>
-                        ) : null}
-                      </span>
-                      <span className="media-picker-copy">
-                        <strong title={asset.fileName}>{asset.fileName}</strong>
-                        <small>
-                          {asset.folderName ? `${asset.folderName} · ` : '未分组 · '}
-                          {asset.width && asset.height
-                            ? `${asset.width} × ${asset.height} · `
-                            : ''}
-                          {formatBytes(asset.byteSize)}
-                        </small>
-                        <em>
-                          {isSelected
-                            ? '已选择'
-                            : workingId === asset.id
-                              ? '正在选择…'
-                              : '选择此素材'}
-                        </em>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              {nextCursor ? (
-                <div className="media-picker-load-more">
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    disabled={loadingMore}
-                    onClick={() => void loadMore()}
-                  >
-                    {loadingMore
-                      ? '正在加载…'
-                      : `加载更多（已显示 ${assets.length} / ${total}）`}
-                  </button>
-                </div>
-              ) : null}
-            </>
+        <div className="media-picker-selection-status">
+          <span>
+            已选择 {selectedIds.length}
+            {maxSelections !== undefined ? ` / ${maxSelections}` : ''}
+          </span>
+          {selectionLimitReached ? (
+            <strong>已达到选择上限</strong>
           ) : (
-            <div className="media-picker-empty">
-              <strong>没有匹配的素材</strong>
-              <p>请先到素材中心上传素材，或调整分组和格式筛选。</p>
-            </div>
+            <small>点击缩略图加入产品</small>
           )}
         </div>
 
-        <div className="media-picker-footer">
-          <span>
-            {total} 个当前结果{assets.length < total ? ` · 已加载 ${assets.length}` : ''}
-          </span>
-          <button
-            type="button"
-            className="primary-button"
-            disabled={workingId !== null}
-            onClick={onDone}
-          >
-            完成选择
-          </button>
-        </div>
-      </section>
-    </div>
+        {errorMessage ? (
+          <div className="notice notice-error" role="alert">
+            {errorMessage}
+          </div>
+        ) : null}
+
+        {loading ? (
+          <div className="media-picker-empty">正在读取素材…</div>
+        ) : assets.length > 0 ? (
+          <>
+            <div className="media-picker-grid">
+              {assets.map((asset) => {
+                const isSelected = selected.has(asset.id);
+                return (
+                  <button
+                    className={`media-picker-card${isSelected ? ' is-selected' : ''}`}
+                    type="button"
+                    key={asset.id}
+                    disabled={workingId !== null || isSelected || selectionLimitReached}
+                    onClick={() => void choose(asset)}
+                  >
+                    <span className="media-picker-preview">
+                      {asset.mediaKind === 'video' ? (
+                        <i>视频</i>
+                      ) : (
+                        <img
+                          src={brandingAssetPreviewUrl(asset.id)}
+                          alt=""
+                          width={asset.width ?? undefined}
+                          height={asset.height ?? undefined}
+                          loading="lazy"
+                        />
+                      )}
+                      <b>{kindLabel(asset.mediaKind)}</b>
+                      {isSelected ? (
+                        <em className="media-picker-selected-mark">✓</em>
+                      ) : null}
+                    </span>
+                    <span className="media-picker-copy">
+                      <strong title={asset.fileName}>{asset.fileName}</strong>
+                      <small>
+                        {asset.folderName ? `${asset.folderName} · ` : '未分组 · '}
+                        {asset.width && asset.height
+                          ? `${asset.width} × ${asset.height} · `
+                          : ''}
+                        {formatBytes(asset.byteSize)}
+                      </small>
+                      <em>
+                        {isSelected
+                          ? '已选择'
+                          : workingId === asset.id
+                            ? '正在选择…'
+                            : '选择此素材'}
+                      </em>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {nextCursor ? (
+              <div className="media-picker-load-more">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={loadingMore}
+                  onClick={() => void loadMore()}
+                >
+                  {loadingMore
+                    ? '正在加载…'
+                    : `加载更多（已显示 ${assets.length} / ${total}）`}
+                </button>
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <div className="media-picker-empty">
+            <strong>没有匹配的素材</strong>
+            <p>请先到素材中心上传素材，或调整分组和格式筛选。</p>
+          </div>
+        )}
+      </div>
+
+      <div className="media-picker-footer">
+        <span>
+          {total} 个当前结果{assets.length < total ? ` · 已加载 ${assets.length}` : ''}
+        </span>
+        <button
+          type="button"
+          className="primary-button"
+          disabled={workingId !== null}
+          onClick={onDone}
+        >
+          完成选择
+        </button>
+      </div>
+    </AdminDialog>
   );
 
   return createPortal(dialog, document.body);

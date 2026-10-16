@@ -334,6 +334,9 @@ function faqDb() {
           if (this.sql.includes('FROM faqs')) {
             return records.get(this.args[0]) ?? null;
           }
+          if (this.sql.includes('FROM message_cta_cards')) {
+            return { count: 0 };
+          }
           throw new Error(`Unexpected first SQL: ${this.sql}`);
         },
       };

@@ -124,13 +124,19 @@ function groupDeleteError(
   context: Parameters<typeof apiError>[0],
   group: ConversionGroupRecord,
   sectionCount = 0,
+  cardCount = 0,
 ) {
   return apiError(
     context,
     409,
     'CONVERSION_GROUP_HAS_DEPENDENCIES',
     `转化分组“${group.name}”仍有入口、产品或分区卡片引用，不能删除。`,
-    { targetCount: group.targetCount, productCount: group.productCount, sectionCount },
+    {
+      targetCount: group.targetCount,
+      productCount: group.productCount,
+      sectionCount,
+      cardCount,
+    },
   );
 }
 
@@ -140,6 +146,16 @@ async function groupSectionReferenceCount(
 ): Promise<number> {
   const row = await db
     .prepare('SELECT COUNT(*) AS count FROM sections WHERE conversion_group_id = ?')
+    .bind(groupId)
+    .first<{ count: number }>();
+  return Number(row?.count ?? 0);
+}
+
+async function groupCardReferenceCount(db: D1Database, groupId: string): Promise<number> {
+  const row = await db
+    .prepare(
+      'SELECT COUNT(*) AS count FROM message_cta_cards WHERE conversion_group_id = ?',
+    )
     .bind(groupId)
     .first<{ count: number }>();
   return Number(row?.count ?? 0);
@@ -286,6 +302,15 @@ adminConversionPoolRoutes.post(
     if (blockedIndex >= 0) {
       const blocked = active[blockedIndex];
       if (blocked) return groupDeleteError(context, blocked, sectionCounts[blockedIndex]);
+    }
+    const cardCounts = await Promise.all(
+      active.map((group) => groupCardReferenceCount(context.env.DB, group.id)),
+    );
+    const blockedCardIndex = cardCounts.findIndex((count) => count > 0);
+    if (blockedCardIndex >= 0) {
+      const blocked = active[blockedCardIndex];
+      if (blocked)
+        return groupDeleteError(context, blocked, 0, cardCounts[blockedCardIndex]);
     }
 
     const responseBody = { deletedIds: ids };
@@ -589,6 +614,8 @@ adminConversionPoolRoutes.delete(
     if (sectionCount > 0) {
       return groupDeleteError(context, current, sectionCount);
     }
+    const cardCount = await groupCardReferenceCount(context.env.DB, current.id);
+    if (cardCount > 0) return groupDeleteError(context, current, 0, cardCount);
     const now = new Date().toISOString();
     const deleted = { ...current, isEnabled: false, deletedAt: now, updatedAt: now };
     await context.env.DB.batch([

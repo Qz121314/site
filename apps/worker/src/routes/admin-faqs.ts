@@ -73,6 +73,30 @@ function faqNotFound(context: Parameters<typeof apiError>[0]) {
   return apiError(context, 404, 'FAQ_NOT_FOUND', 'FAQ 不存在或已进入回收站。');
 }
 
+async function articleCardReferenceCount(
+  db: D1Database,
+  articleId: string,
+): Promise<number> {
+  const row = await db
+    .prepare(
+      `SELECT COUNT(*) AS count FROM message_cta_cards
+       WHERE target_kind = 'article' AND target_ref = ? AND conversion_group_id IS NULL`,
+    )
+    .bind(articleId)
+    .first<{ count: number }>();
+  return Number(row?.count ?? 0);
+}
+
+function articleCardDeleteError(context: Parameters<typeof apiError>[0], count: number) {
+  return apiError(
+    context,
+    409,
+    'ARTICLE_HAS_MESSAGE_CARDS',
+    '文章仍被消息卡片引用，请先修改或移除卡片。',
+    { cardCount: count },
+  );
+}
+
 export const adminFaqRoutes = new Hono<AppEnvironment>();
 
 adminFaqRoutes.get('/', async (context) => {
@@ -172,6 +196,8 @@ adminFaqRoutes.delete('/:id', async (context) => {
   }
   const current = await getFaq(context.env.DB, context.req.param('id'));
   if (!current || current.deletedAt) return faqNotFound(context);
+  const cardCount = await articleCardReferenceCount(context.env.DB, current.id);
+  if (cardCount > 0) return articleCardDeleteError(context, cardCount);
   const now = new Date().toISOString();
   const deleted: FaqRecord = {
     ...current,
@@ -262,6 +288,10 @@ adminFaqRoutes.post('/batch-delete', async (context) => {
   const activeFaqs = faqs.filter((faq): faq is FaqRecord => Boolean(faq));
   if (activeFaqs.length !== ids.length || activeFaqs.some((faq) => faq.deletedAt)) {
     return apiError(context, 404, 'FAQ_NOT_FOUND', '部分 FAQ 不存在或已进入回收站。');
+  }
+  for (const faq of activeFaqs) {
+    const cardCount = await articleCardReferenceCount(context.env.DB, faq.id);
+    if (cardCount > 0) return articleCardDeleteError(context, cardCount);
   }
   const statements: D1PreparedStatement[] = [];
   for (const faq of activeFaqs) {

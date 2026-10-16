@@ -517,6 +517,47 @@ test('drawer traps keyboard focus, closes with Escape, and restores the trigger'
   await expect(trigger).toBeFocused();
 });
 
+test('nested media picker handles Escape without closing the product editor', async ({
+  page,
+}) => {
+  await installAdminFixture(page);
+  await page.route(
+    /\/api\/admin\/sections\/alpha\/(products|categories|tags)\?scope=active$/u,
+    async (route) => {
+      const resource = new URL(route.request().url()).pathname.split('/').at(-1);
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ [resource ?? 'products']: [] }),
+      });
+    },
+  );
+  await page.route(
+    '**/api/admin/sections/alpha/available-conversion-groups',
+    async (route) => {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ groups: [] }),
+      });
+    },
+  );
+
+  await page.goto('/admin/#products:alpha');
+  await page.getByRole('button', { name: '新增产品' }).click();
+  const editor = page.getByRole('dialog', { name: '新增产品' });
+  await expect(editor).toBeVisible();
+  const pickerTrigger = editor.getByRole('button', { name: '从素材中心选择' });
+  await pickerTrigger.click();
+  const picker = page.getByRole('dialog', { name: '选择产品媒体' });
+  await expect(picker).toBeVisible();
+  await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
+
+  await page.keyboard.press('Escape');
+  await expect(picker).toBeHidden();
+  await expect(editor).toBeVisible();
+  await expect(pickerTrigger).toBeFocused();
+  await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
+});
+
 test('long settings forms stay reachable inside the workspace scroll owner', async ({
   page,
 }) => {

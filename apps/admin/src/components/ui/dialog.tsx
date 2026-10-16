@@ -16,6 +16,9 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
+const openDialogs: HTMLElement[] = [];
+let previousBodyOverflow = '';
+
 type AdminDialogProps = {
   open: boolean;
   title: string;
@@ -28,6 +31,7 @@ type AdminDialogProps = {
   role?: 'dialog' | 'alertdialog';
   size?: 'small' | 'medium' | 'large';
   className?: string;
+  backdropClassName?: string;
   children: ReactNode;
   showHeading?: boolean;
   headerLeading?: ReactNode;
@@ -48,6 +52,7 @@ export function AdminDialog({
   role = 'dialog',
   size = 'medium',
   className,
+  backdropClassName,
   children,
   showHeading = true,
   headerLeading,
@@ -69,10 +74,13 @@ export function AdminDialog({
 
     previousFocus.current =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
     const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (openDialogs.length === 0) {
+      previousBodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+    }
+    openDialogs.push(dialog);
     if (initialFocus === 'dialog') {
       dialog?.focus();
     } else {
@@ -80,8 +88,13 @@ export function AdminDialog({
     }
 
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+      const dialogs = document.querySelectorAll<HTMLElement>(
+        '.ui-dialog[aria-modal="true"]',
+      );
+      if (dialogs.item(dialogs.length - 1) !== dialog) return;
       if (shouldDismissAdminDialogKey(event.key, closeDisabledRef.current)) {
         event.preventDefault();
+        event.stopImmediatePropagation();
         closeRef.current();
         return;
       }
@@ -97,7 +110,10 @@ export function AdminDialog({
       }
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
+      if (!dialog.contains(document.activeElement) || document.activeElement === dialog) {
+        event.preventDefault();
+        (event.shiftKey ? last : first)?.focus();
+      } else if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
         last?.focus();
       } else if (!event.shiftKey && document.activeElement === last) {
@@ -108,8 +124,10 @@ export function AdminDialog({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => {
-      document.body.style.overflow = previousOverflow;
       document.removeEventListener('keydown', handleKeyDown);
+      const index = openDialogs.indexOf(dialog);
+      if (index >= 0) openDialogs.splice(index, 1);
+      if (openDialogs.length === 0) document.body.style.overflow = previousBodyOverflow;
       previousFocus.current?.focus();
     };
   }, [initialFocus, open]);
@@ -121,7 +139,11 @@ export function AdminDialog({
   }
 
   return (
-    <div className="ui-dialog-backdrop" role="presentation" onMouseDown={handleBackdrop}>
+    <div
+      className={cn('ui-dialog-backdrop', backdropClassName)}
+      role="presentation"
+      onMouseDown={handleBackdrop}
+    >
       <div
         ref={dialogRef}
         className={cn('ui-dialog', `ui-dialog--${size}`, className)}

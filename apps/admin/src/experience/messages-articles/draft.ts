@@ -47,6 +47,11 @@ export function draftsEqual(a: MessageArticleDraft[], b: MessageArticleDraft[]):
   return a.every(
     (placement, index) =>
       placement.id === b[index]?.id &&
-      placement.backgroundMediaId === b[index]?.backgroundMediaId,
+      placement.backgroundMediaId === b[index]?.backgroundMediaId &&
+      placement.title === b[index]?.title &&
+      placement.targetKind === b[index]?.targetKind &&
+      placement.targetRef === b[index]?.targetRef &&
+      placement.sectionId === b[index]?.sectionId &&
+      placement.conversionGroupId === b[index]?.conversionGroupId,
   );
 }

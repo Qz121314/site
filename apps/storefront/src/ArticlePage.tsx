@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { ChevronLeft, FileText } from 'lucide-react';
-import { useEffect, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useMemo, type MouseEvent as ReactMouseEvent } from 'react';
 import { PublicContentError, type StorefrontBootstrap } from './content';
 import { loadArticleSnapshot } from './content-route';
 import { MarkdownContent } from './MarkdownContent';
@@ -62,16 +62,25 @@ export default function ArticlePage({
     staleTime: Number.POSITIVE_INFINITY,
   });
   const article = query.data ?? null;
-  const isActiveMessageArticle = getMessageArticlesFromBootstrap(bootstrap).some(
-    (item) => item.targetKind === 'article' && item.targetRef === articleId,
+  const messageCardIds = useMemo(
+    () =>
+      getMessageArticlesFromBootstrap(bootstrap)
+        .filter(
+          (item) =>
+            !item.conversionGroupId &&
+            item.targetKind === 'article' &&
+            item.targetRef === articleId,
+        )
+        .map((item) => item.cardId),
+    [bootstrap, articleId],
   );
   const missing =
     query.error instanceof PublicContentError &&
     query.error.code === 'CONTENT_NOT_PUBLISHED';
 
   useEffect(() => {
-    if (article && isActiveMessageArticle) markMessageArticleRead(articleId);
-  }, [article, articleId, isActiveMessageArticle]);
+    if (article) messageCardIds.forEach((cardId) => markMessageArticleRead(cardId));
+  }, [article, messageCardIds]);
 
   useEffect(() => {
     document.title = article
