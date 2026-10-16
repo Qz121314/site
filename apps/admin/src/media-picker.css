@@ -4,11 +4,10 @@
   height: min(820px, calc(100dvh - 28px));
   min-height: 0;
   max-height: min(820px, calc(100dvh - 28px));
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr);
   overflow: hidden;
 }
 
-/* The legacy picker is portaled to body and must sit above the shared dialogs. */
 .media-picker-backdrop {
   display: flex;
   align-items: flex-start;
@@ -37,6 +36,7 @@
   display: grid;
   min-height: 0;
   padding: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
 }
 

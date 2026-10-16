@@ -1,7 +1,6 @@
 import { Hono, type Context } from 'hono';
 import {
   getAuthorizedConversionGroup,
-  getConversionGroup,
   selectNextConversionTarget,
 } from '../conversion-pool/conversion-pool';
 import { getRoutableProduct } from '../conversion-pool/public-cta';
@@ -29,16 +28,18 @@ publicConversionRoutes.get('/message-card/:cardId', async (context) => {
   setRedirectHeaders(context);
   const cardId = context.req.param('cardId').trim();
   const card = await context.env.DB.prepare(
-    `SELECT section_id, conversion_group_id
-     FROM message_cta_cards
-     WHERE id = ? AND is_enabled = 1 AND conversion_group_id IS NOT NULL`,
+    `SELECT c.section_id, c.conversion_group_id
+     FROM message_cta_cards c
+     JOIN sections s ON s.id = c.section_id
+     WHERE c.id = ? AND c.is_enabled = 1 AND c.conversion_group_id IS NOT NULL
+       AND s.is_enabled = 1 AND s.is_visible = 1 AND s.deleted_at IS NULL`,
   )
     .bind(cardId)
     .first<{ section_id: string; conversion_group_id: string }>();
   if (!card?.section_id || !card.conversion_group_id) {
     return unavailable(context, 404, 'This contact option is unavailable.');
   }
-  const group = await getConversionGroup(
+  const group = await getAuthorizedConversionGroup(
     context.env.DB,
     card.section_id,
     card.conversion_group_id,
@@ -47,7 +48,15 @@ publicConversionRoutes.get('/message-card/:cardId', async (context) => {
     return unavailable(context, 409, 'This contact option is temporarily unavailable.');
   }
   if (group.mode === 'customer_service') {
-    return context.redirect('/messages/new/', 302);
+    const path = `/messages/new/?${new URLSearchParams({
+      sectionId: card.section_id,
+      cardId,
+      handoffId: crypto.randomUUID(),
+    })}`;
+    if (context.req.header('accept')?.includes('application/json')) {
+      return context.json({ path });
+    }
+    return context.redirect(path, 302);
   }
   const target = await selectNextConversionTarget(
     context.env.DB,

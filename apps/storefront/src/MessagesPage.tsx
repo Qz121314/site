@@ -39,11 +39,14 @@ type ComposeContext = {
   sectionId: string;
   handoffId: string | null;
   ctaPath: string | null;
+  cardId: string | null;
+  attemptId: string | null;
 };
 type ResolvedComposeContext = {
   productId: string | null;
   sectionId: string;
   handoffId: string;
+  cardId: string | null;
 };
 type ConversationQueryCache = {
   pages: Array<SupportConversationDetail | null>;
@@ -67,6 +70,8 @@ function readComposeContext(): ComposeContext | null {
   const sectionId = params.get('sectionId')?.trim() ?? '';
   const rawHandoffId = params.get('handoffId')?.trim() ?? '';
   const rawCtaPath = params.get('ctaPath')?.trim() ?? '';
+  const cardId = params.get('cardId')?.trim() ?? '';
+  const attemptId = params.get('attemptId')?.trim() ?? '';
   const handoffId = HANDOFF_ID_PATTERN.test(rawHandoffId) ? rawHandoffId : null;
   const ctaPath =
     rawCtaPath.startsWith('/go/') && rawCtaPath.length <= 240 ? rawCtaPath : null;
@@ -74,30 +79,40 @@ function readComposeContext(): ComposeContext | null {
     !sectionId ||
     (!handoffId && !ctaPath) ||
     productId.length > 120 ||
-    sectionId.length > 120
+    sectionId.length > 120 ||
+    cardId.length > 120
   )
     return null;
-  return { productId: productId || null, sectionId, handoffId, ctaPath };
+  return {
+    productId: productId || null,
+    sectionId,
+    handoffId,
+    ctaPath,
+    cardId: cardId || null,
+    attemptId: HANDOFF_ID_PATTERN.test(attemptId) ? attemptId : null,
+  };
 }
 
 function parseResolvedComposePath(
   path: string,
-  expected: Pick<ComposeContext, 'productId' | 'sectionId'>,
+  expected: Pick<ComposeContext, 'productId' | 'sectionId' | 'cardId'>,
 ): ResolvedComposeContext {
   const target = new URL(path, window.location.origin);
   const productId = target.searchParams.get('productId')?.trim() ?? '';
   const sectionId = target.searchParams.get('sectionId')?.trim() ?? '';
   const handoffId = target.searchParams.get('handoffId')?.trim() ?? '';
+  const cardId = target.searchParams.get('cardId')?.trim() ?? '';
   if (
     target.origin !== window.location.origin ||
     target.pathname !== '/messages/new/' ||
     (productId || null) !== expected.productId ||
     sectionId !== expected.sectionId ||
+    (cardId || null) !== expected.cardId ||
     !HANDOFF_ID_PATTERN.test(handoffId)
   ) {
     throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
   }
-  return { productId: productId || null, sectionId, handoffId };
+  return { productId: productId || null, sectionId, handoffId, cardId: cardId || null };
 }
 
 function NotificationBellIcon({ enabled }: { enabled: boolean }) {
@@ -307,7 +322,11 @@ export function MessagesPage({
     retry: 1,
   });
   const composeHandoffQuery = useQuery({
-    queryKey: ['support-compose-handoff', composeContext?.ctaPath],
+    queryKey: [
+      'support-compose-handoff',
+      composeContext?.ctaPath,
+      composeContext?.attemptId,
+    ],
     enabled: Boolean(composeContext?.ctaPath && !composeContext.handoffId),
     queryFn: async ({ signal }) => {
       if (!composeContext?.ctaPath) throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
@@ -323,6 +342,7 @@ export function MessagesPage({
         productId: composeContext.productId,
         sectionId: composeContext.sectionId,
         handoffId: composeContext.handoffId,
+        cardId: composeContext.cardId,
       }
     : (composeHandoffQuery.data ?? null);
 
@@ -364,6 +384,12 @@ export function MessagesPage({
     queryFn: ({ signal }) => {
       if (!resolvedComposeContext || !pendingConversation?.productHref)
         throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
+      const sectionInput = {
+        handoffId: resolvedComposeContext.handoffId,
+        sectionId: resolvedComposeContext.sectionId,
+        sectionName: pendingConversation.productTitle,
+        sectionHref: pendingConversation.productHref,
+      };
       const input = resolvedComposeContext.productId
         ? {
             contextType: 'product' as const,
@@ -374,13 +400,13 @@ export function MessagesPage({
             productCoverUrl: pendingConversation.productCoverUrl,
             productHref: pendingConversation.productHref,
           }
-        : {
-            contextType: 'section' as const,
-            handoffId: resolvedComposeContext.handoffId,
-            sectionId: resolvedComposeContext.sectionId,
-            sectionName: pendingConversation.productTitle,
-            sectionHref: pendingConversation.productHref,
-          };
+        : resolvedComposeContext.cardId
+          ? {
+              contextType: 'message_card' as const,
+              cardId: resolvedComposeContext.cardId,
+              ...sectionInput,
+            }
+          : { contextType: 'section' as const, ...sectionInput };
       return siteSupportGateway.startConversation(input, signal, setConnectingMessage);
     },
     staleTime: Number.POSITIVE_INFINITY,
@@ -444,6 +470,7 @@ export function MessagesPage({
       handoffId: resolved.handoffId,
     });
     if (resolved.productId) params.set('productId', resolved.productId);
+    if (resolved.cardId) params.set('cardId', resolved.cardId);
     replaceStorefrontLocation(`/messages/new/?${params.toString()}`);
   }, [compose, composeContext?.handoffId, composeHandoffQuery.data]);
 

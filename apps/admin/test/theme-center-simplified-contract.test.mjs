@@ -23,13 +23,13 @@ test('Theme Studio keeps draft-only selection and the existing safe persistence 
 });
 
 test('PWA install prompt is owned by Site Settings', () => {
-  const view = source('../src/SiteSettingsView.tsx');
+  const workspace = source('../src/settings/SiteSettingsWorkspace.tsx');
+  const view = source('../src/experience/PwaSettingsView.tsx');
 
-  assert.ok(
-    view.includes("type SettingsPanel = 'general' | 'home' | 'pwa' | 'advanced';"),
-  );
-  assert.ok(view.includes("{ id: 'pwa', label: 'PWA 安装' }"));
-  assert.ok(view.includes('安装应用提示'));
-  assert.ok(view.includes('延迟显示（秒）'));
-  assert.ok(view.includes('iPhone / iPad 说明'));
+  assert.ok(workspace.includes("view === 'pwa'"));
+  assert.ok(workspace.includes('<PwaSettingsView'));
+  assert.ok(view.includes('installPrompt'));
+  assert.ok(view.includes('delaySeconds'));
+  assert.ok(view.includes('iosDescription'));
+  assert.ok(view.includes("useAdminDirtySource('pwa-settings'"));
 });

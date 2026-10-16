@@ -265,9 +265,10 @@ async function resolveSupportRoute(
 async function resolveSectionSupportRoute(
   sectionId: string,
   signal?: AbortSignal,
+  cardId?: string,
 ): Promise<ResolvedSectionSupportRoute> {
   const value = await siteRequestJson(
-    `/api/public/storefront/support/route/section/${encodeURIComponent(sectionId)}`,
+    `/api/public/storefront/support/route/section/${encodeURIComponent(sectionId)}${cardId ? `?cardId=${encodeURIComponent(cardId)}` : ''}`,
     signal,
   );
   const envelope = isRecord(value) ? value : null;
@@ -278,7 +279,8 @@ async function resolveSectionSupportRoute(
     !section ||
     typeof section.id !== 'string' ||
     typeof section.name !== 'string' ||
-    typeof section.href !== 'string'
+    typeof section.href !== 'string' ||
+    section.id !== sectionId
   ) {
     throw new SupportApiError(
       409,
@@ -726,7 +728,11 @@ export const siteSupportGateway: SupportGateway = {
     const route =
       input.contextType === 'product'
         ? await resolveSupportRoute(input.productId, input.sectionId, signal)
-        : await resolveSectionSupportRoute(input.sectionId, signal);
+        : await resolveSectionSupportRoute(
+            input.sectionId,
+            signal,
+            input.contextType === 'message_card' ? input.cardId : undefined,
+          );
     onConnectingMessage?.(route.connectingMessage);
     const value = await remoteRequestJson(
       remoteUrl(route.connection, '/conversations'),

@@ -215,6 +215,13 @@ test('draft operations de-duplicate by card ID, preserve order, and keep card ta
     true,
   );
   assert.equal(draftsEqual(cards, moved), false);
+  for (const change of [
+    { title: 'Changed title' },
+    { targetKind: 'link', targetRef: 'https://new.example' },
+    { sectionId: 'section-a', conversionGroupId: 'group-a' },
+  ]) {
+    assert.equal(draftsEqual(cards, [{ ...cardA, ...change }, ...cards.slice(1)]), false);
+  }
 });
 
 test('Messages CTA UI uses shared reference-only media selection and generic target fields', async () => {

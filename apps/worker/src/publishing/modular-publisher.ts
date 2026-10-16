@@ -599,7 +599,11 @@ async function loadSource(db: D1Database): Promise<Source> {
          FROM sections s
          LEFT JOIN conversion_groups conversion_group
            ON conversion_group.id = s.conversion_group_id
-          AND conversion_group.section_id = s.id
+           AND EXISTS (
+             SELECT 1 FROM conversion_group_sections authorized
+             WHERE authorized.group_id = conversion_group.id
+               AND authorized.section_id = s.id
+           )
           AND conversion_group.deleted_at IS NULL
          LEFT JOIN media_assets icon
            ON icon.id = s.icon_asset_id
@@ -660,7 +664,11 @@ async function loadSource(db: D1Database): Promise<Source> {
          LEFT JOIN categories c ON c.id = p.category_id AND c.deleted_at IS NULL
          LEFT JOIN conversion_groups conversion_group
            ON conversion_group.id = p.conversion_group_id
-          AND conversion_group.section_id = p.section_id
+           AND EXISTS (
+             SELECT 1 FROM conversion_group_sections authorized
+             WHERE authorized.group_id = conversion_group.id
+               AND authorized.section_id = p.section_id
+           )
           AND conversion_group.deleted_at IS NULL
          LEFT JOIN media_assets cover ON cover.id = COALESCE(
            p.cover_asset_id,
@@ -731,12 +739,40 @@ async function loadSource(db: D1Database): Promise<Source> {
            c.conversion_group_id,
            c.sort_order
          FROM message_cta_cards c
-         LEFT JOIN faqs f ON c.target_kind = 'article' AND f.id = c.target_ref
+          LEFT JOIN faqs f ON c.target_kind = 'article' AND f.id = c.target_ref
          LEFT JOIN media_assets background
            ON background.id = c.background_media_id
           AND background.status = 'ready'
           AND background.deleted_at IS NULL
-         WHERE c.is_enabled = 1
+          WHERE c.is_enabled = 1
+            AND (c.conversion_group_id IS NOT NULL OR c.target_kind != 'article'
+              OR (f.id IS NOT NULL AND f.deleted_at IS NULL AND f.is_enabled = 1))
+            AND (c.conversion_group_id IS NULL OR EXISTS (
+              SELECT 1 FROM conversion_groups g
+              JOIN sections card_section ON card_section.id = c.section_id
+              WHERE g.id = c.conversion_group_id
+                AND g.deleted_at IS NULL AND g.is_enabled = 1
+                AND card_section.deleted_at IS NULL
+                AND card_section.is_enabled = 1 AND card_section.is_visible = 1
+                AND EXISTS (
+                  SELECT 1 FROM conversion_group_sections authorized
+                  WHERE authorized.group_id = g.id
+                    AND authorized.section_id = c.section_id
+                )
+                AND (
+                  (g.mode = 'customer_service' AND EXISTS (
+                    SELECT 1 FROM customer_service_connections support
+                    WHERE support.id = g.customer_service_connection_id
+                      AND support.deleted_at IS NULL AND support.is_enabled = 1
+                      AND support.verified_at IS NOT NULL
+                  ))
+                  OR (g.mode = 'link' AND EXISTS (
+                    SELECT 1 FROM conversion_targets target
+                    WHERE target.group_id = g.id
+                      AND target.deleted_at IS NULL AND target.is_enabled = 1
+                  ))
+                )
+            ))
          ORDER BY c.sort_order ASC, c.id ASC`,
       )
       .all<MessageArticleRow>()

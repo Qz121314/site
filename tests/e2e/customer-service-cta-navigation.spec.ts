@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { installLocalCustomerServiceCtaFixture } from './customer-service-cta-local-fixture';
 import {
   installLocalMessagesArticleFixture,
+  MESSAGE_CARD_IDS,
   MESSAGE_ARTICLE_IDS,
 } from './messages-article-local-fixture';
 import { findPublishedProductRoute } from './published-storefront-fixtures';
@@ -171,6 +172,67 @@ test('customer-service CTA opens the chat shell before the Worker handoff resolv
   releaseHandoff();
 });
 
+test('a second customer-service CTA click starts a distinct handoff', async ({
+  page,
+}) => {
+  test.skip(!useLocalFixture, 'Repeated handoff uses the local product fixture.');
+  const productHref = await installLocalCustomerServiceCtaFixture(page, 'template-a');
+  await page.route('**/api/public/storefront/cta/*', (route) =>
+    route.fulfill({
+      json: {
+        available: true,
+        label: 'Contact',
+        mode: 'customer_service',
+        path: '/go/__repeat-handoff-test__',
+      },
+    }),
+  );
+  await page.route('**/api/public/storefront/support/route/*', (route) =>
+    route.fulfill({ json: { available: false } }),
+  );
+  let handoffRequests = 0;
+  await page.route('**/go/__repeat-handoff-test__', (route) => {
+    handoffRequests += 1;
+    const handoffId = `11111111-1111-4111-8111-${String(handoffRequests).padStart(12, '0')}`;
+    return route.fulfill({
+      json: {
+        path: `/messages/new/?productId=cta-product&sectionId=cta-section&handoffId=${handoffId}`,
+      },
+    });
+  });
+  await page.goto(productHref);
+  const cta = page.locator('.storefront-route-action-host .cta-button');
+  await cta.click();
+  await expect(page).toHaveURL(/handoffId=/u);
+  const first = new URL(page.url()).searchParams.get('handoffId');
+  await page.goBack();
+  await cta.click();
+  await expect(page).toHaveURL(/handoffId=/u);
+  const second = new URL(page.url()).searchParams.get('handoffId');
+  expect(handoffRequests).toBe(2);
+  expect(second).not.toBe(first);
+});
+
+test('message-card compose resolves the card selected support route', async ({
+  page,
+}) => {
+  test.skip(!useLocalFixture, 'Message-card handoff uses the local section fixture.');
+  await installLocalCustomerServiceCtaFixture(page);
+  let cardRouteRequests = 0;
+  await page.route(
+    '**/api/public/storefront/support/route/section/cta-section?cardId=card-a',
+    (route) => {
+      cardRouteRequests += 1;
+      return route.fulfill({ json: { available: false } });
+    },
+  );
+  await page.goto(
+    '/messages/new/?sectionId=cta-section&cardId=card-a&handoffId=11111111-1111-4111-8111-000000000001',
+  );
+  await expect(page.locator('.chat-page')).toBeVisible();
+  await expect.poll(() => cardRouteRequests).toBe(1);
+});
+
 test('default product CTA keeps the existing route transition', async ({ page }) => {
   test.skip(
     !useLocalFixture,
@@ -258,13 +320,13 @@ test('Messages Articles stay title-only and mark read only on the reading page',
 
   const rowPresentation = await page.evaluate(() => {
     const alphaTitle = document.querySelector<HTMLElement>(
-      '[data-article-id="article-alpha"] h3',
+      '[data-article-id="card-alpha"] h3',
     );
     const betaTitle = document.querySelector<HTMLElement>(
-      '[data-article-id="article-beta"] h3',
+      '[data-article-id="card-beta"] h3',
     );
     const gammaTitle = document.querySelector<HTMLElement>(
-      '[data-article-id="article-gamma"] h3',
+      '[data-article-id="card-gamma"] h3',
     );
     if (!alphaTitle || !betaTitle || !gammaTitle) return null;
 
@@ -410,7 +472,7 @@ test('Messages Articles stay title-only and mark read only on the reading page',
   });
   expect(
     await page.evaluate(() => localStorage.getItem('site:messages:read-articles')),
-  ).toBe(JSON.stringify([MESSAGE_ARTICLE_IDS.alpha]));
+  ).toBe(JSON.stringify([MESSAGE_CARD_IDS.alpha]));
 
   await page.getByRole('link', { name: 'Back' }).click();
   await expect(page).toHaveURL('/messages/');
@@ -424,7 +486,7 @@ test('Messages Articles stay title-only and mark read only on the reading page',
   await expect(messagesNav.getByText('5')).toBeVisible();
   expect(
     await page.evaluate(() => localStorage.getItem('site:messages:read-articles')),
-  ).toBe(JSON.stringify([MESSAGE_ARTICLE_IDS.alpha]));
+  ).toBe(JSON.stringify([MESSAGE_CARD_IDS.alpha]));
   expect(fixture.supportHttpRequests()).toBe(supportRequestsBeforeArticle);
   expect(fixture.supportMutationRequests()).toBe(0);
   expect(pageErrors).toEqual([]);

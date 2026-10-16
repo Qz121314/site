@@ -110,8 +110,7 @@ test('shared status form feedback dialog drawer and action-bar patterns are sema
 test('reference pages adopt the shared patterns without adding request behavior', async () => {
   const navigation = await source('../src/experience/NavigationSettingsView.tsx');
   const bottomNavigation = await source('../src/BottomNavigationSettingsSection.tsx');
-  const general = await source('../src/system/SystemGeneralView.tsx');
-  const infrastructure = await source('../src/system/SystemInfrastructureView.tsx');
+  const system = await source('../src/system/SystemSettingsView.tsx');
   const catalog = await source('../src/catalog/CatalogWorkspaceSwitcher.tsx');
   const articleCenter = await source('../src/ArticleCenterView.tsx');
   const articleEditor = await source('../src/article-center/ArticleEditorDialog.tsx');
@@ -125,16 +124,10 @@ test('reference pages adopt the shared patterns without adding request behavior'
   assert.match(bottomNavigation, /AdminStatusBadge/);
   assert.match(bottomNavigation, /is-selected/);
 
-  assert.match(general, /AdminFormSection/);
-  assert.match(general, /AdminFieldRow/);
-  assert.match(general, /<Button[\s\S]*variant="primary"/);
-  assert.match(general, /<AdminActionBar/);
-
-  assert.match(infrastructure, /AdminFormSection/);
-  assert.match(infrastructure, /AdminFieldRow/);
-  assert.match(infrastructure, /AdminStatusBadge/);
-  assert.match(infrastructure, /variant="secondary"/);
-  assert.match(infrastructure, /variant="primary"/);
+  assert.match(system, /AdminFieldRow/);
+  assert.match(system, /AdminStatusBadge/);
+  assert.match(system, /variant="secondary"/);
+  assert.match(system, /variant="primary"/);
 
   assert.match(catalog, /AdminSegmentedControl/);
   assert.match(catalog, /AdminSegmentedItem/);
@@ -152,7 +145,7 @@ test('reference pages adopt the shared patterns without adding request behavior'
   for (const sharedSource of [
     navigation,
     bottomNavigation,
-    general,
+    system,
     catalog,
     articleCenter,
   ]) {

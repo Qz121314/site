@@ -267,15 +267,17 @@ publicStorefrontConfigRoutes.get('/support/route/:productId', async (context) =>
 publicStorefrontConfigRoutes.get('/support/route/section/:sectionId', async (context) => {
   setPublicRuntimeHeaders(context);
   const sectionId = context.req.param('sectionId').trim();
-  if (!validPublicId(sectionId)) return context.json({ available: false });
+  const cardId = context.req.query('cardId')?.trim() ?? '';
+  if (!validPublicId(sectionId) || (cardId && !validPublicId(cardId)))
+    return context.json({ available: false });
 
   const section = await context.env.DB.prepare(
     `SELECT id, name, slug, conversion_group_id,
        (SELECT messages_connecting_text FROM site_settings WHERE id = 1)
          AS messages_connecting_text
      FROM sections
-     WHERE id = ? AND is_enabled = 1 AND is_visible = 1
-       AND deleted_at IS NULL AND conversion_group_id IS NOT NULL`,
+      WHERE id = ? AND is_enabled = 1 AND is_visible = 1
+        AND deleted_at IS NULL`,
   )
     .bind(sectionId)
     .first<{
@@ -285,13 +287,21 @@ publicStorefrontConfigRoutes.get('/support/route/section/:sectionId', async (con
       conversion_group_id: string;
       messages_connecting_text: string;
     }>();
-  if (!section?.conversion_group_id) return context.json({ available: false });
+  if (!section) return context.json({ available: false });
 
-  const group = await getAuthorizedConversionGroup(
-    context.env.DB,
-    sectionId,
-    section.conversion_group_id,
-  );
+  const card = cardId
+    ? await context.env.DB.prepare(
+        `SELECT conversion_group_id FROM message_cta_cards
+         WHERE id = ? AND section_id = ? AND is_enabled = 1
+           AND conversion_group_id IS NOT NULL`,
+      )
+        .bind(cardId, sectionId)
+        .first<{ conversion_group_id: string }>()
+    : null;
+  const groupId = cardId ? card?.conversion_group_id : section.conversion_group_id;
+  if (!groupId) return context.json({ available: false });
+
+  const group = await getAuthorizedConversionGroup(context.env.DB, sectionId, groupId);
   if (
     !group ||
     group.deletedAt ||

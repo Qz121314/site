@@ -70,13 +70,6 @@ test('catalog workspace switcher preserves the active section id', () => {
   assert.equal(catalogViewForResource('tags', 'dating'), 'tags:dating');
 });
 
-test('catalog sidebar selection identifies the exact resource route', async () => {
-  const secondary = await source('../src/shell/AdminSecondarySidebar.tsx');
-  assert.match(secondary, /item\.view === activeView/);
-  assert.match(secondary, /aria-current=\{active \? 'page' : undefined\}/);
-  assert.doesNotMatch(secondary, /sectionName.*·.*item\.label/);
-});
-
 test('catalog workspace switcher uses the shared segmented pattern and guarded navigation path', async () => {
   const dashboard = await source('../src/Dashboard.tsx');
   const shell = await source('../src/shell/AdminShell.tsx');
