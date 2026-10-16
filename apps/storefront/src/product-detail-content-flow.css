@@ -261,8 +261,8 @@
 
 .product-detail-page.is-template-a,
 .product-detail-route-action.is-template-a {
-  --template-a-font-body: 'Trebuchet MS', 'Avenir Next', sans-serif;
-  --template-a-font-display: Georgia, 'Times New Roman', serif;
+  --template-a-font-body: var(--site-font-family);
+  --template-a-font-display: var(--site-font-family);
   --template-a-page: #f7f0ec;
   --template-a-ink: #38282d;
   --template-a-accent: #a74463;
