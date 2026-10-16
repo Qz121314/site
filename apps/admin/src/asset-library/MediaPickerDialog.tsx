@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AdminApiError } from '../api';
 import { brandingAssetPreviewUrl } from '../branding-media/api';
 import { AdminDialog } from '../components/ui/dialog';
@@ -166,7 +167,7 @@ export function MediaPickerDialog(props: MediaPickerDialogProps) {
     }
   }
 
-  return (
+  const dialog = (
     <AdminDialog
       open
       title={title}
@@ -287,4 +288,6 @@ export function MediaPickerDialog(props: MediaPickerDialogProps) {
       </div>
     </AdminDialog>
   );
+
+  return createPortal(dialog, document.body);
 }
