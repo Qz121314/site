@@ -38,6 +38,8 @@ test('Static Assets bypass the Worker while the explicit dynamic route contract 
     '/browse*',
     '/discover*',
     '/messages*',
+    '/reviews*',
+    '/articles*',
     '/faq*',
     '/sections/*',
     '/products/*',
@@ -63,6 +65,8 @@ test('Static Assets bypass the Worker while the explicit dynamic route contract 
     '/public/current.json',
     '/_media/products/cover.webp',
     '/_image/square/640/products/cover.webp',
+    '/reviews/',
+    '/articles/article-1/',
     '/sections/escorts/products/los-angeles/',
   ]) {
     assert.equal(

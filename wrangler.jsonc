@@ -24,6 +24,8 @@
       "/browse*",
       "/discover*",
       "/messages*",
+      "/reviews*",
+      "/articles*",
       "/faq*",
       "/sections/*",
       "/products/*",
