@@ -26,6 +26,11 @@ const pointer = {
     manifestKey: 'public/modules/faq/faq-v1/manifest.json',
     publishedAt: '2026-08-12T10:00:00.000Z',
   },
+  reviews: {
+    contentVersion: 'reviews-v1',
+    manifestKey: 'public/modules/reviews/reviews-v1/manifest.json',
+    publishedAt: '2026-08-12T10:00:00.000Z',
+  },
   sections: {
     'section-1': {
       contentVersion: 'section-v1',
@@ -75,6 +80,22 @@ const objects = new Map([
   [
     'public/modules/faq/faq-v1/faq.json',
     { faqs: [{ id: 'booking', title: 'How to book', body: 'Choose a listing.' }] },
+  ],
+  [
+    'public/modules/faq/faq-v1/articles.json',
+    {
+      articles: [
+        {
+          id: 'article-1',
+          title: 'Choosing a listing',
+          body: 'Compare service details and location before you book.',
+        },
+      ],
+    },
+  ],
+  [
+    'public/modules/reviews/reviews-v1/page.json',
+    { page: { title: 'Customer Reviews', body: 'Read customer experiences.' } },
   ],
   [
     'public/modules/sections/section-1/section-v1/section.json',
@@ -214,6 +235,8 @@ test('SEO routes return real robots text and a published-content sitemap', async
   );
   assert.doesNotMatch(xml, /unlisted-service/u);
   assert.match(xml, /https:\/\/example\.com\/faq\/booking\//u);
+  assert.match(xml, /https:\/\/example\.com\/articles\/article-1\//u);
+  assert.match(xml, /https:\/\/example\.com\/reviews\//u);
 });
 
 test('Storefront HTML has route metadata, canonical URLs and structured data', async () => {
@@ -279,6 +302,34 @@ test('Browse HTML preloads the responsive LCP image before client rendering', as
   assert.match(html, /\/_image\/square\/240\/media\/product\.webp/u);
   assert.match(html, /imagesrcset=/u);
   assert.match(html, /fetchpriority="high"/u);
+});
+
+test('public Article and Reviews HTML includes indexable route metadata', async () => {
+  const article = await app.request('https://example.com/articles/article-1/', {}, env());
+  assert.equal(article.status, 200);
+  const articleHtml = await article.text();
+  assert.match(articleHtml, /<title>Choosing a listing · EROSDOOR<\/title>/u);
+  assert.match(
+    articleHtml,
+    /name="description" content="Compare service details and location before you book\."/u,
+  );
+  assert.match(
+    articleHtml,
+    /<link rel="canonical" href="https:\/\/example\.com\/articles\/article-1\/"/u,
+  );
+  assert.match(
+    articleHtml,
+    /property="og:title" content="Choosing a listing · EROSDOOR"/u,
+  );
+
+  const reviews = await app.request('https://example.com/reviews/', {}, env());
+  assert.equal(reviews.status, 200);
+  const reviewsHtml = await reviews.text();
+  assert.match(reviewsHtml, /<title>Customer Reviews · EROSDOOR<\/title>/u);
+  assert.match(
+    reviewsHtml,
+    /<link rel="canonical" href="https:\/\/example\.com\/reviews\/"/u,
+  );
 });
 
 test('Storefront normalizes valid routes and returns a real noindex 404', async () => {

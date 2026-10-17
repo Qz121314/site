@@ -355,6 +355,17 @@ async function loadFaqs(
   );
 }
 
+async function loadArticles(
+  bucket: R2Bucket,
+  content: PublishedContent,
+): Promise<FaqArticle[]> {
+  const value = await readJson(
+    bucket,
+    referenceFile(content.pointer.faq, 'articles.json'),
+  );
+  return parseFaqs(isRecord(value) ? { faqs: value.articles } : null);
+}
+
 function sameOriginMediaPath(objectKey: string | null): string | null {
   if (!objectKey || objectKey.includes('..')) return null;
   const segments = objectKey.split('/');
@@ -580,6 +591,24 @@ async function resolveSeoPage(
       site.locationLabel,
     );
     return pathname === '/faq' ? { ...page, redirectPath: '/faq/' } : page;
+  }
+
+  const articleMatch = /^\/articles\/([^/]+)\/?$/u.exec(pathname);
+  if (articleMatch) {
+    const articleRef = decodeRoutePart(articleMatch[1] ?? '');
+    const article = articleRef
+      ? (await loadArticles(bucket, content)).find((item) => item.id === articleRef)
+      : null;
+    if (!article) return notFoundPage(origin, content);
+    const canonicalPath = `/articles/${routePart(article.id)}/`;
+    const page = basicPage(
+      origin,
+      content,
+      canonicalPath,
+      `${article.title} · ${site.name}`,
+      cleanText(article.body, 160) ?? site.locationLabel,
+    );
+    return pathname !== canonicalPath ? { ...page, redirectPath: canonicalPath } : page;
   }
 
   const faqMatch = /^\/faq\/([^/]+)\/?$/u.exec(pathname);
@@ -849,15 +878,22 @@ export async function serveSitemap(context: Context<AppEnvironment>) {
   entries.set('/', content.pointer.site.publishedAt);
   entries.set('/browse/', content.pointer.sectionsIndex.publishedAt);
   entries.set('/faq/', content.pointer.faq.publishedAt);
+  if (content.pointer.reviews) {
+    entries.set('/reviews/', content.pointer.reviews.publishedAt);
+  }
 
-  const [faqs, ...productLists] = await Promise.all([
+  const [faqs, articles, ...productLists] = await Promise.all([
     loadFaqs(context.env.ASSETS_BUCKET, content),
+    loadArticles(context.env.ASSETS_BUCKET, content),
     ...content.sections.map((section) =>
       loadSectionProducts(context.env.ASSETS_BUCKET, content, section),
     ),
   ]);
   for (const article of faqs) {
     entries.set(`/faq/${routePart(article.id)}/`, content.pointer.faq.publishedAt);
+  }
+  for (const article of articles) {
+    entries.set(`/articles/${routePart(article.id)}/`, content.pointer.faq.publishedAt);
   }
   for (const [index, section] of content.sections.entries()) {
     const reference = content.pointer.sections[section.id];
