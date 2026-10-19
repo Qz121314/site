@@ -37,19 +37,13 @@ export function BrowsePage({
   return (
     <section className="browse-directory">
       {sections.length > 0 ? (
-        <header className="browse-directory-intro">
-          <h1>Find the connection you want.</h1>
-          <p>Browse independent escort profiles or explore dating.</p>
-        </header>
-      ) : null}
-      {sections.length > 0 ? (
         <section className="browse-directory-section">
           <div
             className={`browse-section-list${sections.length === 1 ? ' is-single' : ''}`}
           >
             {sections.map((section, index) => (
               <article
-                className={`browse-section-card ${index === 0 ? 'is-primary' : 'is-secondary'}${section.browseBackgroundUrl ? ' has-image' : ' is-fallback'}`}
+                className={`browse-section-card${section.browseBackgroundUrl ? ' has-image' : ' is-fallback'}`}
                 key={section.id}
               >
                 <LinkComponent
