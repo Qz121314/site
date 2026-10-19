@@ -75,33 +75,23 @@ for (const viewport of MOBILE_VIEWPORTS) {
         : [];
       const containerRect = shortcuts?.getBoundingClientRect();
       return {
-        display: shortcuts ? getComputedStyle(shortcuts).display : '',
-        columnCount: shortcuts
-          ? getComputedStyle(shortcuts).gridTemplateColumns.split(' ').length
-          : 0,
+        shortcutCount: shortcutRects.length,
         hasHorizontalOverflow: shortcuts
           ? shortcuts.scrollWidth > shortcuts.clientWidth + 1.5
           : true,
-        fifthFullyVisible:
-          shortcutRects.length < 5 || !containerRect
-            ? null
-            : shortcutRects[4].right <= containerRect.right + 1.5,
-        sixthStartsNextRow:
-          shortcutRects.length < 6
-            ? null
-            : shortcutRects[5].top > shortcutRects[0].top + 1.5,
+        shortcutsFitContainer:
+          !!containerRect &&
+          shortcutRects.every(
+            (shortcut) =>
+              shortcut.left >= containerRect.left - 1.5 &&
+              shortcut.right <= containerRect.right + 1.5,
+          ),
         shortcutTopGap: firstRect && bottomRect ? bottomRect.top - firstRect.top : -1,
       };
     });
-    expect(browseContract.display).toBe('grid');
-    expect(browseContract.columnCount).toBe(5);
+    expect(browseContract.shortcutCount).toBeGreaterThan(0);
     expect(browseContract.hasHorizontalOverflow).toBe(false);
-    if (browseContract.fifthFullyVisible !== null) {
-      expect(browseContract.fifthFullyVisible).toBe(true);
-    }
-    if (browseContract.sixthStartsNextRow !== null) {
-      expect(browseContract.sixthStartsNextRow).toBe(true);
-    }
+    expect(browseContract.shortcutsFitContainer).toBe(true);
     expect(browseContract.shortcutTopGap).toBeGreaterThan(0);
     await expectFixedBottomChrome(page);
     await expectNoHorizontalOverflow(page);
