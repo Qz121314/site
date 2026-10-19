@@ -343,22 +343,35 @@ export function StorefrontHero(
 }
 
 export function StorefrontHomeShortcut({
+  actionLabel,
+  description,
   href,
   icon,
+  isPrimary = false,
   isMore = false,
   label,
   LinkComponent = 'a',
 }: {
+  actionLabel?: string;
+  description?: string;
   href: string;
   icon: ReactNode;
+  isPrimary?: boolean;
   isMore?: boolean;
   label: string;
   LinkComponent?: StorefrontLinkComponent;
 }) {
   return (
-    <LinkComponent className={`home-shortcut${isMore ? ' is-more' : ''}`} href={href}>
+    <LinkComponent
+      className={`home-shortcut${isMore ? ' is-more' : ''}${isPrimary ? ' is-primary' : ''}`}
+      href={href}
+    >
       <span className="home-shortcut-icon">{icon}</span>
       <span className="home-shortcut-label">{label}</span>
+      {description ? (
+        <span className="home-shortcut-description">{description}</span>
+      ) : null}
+      {actionLabel ? <span className="home-shortcut-action">{actionLabel}</span> : null}
     </LinkComponent>
   );
 }

@@ -128,6 +128,26 @@ function SectionIcon({ section }: { section: PublicSection }) {
   return <span aria-hidden="true">{section.icon.value || fallback}</span>;
 }
 
+function SectionCardImage({
+  priority,
+  section,
+}: {
+  priority: boolean;
+  section: PublicSection;
+}) {
+  if (!section.browseBackgroundUrl) return <SectionIcon section={section} />;
+
+  return (
+    <ResilientImage
+      alt=""
+      fallback={<span className="home-shortcut-image-fallback" aria-hidden="true" />}
+      fetchPriority={priority ? 'high' : 'low'}
+      loading={priority ? 'eager' : 'lazy'}
+      src={section.browseBackgroundUrl}
+    />
+  );
+}
+
 function HomeShortcuts({
   sections,
   showMore,
@@ -135,13 +155,24 @@ function HomeShortcuts({
   sections: PublicSection[];
   showMore: boolean;
 }) {
+  const adaptiveLayout = sections.length > 0 && sections.length <= 4;
+
+  if (sections.length === 0) return null;
+
   return (
     <div className="home-shortcut-zone">
-      <nav className="home-shortcuts home-shortcut-hero" aria-label="Sections">
-        {sections.map((section) => (
+      <nav
+        className={`home-shortcuts home-shortcut-hero${adaptiveLayout ? ' is-adaptive' : ''}`}
+        data-section-count={sections.length}
+        aria-label="Sections"
+      >
+        {sections.map((section, index) => (
           <StorefrontHomeShortcut
+            actionLabel={section.browseButtonLabel || SYSTEM_UI.browse}
+            {...(section.description ? { description: section.description } : {})}
             href={sectionHref(section)}
-            icon={<SectionIcon section={section} />}
+            icon={<SectionCardImage priority={index === 0} section={section} />}
+            isPrimary={index === 0}
             key={section.id}
             label={section.name}
             LinkComponent={HomeLink}
@@ -206,12 +237,14 @@ function HomeRecommendationRail({
   priority,
   section,
   compact = false,
+  featuredOnly = true,
 }: {
   bootstrap: StorefrontBootstrap;
   initialProducts: PublicProductSummary[];
   priority: boolean;
   section: PublicSection;
   compact?: boolean;
+  featuredOnly?: boolean;
 }) {
   const query = useQuery({
     queryKey: ['storefront-section', bootstrap.pointer.contentVersion, section.id],
@@ -225,14 +258,17 @@ function HomeRecommendationRail({
   const products = useMemo(
     () =>
       (initialProducts.length > 0 ? initialProducts : (query.data?.products ?? []))
-        .filter((product) => product.isVisible !== false && product.isFeatured)
+        .filter(
+          (product) =>
+            product.isVisible !== false && (!featuredOnly || product.isFeatured),
+        )
         .sort(
           (left, right) =>
             left.featuredOrder - right.featuredOrder ||
             left.sortOrder - right.sortOrder ||
             left.title.localeCompare(right.title),
         ),
-    [initialProducts, query.data?.products],
+    [featuredOnly, initialProducts, query.data?.products],
   );
 
   if (query.error || (query.data && products.length === 0)) return null;
@@ -419,6 +455,15 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   const shortcutSections = shortcutLayout.sectionIds.flatMap((id) =>
     sectionById.get(id) ? [sectionById.get(id) as PublicSection] : [],
   );
+  const escortsShortcut = shortcutSections.find(
+    (section) => section.slug.toLowerCase() === 'escorts',
+  );
+  const orderedShortcutSections = escortsShortcut
+    ? [
+        escortsShortcut,
+        ...shortcutSections.filter((section) => section.id !== escortsShortcut.id),
+      ]
+    : shortcutSections;
   const recommendationSections = layout.recommendationSectionIds.flatMap((id) =>
     sectionById.get(id) ? [sectionById.get(id) as PublicSection] : [],
   );
@@ -429,10 +474,13 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   const heroSlides = site.hero?.slides ?? [];
   const hasHero = heroSlides.some((slide) => slide.mediaUrl.trim());
   const isTemplateA = layoutForPage(bootstrap, 'browse') === 'template-a';
-  const primarySection = availableSections[0];
+  const primarySection =
+    availableSections.find((section) => section.slug.toLowerCase() === 'escorts') ??
+    availableSections[0];
   const secondarySections = recommendationSections.filter(
     (section) => section.id !== primarySection?.id,
   );
+  const hasSingleSection = availableSections.length === 1;
 
   useEffect(() => {
     document.documentElement.lang = 'en';
@@ -447,26 +495,42 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
     >
       <h1 className="sr-only">Browse · {site.name}</h1>
       <HomeHero siteName={site.name} slides={heroSlides} />
-      <HomeShortcuts sections={shortcutSections} showMore={shortcutLayout.showMore} />
+      {!hasSingleSection ? (
+        <HomeShortcuts
+          sections={orderedShortcutSections}
+          showMore={shortcutLayout.showMore}
+        />
+      ) : null}
 
       <div className={isTemplateA ? 'home-template-a-feed' : 'home-recommendation-feed'}>
-        {isTemplateA && primarySection ? (
+        {hasSingleSection && primarySection ? (
+          <HomeRecommendationRail
+            bootstrap={bootstrap}
+            initialProducts={featuredProductsBySection.get(primarySection.id) ?? []}
+            priority={!hasHero}
+            section={primarySection}
+            featuredOnly={false}
+          />
+        ) : null}
+        {!hasSingleSection && isTemplateA && primarySection ? (
           <HomePrimaryDirectory
             bootstrap={bootstrap}
             initialProducts={featuredProductsBySection.get(primarySection.id) ?? []}
             section={primarySection}
           />
         ) : null}
-        {(isTemplateA ? secondarySections : recommendationSections).map((section) => (
-          <HomeRecommendationRail
-            bootstrap={bootstrap}
-            initialProducts={featuredProductsBySection.get(section.id) ?? []}
-            priority={!hasHero && section.id === priorityRecommendationSectionId}
-            section={section}
-            compact
-            key={section.id}
-          />
-        ))}
+        {!hasSingleSection
+          ? (isTemplateA ? secondarySections : recommendationSections).map((section) => (
+              <HomeRecommendationRail
+                bootstrap={bootstrap}
+                initialProducts={featuredProductsBySection.get(section.id) ?? []}
+                priority={!hasHero && section.id === priorityRecommendationSectionId}
+                section={section}
+                compact
+                key={section.id}
+              />
+            ))
+          : null}
       </div>
     </div>
   );

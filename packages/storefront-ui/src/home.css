@@ -504,6 +504,175 @@
   background: color-mix(in srgb, var(--surface-soft) 90%, var(--surface));
 }
 
+.home-shortcuts.is-adaptive {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding: 0;
+  overflow: visible;
+}
+
+.home-shortcuts.is-adaptive .home-shortcut {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 18px;
+  overflow: hidden;
+  border: 1px solid var(--theme-art-media-frame, var(--line));
+  border-radius: var(--theme-radius-card, 18px);
+  background: var(--surface-soft, var(--surface));
+  box-shadow: var(--theme-art-media-shadow, none);
+  text-align: left;
+  scroll-snap-align: unset;
+  transition:
+    border-color var(--app-motion-base, 240ms) ease,
+    box-shadow var(--app-motion-base, 240ms) ease,
+    transform var(--app-motion-base, 240ms) var(--app-ease-out, ease-out);
+}
+
+.home-shortcuts.is-adaptive .home-shortcut-icon {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  border: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--brand) 34%, var(--surface)),
+      transparent
+    ),
+    var(--surface-soft, var(--surface));
+  box-shadow: none;
+}
+
+.home-shortcuts.is-adaptive .home-shortcut-icon::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgb(12 10 11 / 8%) 12%,
+    rgb(12 10 11 / 30%) 46%,
+    rgb(12 10 11 / 86%) 100%
+  );
+  content: '';
+  pointer-events: none;
+}
+
+.home-shortcuts.is-adaptive .home-shortcut-icon img {
+  filter: none;
+}
+
+.home-shortcut-image-fallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(
+      circle at 78% 14%,
+      color-mix(in srgb, var(--brand) 32%, transparent),
+      transparent 42%
+    ),
+    color-mix(in srgb, var(--surface-soft) 84%, var(--surface));
+}
+
+.home-shortcuts.is-adaptive .home-shortcut-icon > span:not(.home-more-glyph) {
+  position: relative;
+  z-index: 1;
+  color: rgb(255 255 255 / 84%);
+  font-size: clamp(2rem, 8vw, 4rem);
+  font-weight: 520;
+}
+
+.home-shortcuts.is-adaptive .home-shortcut-label,
+.home-shortcuts.is-adaptive .home-shortcut-description,
+.home-shortcuts.is-adaptive .home-shortcut-action {
+  position: relative;
+  z-index: 1;
+}
+
+.home-shortcuts.is-adaptive .home-shortcut-label {
+  width: auto;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 730;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  text-shadow: 0 1px 16px rgb(0 0 0 / 32%);
+  -webkit-line-clamp: 1;
+}
+
+.home-shortcuts.is-adaptive .home-shortcut.is-primary .home-shortcut-label {
+  font-size: clamp(1.28rem, 4vw, 1.8rem);
+}
+
+.home-shortcuts.is-adaptive .home-shortcut-description {
+  display: -webkit-box;
+  max-width: 48ch;
+  overflow: hidden;
+  color: rgb(255 255 255 / 78%);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  text-shadow: 0 1px 12px rgb(0 0 0 / 28%);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.home-shortcuts.is-adaptive .home-shortcut-action {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 0 12px;
+  border: 1px solid rgb(255 255 255 / 32%);
+  border-radius: 999px;
+  color: #fff;
+  background: rgb(20 16 17 / 24%);
+  font-size: 0.7rem;
+  font-weight: 700;
+  backdrop-filter: blur(12px);
+}
+
+.home-shortcuts.is-adaptive .home-shortcut:active {
+  transform: scale(0.985);
+}
+
+.home-shortcuts.is-adaptive[data-section-count='1'] .home-shortcut {
+  min-height: 214px;
+}
+
+.home-shortcuts.is-adaptive[data-section-count='2'] .home-shortcut {
+  min-height: 214px;
+}
+
+.home-shortcuts.is-adaptive[data-section-count='3'] {
+  grid-template-rows: 210px 148px;
+}
+
+.home-shortcuts.is-adaptive[data-section-count='3'] .home-shortcut:first-child {
+  grid-column: 1 / -1;
+}
+
+.home-shortcuts.is-adaptive[data-section-count='4'] {
+  grid-template-rows: 210px 142px 92px;
+}
+
+.home-shortcuts.is-adaptive[data-section-count='4'] .home-shortcut:first-child,
+.home-shortcuts.is-adaptive[data-section-count='4'] .home-shortcut:nth-child(4) {
+  grid-column: 1 / -1;
+}
+
+.home-shortcuts.is-adaptive[data-section-count='4'] .home-shortcut:nth-child(4) {
+  padding-block: 14px;
+}
+
 .home-more-glyph {
   display: grid;
   grid-template-columns: repeat(2, 4px);
@@ -1118,6 +1287,71 @@
     font-size: 0.73rem;
   }
 
+  .home-shortcuts.is-adaptive[data-section-count='1'] .home-shortcut {
+    min-height: 300px;
+  }
+
+  .home-shortcuts.is-adaptive[data-section-count='2'] {
+    grid-template-columns: 2fr 1fr;
+  }
+
+  .home-shortcuts.is-adaptive[data-section-count='2'] .home-shortcut {
+    min-height: 300px;
+  }
+
+  .home-shortcuts.is-adaptive[data-section-count='3'] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(150px, 1fr));
+  }
+
+  .home-shortcuts.is-adaptive[data-section-count='3'] .home-shortcut:first-child {
+    grid-column: 1 / 3;
+    grid-row: 1 / 3;
+  }
+
+  .home-shortcuts.is-adaptive[data-section-count='3'] .home-shortcut:nth-child(2) {
+    grid-column: 3 / 5;
+    grid-row: 1;
+  }
+
+  .home-shortcuts.is-adaptive[data-section-count='3'] .home-shortcut:nth-child(3) {
+    grid-column: 3 / 5;
+    grid-row: 2;
+  }
+
+  .home-shortcuts.is-adaptive[data-section-count='4'] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(3, clamp(130px, 15vw, 190px));
+  }
+
+  .home-shortcuts.is-adaptive[data-section-count='4'] .home-shortcut:first-child {
+    grid-column: 1 / 3;
+    grid-row: 1 / 4;
+  }
+
+  .home-shortcuts.is-adaptive[data-section-count='4'] .home-shortcut:nth-child(2) {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .home-shortcuts.is-adaptive[data-section-count='4'] .home-shortcut:nth-child(3) {
+    grid-column: 3;
+    grid-row: 2;
+  }
+
+  .home-shortcuts.is-adaptive[data-section-count='4'] .home-shortcut:nth-child(4) {
+    grid-column: 3;
+    grid-row: 3;
+  }
+
+  .home-shortcuts.is-adaptive .home-shortcut-label {
+    font-size: 1.08rem;
+  }
+
+  .home-shortcuts.is-adaptive .home-shortcut.is-primary .home-shortcut-label {
+    font-size: clamp(1.7rem, 2.4vw, 2.5rem);
+  }
+
   .home-recommendation-heading {
     margin-bottom: 18px;
   }
@@ -1153,6 +1387,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .home-shortcut-icon,
+  .home-shortcuts.is-adaptive .home-shortcut,
   .home-shortcut-icon img,
   .home-product-cover,
   .home-product-cover img,
