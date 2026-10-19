@@ -120,7 +120,7 @@
 :is(html, .storefront-theme-root) .section-category-filter button {
   padding: 0 13px;
   border: 1px solid color-mix(in srgb, var(--line) 58%, transparent);
-  border-radius: 999px;
+  border-radius: var(--theme-radius-control, 12px);
   color: color-mix(in srgb, var(--text) 72%, var(--muted));
   background: color-mix(in srgb, var(--surface-soft) 82%, transparent);
   box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 3%, transparent) inset;

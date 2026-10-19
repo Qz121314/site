@@ -295,7 +295,7 @@
 
 .product-detail-route-action .cta-button.is-ready,
 .product-detail-inline-action .cta-button.is-ready {
-  animation: product-detail-cta-breathe 3.6s ease-in-out infinite;
+  animation: none;
 }
 
 .product-detail-cta-label {
@@ -386,20 +386,6 @@
 .product-detail-state {
   width: min(720px, 100%);
   margin-inline: auto;
-}
-
-@keyframes product-detail-cta-breathe {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 0 transparent);
-  }
-
-  50% {
-    filter: drop-shadow(
-      0 0 14px
-        color-mix(in srgb, var(--theme-primary-detail-cta-background) 30%, transparent)
-    );
-  }
 }
 
 @keyframes product-detail-cta-spin {
