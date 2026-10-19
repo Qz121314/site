@@ -224,10 +224,10 @@
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav {
     padding: 4px max(8px, env(safe-area-inset-right)) 4px
       max(8px, env(safe-area-inset-left));
-    border: 1px solid color-mix(in srgb, var(--brand-strong) 18%, var(--line));
+    border: 1px solid color-mix(in srgb, var(--brand-strong) 10%, var(--line));
     border-radius: 16px;
-    background: color-mix(in srgb, var(--surface, #fff) 90%, var(--brand-strong) 10%);
-    box-shadow: 0 14px 30px color-mix(in srgb, var(--brand-strong) 12%, transparent);
+    background: color-mix(in srgb, var(--surface, #fff) 97%, var(--brand-strong) 3%);
+    box-shadow: 0 7px 20px color-mix(in srgb, var(--text) 6%, transparent);
     backdrop-filter: var(
       --theme-navigation-backdrop,
       var(--theme-primary-navigation-backdrop)
@@ -279,13 +279,11 @@
     > .bottom-nav
     a.is-active
     .bottom-nav-icon {
-    background: color-mix(in srgb, var(--brand-strong) 6%, transparent);
+    background: color-mix(in srgb, var(--brand-strong) 9%, var(--surface));
     transform: none;
-    border-color: color-mix(in srgb, var(--brand-strong) 42%, transparent);
-    border-radius: 50%;
-    box-shadow:
-      0 0 0 3px color-mix(in srgb, var(--brand-strong) 8%, transparent),
-      0 2px 8px color-mix(in srgb, var(--brand-strong) 12%, transparent);
+    border-color: color-mix(in srgb, var(--brand-strong) 12%, transparent);
+    border-radius: 10px;
+    box-shadow: none;
   }
 
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a:active {
@@ -451,13 +449,11 @@
   height: 40px;
   min-width: 40px;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--brand) 20%, var(--line));
-  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--brand) 12%, var(--line));
+  border-radius: var(--theme-radius-control, 12px);
   color: color-mix(in srgb, var(--text) 78%, var(--muted));
-  background: color-mix(in srgb, var(--surface) 88%, var(--brand) 4%);
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--brand) 3%, transparent),
-    0 5px 14px color-mix(in srgb, var(--brand-strong) 8%, transparent);
+  background: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--text) 5%, transparent);
 }
 
 :is(html, .storefront-theme-root)

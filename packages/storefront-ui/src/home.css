@@ -566,7 +566,7 @@
 }
 
 .home-shortcuts.is-adaptive .home-shortcut-icon img {
-  filter: none;
+  filter: var(--theme-art-media-filter, none);
 }
 
 .home-shortcut-image-fallback {
@@ -632,7 +632,7 @@
   margin-top: 6px;
   padding: 0 12px;
   border: 1px solid rgb(255 255 255 / 32%);
-  border-radius: 999px;
+  border-radius: var(--theme-radius-control, 12px);
   color: #fff;
   background: rgb(20 16 17 / 24%);
   font-size: 0.7rem;
