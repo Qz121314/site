@@ -34,10 +34,21 @@
     gap: 14px;
   }
 
+  .browse-directory-intro {
+    gap: 7px;
+    padding: 7px 2px 0;
+  }
+
   .browse-directory-intro h1 {
-    font-size: clamp(1.55rem, 7vw, 1.82rem);
+    max-width: 15ch;
+    font-size: clamp(1.9rem, 8vw, 2.35rem);
     line-height: 1.05;
-    letter-spacing: -0.055em;
+    letter-spacing: -0.045em;
+  }
+
+  .browse-directory-intro p {
+    max-width: 36ch;
+    font-size: 0.875rem;
   }
 
   .browse-section-list {
@@ -59,7 +70,7 @@
 
   .browse-section-list:not(.is-single) {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: repeat(2, minmax(0, 1fr));
+    grid-template-rows: minmax(0, 1.35fr) minmax(124px, 0.82fr);
   }
 
   .browse-section-list:not(.is-single) .browse-section-card {
@@ -78,6 +89,14 @@
     font-size: clamp(1.32rem, 5.7vw, 1.48rem);
     font-weight: 720;
     letter-spacing: -0.045em;
+  }
+
+  .browse-section-card.is-primary .browse-section-card-content strong {
+    font-size: clamp(1.55rem, 7vw, 1.85rem);
+  }
+
+  .browse-section-card.is-secondary .browse-section-card-content strong {
+    font-size: 1.2rem;
   }
 
   .browse-section-card-content p {
@@ -101,6 +120,13 @@
 
   .browse-section-card-action svg {
     filter: none;
+  }
+
+  .browse-section-card.is-secondary .browse-section-card-action {
+    min-height: 40px;
+    padding-inline: 4px;
+    color: #fff;
+    font-size: 0.75rem;
   }
 
   .browse-section-card {

@@ -9,22 +9,27 @@
 
 .browse-directory-intro {
   display: grid;
-  gap: 4px;
-  padding-inline: 2px;
+  gap: 9px;
+  padding-inline: 4px;
 }
 
 .browse-directory-intro h1 {
   margin: 0;
   color: var(--text);
   font-family: var(--storefront-font-display);
-  font-size: clamp(1.05rem, 4.5vw, 1.2rem);
-  font-weight: var(--theme-heading-weight, var(--storefront-weight-semibold, 650));
-  line-height: 1.2;
-  letter-spacing: -0.03em;
+  font-size: clamp(2rem, 5vw, 3.35rem);
+  font-weight: var(--theme-heading-weight, 560);
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
 }
 
-.browse-directory-intro h1 span {
-  color: var(--brand-strong, var(--brand));
+.browse-directory-intro p {
+  max-width: 52ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  line-height: 1.5;
 }
 
 .browse-directory-section {
@@ -210,6 +215,19 @@
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 24%));
 }
 
+.browse-section-card.is-primary .browse-section-card-content strong {
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+}
+
+.browse-section-card.is-secondary .browse-section-card-action {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  font-size: 0.875rem;
+}
+
 .browse-section-card:active {
   opacity: 0.9;
   transform: scale(0.99);
@@ -239,7 +257,7 @@
 
 @media (max-width: 767px) {
   .browse-directory {
-    gap: 20px;
+    gap: 16px;
   }
 }
 
@@ -249,7 +267,7 @@
   }
 
   .browse-section-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1.55fr) minmax(260px, 1fr);
     gap: 18px;
   }
 
@@ -258,8 +276,8 @@
   }
 
   .browse-section-card {
-    min-height: 0;
-    aspect-ratio: 16 / 9;
+    min-height: clamp(360px, 55vh, 560px);
+    aspect-ratio: auto;
   }
 
   .browse-section-card-content {
@@ -270,6 +288,10 @@
 
   .browse-section-card-content strong {
     font-size: clamp(1.4rem, 2.25vw, 1.9rem);
+  }
+
+  .browse-section-card.is-secondary .browse-section-card-content strong {
+    font-size: clamp(1.3rem, 2vw, 1.65rem);
   }
 }
 
