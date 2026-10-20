@@ -11,20 +11,12 @@
     0 0 0 1px color-mix(in srgb, var(--brand) 20%, transparent);
   --theme-button-shadow: 0 6px 18px color-mix(in srgb, var(--brand) 14%, transparent);
   --theme-primary-navigation-shadow: 0 8px 26px rgb(78 37 49 / 8%);
-  --theme-primary-detail-cta-background: color-mix(
-    in srgb,
-    var(--brand) 16%,
-    var(--surface)
-  );
-  --theme-primary-detail-cta-color: var(--brand-strong);
-  --theme-primary-detail-cta-border: color-mix(in srgb, var(--brand) 18%, transparent);
-  --theme-primary-detail-cta-shadow: 0 4px 14px rgb(78 37 49 / 9%);
-  --theme-detail-cta-shadow: 0 4px 14px rgb(78 37 49 / 9%);
-  --theme-primary-detail-cta-arrow-background: color-mix(
-    in srgb,
-    var(--brand) 9%,
-    transparent
-  );
+  --theme-primary-detail-cta-background: #a74765;
+  --theme-primary-detail-cta-color: #fffaf7;
+  --theme-primary-detail-cta-border: transparent;
+  --theme-primary-detail-cta-shadow: 0 5px 14px rgb(116 49 68 / 13%);
+  --theme-detail-cta-shadow: 0 5px 14px rgb(116 49 68 / 13%);
+  --theme-primary-detail-cta-arrow-background: transparent;
   --theme-art-media-filter: saturate(0.96) contrast(1.015) brightness(1.015);
   --theme-art-media-hover-scale: 1.018;
   --theme-art-heading-weight: 590;
@@ -93,29 +85,21 @@
 :is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
   :is(.product-detail-route-action, .product-detail-inline-action)
   .cta-button {
-  border-radius: 999px;
+  border-color: transparent;
+  border-radius: 14px;
+  background: var(--theme-primary-detail-cta-background);
+  box-shadow: var(--theme-primary-detail-cta-shadow);
 }
 
 :is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
   .product-detail-cta-label {
+  font-family: var(--storefront-font-ui);
   font-weight: 600;
 }
 
 :is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
-  .product-detail-route-action.is-template-a {
-  --theme-primary-detail-cta-background: color-mix(
-    in srgb,
-    var(--brand) 16%,
-    var(--surface)
-  );
-  --theme-primary-detail-cta-color: var(--brand-strong);
-  --theme-primary-detail-cta-shadow: 0 4px 14px rgb(78 37 49 / 9%);
-  --theme-detail-cta-shadow: 0 4px 14px rgb(78 37 49 / 9%);
-  --theme-primary-detail-cta-arrow-background: color-mix(
-    in srgb,
-    var(--brand) 9%,
-    transparent
-  );
+  .product-detail-cta-arrow {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
