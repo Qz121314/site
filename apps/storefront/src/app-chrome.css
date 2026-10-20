@@ -329,56 +329,10 @@
 
   :is(html, .storefront-theme-root) .app-shell > .topbar .topbar-actions {
     top: 6px;
-    right: max(24px, calc((100vw - var(--v2-content-width, 1200px)) / 2));
-    height: 50px;
-    padding: 4px 8px 4px 4px;
-    gap: 8px;
-    border: 1px solid var(--theme-primary-navigation-border, var(--line));
-    border-left: 0;
-    border-radius: 0 16px 16px 0;
-    background: color-mix(in srgb, var(--surface) 78%, transparent);
-    box-shadow: 0 12px 30px color-mix(in srgb, var(--text) 10%, transparent);
-    backdrop-filter: blur(18px) saturate(1.08);
-    -webkit-backdrop-filter: blur(18px) saturate(1.08);
-  }
-
-  :is(html, .storefront-theme-root)
-    .app-shell
-    > .topbar
-    .topbar-actions
-    :is(.pwa-install-button, .topbar-message-button) {
-    display: grid;
-    width: 40px;
+    right: max(24px, calc((100vw - var(--v2-content-width, 1200px)) / 2 + 72px));
     height: 40px;
-    min-width: 40px;
-    place-items: center;
-    border: 1px solid var(--theme-primary-navigation-border, var(--line));
-    border-radius: 12px;
-    color: var(--v2-muted, var(--muted));
-    background: color-mix(in srgb, var(--surface) 74%, transparent);
-    transition:
-      color var(--app-motion-fast, 140ms) ease,
-      background var(--app-motion-fast, 140ms) ease,
-      border-color var(--app-motion-fast, 140ms) ease,
-      transform var(--app-motion-fast, 140ms) var(--app-ease-out, ease-out);
-  }
-
-  :is(html, .storefront-theme-root)
-    .app-shell
-    > .topbar
-    .topbar-actions
-    :is(.pwa-install-button, .topbar-message-button):hover {
-    color: var(--text);
-    border-color: color-mix(in srgb, var(--text) 22%, var(--line));
-    background: var(--surface);
-  }
-
-  :is(html, .storefront-theme-root)
-    .app-shell
-    > .topbar
-    .topbar-actions
-    :is(.pwa-install-button, .topbar-message-button):active {
-    transform: scale(0.96);
+    padding: 0;
+    gap: 0;
   }
 
   :is(html, .storefront-theme-root) .storefront-bottom-chrome {
@@ -443,24 +397,28 @@
   .app-shell
   > .topbar
   .topbar-actions
-  :is(.pwa-install-button, .topbar-message-button) {
+  .pwa-install-button {
   display: grid;
   width: 40px;
   height: 40px;
   min-width: 40px;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--brand) 12%, var(--line));
-  border-radius: var(--theme-radius-control, 12px);
+  border: 0;
+  border-radius: 50%;
   color: color-mix(in srgb, var(--text) 78%, var(--muted));
-  background: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--text) 5%, transparent);
+  background: transparent;
+  box-shadow: none;
+  transition:
+    color var(--app-motion-fast, 140ms) ease,
+    background var(--app-motion-fast, 140ms) ease,
+    transform var(--app-motion-fast, 140ms) var(--app-ease-out, ease-out);
 }
 
 :is(html, .storefront-theme-root)
   .app-shell
   > .topbar
   .topbar-actions
-  :is(.pwa-install-button, .topbar-message-button)
+  .pwa-install-button
   svg {
   width: 20px;
   height: 20px;
@@ -470,31 +428,17 @@
   .app-shell
   > .topbar
   .topbar-actions
-  :is(.pwa-install-button, .topbar-message-button):hover {
+  .pwa-install-button:hover {
   color: var(--brand-strong);
-  border-color: color-mix(in srgb, var(--brand-strong) 38%, var(--line));
-  background: color-mix(in srgb, var(--brand) 7%, var(--surface));
+  background: color-mix(in srgb, var(--brand) 7%, transparent);
 }
 
 :is(html, .storefront-theme-root)
   .app-shell
   > .topbar
   .topbar-actions
-  :is(.pwa-install-button, .topbar-message-button):active {
+  .pwa-install-button:active {
   transform: scale(var(--theme-press-scale, 0.985));
-}
-
-:is(html, .storefront-theme-root) .topbar-message-badge {
-  top: 3px;
-  right: 3px;
-  min-width: 8px;
-  width: 8px;
-  height: 8px;
-  padding: 0;
-  border: 2px solid var(--surface, #fff);
-  background: var(--brand-strong, var(--brand));
-  box-shadow: 0 2px 6px color-mix(in srgb, var(--brand-strong) 28%, transparent);
-  font-size: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -502,7 +446,7 @@
     .app-shell
     > .topbar
     .topbar-actions
-    :is(.pwa-install-button, .topbar-message-button),
+    .pwa-install-button,
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a {
     transition: none;
   }

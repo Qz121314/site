@@ -103,35 +103,10 @@ html[data-storefront-scrolled] .app-shell .brand-lockup {
   transform: scale(0.97);
 }
 
-html[data-storefront-scrolled] .app-shell .topbar-message-button {
-  transform: translateY(-1px);
-}
-
-.topbar-message-badge {
-  animation: storefront-badge-arrive 600ms var(--route-transition-ease, ease-out) both;
-}
-
 @media (hover: hover) and (pointer: fine) {
   :is(.product-card, .section-product-card):hover :is(h3, .section-product-title)::after {
     opacity: 0.9;
     transform: translate3d(0, 0, 0);
-  }
-}
-
-@keyframes storefront-badge-arrive {
-  from {
-    opacity: 0;
-    transform: scale(0.72);
-  }
-
-  70% {
-    opacity: 1;
-    transform: scale(1.08);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
   }
 }
 
@@ -185,12 +160,7 @@ html[data-storefront-scrolled] .app-shell .topbar-message-button {
     animation: none;
   }
 
-  html[data-storefront-scrolled] .app-shell .brand-lockup,
-  html[data-storefront-scrolled] .app-shell .topbar-message-button {
+  html[data-storefront-scrolled] .app-shell .brand-lockup {
     transform: none;
-  }
-
-  .topbar-message-badge {
-    animation: none;
   }
 }
