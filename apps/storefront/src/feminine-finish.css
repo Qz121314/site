@@ -1,5 +1,25 @@
 /* Erosdoor's pearl recipe: warm, editorial details without changing page flow. */
 
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('/fonts/cormorant-garamond-latin.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+    U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:is(html, .storefront-theme-root)[data-theme] {
+  --storefront-font-display: 'Cormorant Garamond', var(--site-font-family);
+  --storefront-font-brand: 'Cormorant Garamond', var(--site-font-family);
+  --theme-heading-weight: 600;
+  --theme-label-weight: 600;
+  --theme-art-heading-weight: 600;
+  --theme-art-product-title-weight: 600;
+}
+
 :is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial'] {
   --theme-radius-media: 18px;
   --theme-radius-control: 14px;
@@ -19,9 +39,9 @@
   --theme-primary-detail-cta-arrow-background: transparent;
   --theme-art-media-filter: saturate(0.96) contrast(1.015) brightness(1.015);
   --theme-art-media-hover-scale: 1.018;
-  --theme-art-heading-weight: 590;
+  --theme-art-heading-weight: 600;
   --theme-art-heading-tracking: -0.018em;
-  --theme-art-product-title-weight: 560;
+  --theme-art-product-title-weight: 600;
   --theme-art-product-title-tracking: 0.006em;
 }
 
@@ -39,8 +59,8 @@
 :is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
   .product-detail-summary
   h1 {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-weight: 500;
+  font-family: var(--storefront-font-display);
+  font-weight: 600;
   letter-spacing: -0.018em;
 }
 
@@ -89,12 +109,6 @@
   border-radius: 14px;
   background: var(--theme-primary-detail-cta-background);
   box-shadow: var(--theme-primary-detail-cta-shadow);
-}
-
-:is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
-  .product-detail-cta-label {
-  font-family: var(--storefront-font-ui);
-  font-weight: 600;
 }
 
 :is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']

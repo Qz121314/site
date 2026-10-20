@@ -304,8 +304,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   font-family: var(--storefront-font-display);
-  font-weight: 700;
-  letter-spacing: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: 0.012em;
+  line-height: 1;
   white-space: nowrap;
 }
 
