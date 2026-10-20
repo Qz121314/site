@@ -1,0 +1,84 @@
+/* Erosdoor's pearl recipe: warm, editorial details without changing page flow. */
+
+:is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial'] {
+  --theme-radius-media: 18px;
+  --theme-radius-control: 14px;
+  --theme-browse-radius: 22px;
+  --theme-media-frame: color-mix(in srgb, var(--line) 58%, var(--brand) 42%);
+  --theme-media-shadow: 0 10px 28px rgb(78 37 49 / 10%);
+  --theme-media-hover-shadow:
+    0 16px 36px rgb(78 37 49 / 15%),
+    0 0 0 1px color-mix(in srgb, var(--brand) 20%, transparent);
+  --theme-button-shadow: 0 6px 18px color-mix(in srgb, var(--brand) 14%, transparent);
+  --theme-primary-navigation-shadow: 0 8px 26px rgb(78 37 49 / 8%);
+  --theme-art-media-filter: saturate(0.96) contrast(1.015) brightness(1.015);
+  --theme-art-media-hover-scale: 1.018;
+  --theme-art-heading-weight: 590;
+  --theme-art-heading-tracking: -0.018em;
+  --theme-art-product-title-weight: 560;
+  --theme-art-product-title-tracking: 0.006em;
+}
+
+:is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
+  .browse-section-card {
+  border-radius: var(--theme-browse-radius);
+}
+
+:is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
+  .browse-section-card-content
+  strong,
+:is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
+  .section-catalog-header
+  h1,
+:is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
+  .product-detail-summary
+  h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 500;
+  letter-spacing: -0.018em;
+}
+
+:is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
+  .browse-section-card-content
+  strong {
+  font-size: clamp(1.34rem, 5.5vw, 1.52rem);
+  text-transform: none;
+}
+
+:is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
+  .browse-section-card-action {
+  border-color: color-mix(in srgb, var(--brand) 18%, var(--surface));
+  border-radius: 999px;
+  color: var(--brand-strong);
+  background: color-mix(in srgb, var(--surface) 94%, #fff 6%);
+  box-shadow: 0 5px 16px rgb(47 24 31 / 14%);
+  font-weight: 560;
+}
+
+:is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
+  :is(
+    .home-product-cover,
+    .browse-search-product-cover,
+    .section-product-cover,
+    .detail-media-stage
+  ) {
+  border-radius: var(--theme-radius-media);
+}
+
+:is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
+  .section-catalog-search {
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 88%, #fff 12%);
+}
+
+:is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
+  .bottom-nav {
+  box-shadow: 0 8px 26px rgb(78 37 49 / 8%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
+    .browse-section-card-action {
+    transition: none;
+  }
+}

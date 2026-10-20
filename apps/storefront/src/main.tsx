@@ -32,6 +32,7 @@ import './loading-states.css';
 import './interaction-motion.css';
 import './premium-finish.css';
 import './premium-atmosphere.css';
+import './feminine-finish.css';
 
 installStorefrontViewportRuntime();
 installStorefrontScrollReveal();
