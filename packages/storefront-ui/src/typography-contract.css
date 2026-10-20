@@ -32,7 +32,7 @@
 }
 
 :is(html, .storefront-theme-root)
-  :is(h1, h2, h3, .home-product-tile strong, .bottom-nav small) {
+  :is(h1, h2, h3, .home-product-tile strong, .home-product-title, .bottom-nav small) {
   font-family: var(--storefront-font-display);
 }
 

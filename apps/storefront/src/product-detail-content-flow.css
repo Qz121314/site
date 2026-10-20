@@ -262,7 +262,7 @@
 .product-detail-page.is-template-a,
 .product-detail-route-action.is-template-a {
   --template-a-font-body: var(--site-font-family);
-  --template-a-font-display: var(--site-font-family);
+  --template-a-font-display: var(--storefront-font-brand);
   --template-a-page: #f7f0ec;
   --template-a-ink: #38282d;
   --template-a-accent: #a74463;
@@ -348,8 +348,8 @@
 .product-detail-page.is-template-a .product-detail-summary h1 {
   font-family: var(--template-a-font-display);
   font-size: clamp(2.3rem, 7vw, 3.4rem);
-  font-weight: 400;
-  letter-spacing: -0.045em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   line-height: 0.98;
 }
 
