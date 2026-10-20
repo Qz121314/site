@@ -27,8 +27,7 @@
   gap: 4px;
 }
 
-.topbar-actions > .pwa-install-control,
-.topbar-actions > .storefront-icon-button {
+.topbar-actions > .pwa-install-control {
   flex: 0 0 auto;
 }
 
@@ -39,8 +38,7 @@
   color: var(--text, #1f2328);
 }
 
-.topbar-actions .pwa-install-button svg,
-.topbar-message-button svg {
+.topbar-actions .pwa-install-button svg {
   width: 17px;
   height: 17px;
 }
@@ -64,29 +62,6 @@
   box-shadow: var(--shadow, 0 8px 24px rgb(31 35 40 / 12%));
   font-size: 0.7rem;
   line-height: 1.35;
-}
-
-.topbar-message-button {
-  position: relative;
-  color: var(--text, #1f2328);
-}
-
-.topbar-message-badge {
-  position: absolute;
-  top: 1px;
-  right: 0;
-  display: grid;
-  min-width: 16px;
-  height: 16px;
-  place-items: center;
-  padding: 0 3px;
-  border: 2px solid var(--surface, #fff);
-  border-radius: 999px;
-  color: #fff;
-  background: #d92d20;
-  font-size: 0.5rem;
-  font-weight: 850;
-  line-height: 1;
 }
 
 @media (min-width: 768px) {

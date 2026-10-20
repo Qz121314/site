@@ -4,7 +4,7 @@ import {
   StorefrontBrandName,
   type StorefrontLinkComponent,
 } from '@site/storefront-ui';
-import { Bell, ChevronLeft, CircleAlert, MapPin } from 'lucide-react';
+import { ChevronLeft, CircleAlert, MapPin } from 'lucide-react';
 import {
   type AnchorHTMLAttributes,
   type MouseEvent as ReactMouseEvent,
@@ -236,24 +236,6 @@ function PrimaryError() {
   );
 }
 
-function StorefrontMessageButton({ unreadCount }: { unreadCount: number }) {
-  return (
-    <StorefrontLink
-      aria-label={unreadCount > 0 ? `Messages, ${unreadCount} unread` : 'Messages'}
-      className="storefront-icon-button topbar-message-button"
-      href="/messages/"
-      title="Messages"
-    >
-      <Bell aria-hidden="true" />
-      {unreadCount > 0 ? (
-        <span className="topbar-message-badge" aria-hidden="true">
-          {unreadCount > 99 ? '99+' : unreadCount}
-        </span>
-      ) : null}
-    </StorefrontLink>
-  );
-}
-
 type SupportPriorityAlert = {
   body: string;
   conversationRef: string;
@@ -345,7 +327,6 @@ function PrimaryShell({
             rightAction={
               <div className="topbar-actions">
                 <PwaInstallButton />
-                <StorefrontMessageButton unreadCount={unreadMessages} />
               </div>
             }
             siteName={site.name}
