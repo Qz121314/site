@@ -103,6 +103,18 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
+  :is(.product-detail-route-action, .product-detail-inline-action) {
+  --theme-primary-detail-cta-background: color-mix(
+    in srgb,
+    var(--brand) 12%,
+    var(--surface)
+  );
+  --theme-primary-detail-cta-color: var(--brand-strong);
+  --theme-primary-detail-cta-shadow: 0 4px 12px
+    color-mix(in srgb, var(--brand) 9%, transparent);
+}
+
+:is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
   :is(.product-detail-route-action, .product-detail-inline-action)
   .cta-button {
   border: 1px solid color-mix(in srgb, var(--brand) 20%, var(--surface));
