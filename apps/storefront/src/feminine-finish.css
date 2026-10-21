@@ -105,8 +105,8 @@
 :is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style='editorial']
   :is(.product-detail-route-action, .product-detail-inline-action)
   .cta-button {
-  border-color: transparent;
-  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--brand) 20%, var(--surface));
+  border-radius: 999px;
   background: var(--theme-primary-detail-cta-background);
   box-shadow: var(--theme-primary-detail-cta-shadow);
 }
