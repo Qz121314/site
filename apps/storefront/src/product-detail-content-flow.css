@@ -263,9 +263,9 @@
 .product-detail-route-action.is-template-a {
   --template-a-font-body: var(--site-font-family);
   --template-a-font-display: var(--storefront-font-brand);
-  --template-a-page: #f7f0ec;
-  --template-a-ink: #38282d;
-  --template-a-accent: #a74463;
+  --template-a-page: #f6f1ef;
+  --template-a-ink: #30262b;
+  --template-a-accent: #8e3f59;
   --storefront-font-ui: var(--template-a-font-body);
   --storefront-font-display: var(--template-a-font-display);
   --app-motion-fast: 160ms;
@@ -275,22 +275,22 @@
   --theme-detail-cta-height: 58px;
   --theme-detail-cta-radius: 14px;
   --theme-primary-detail-cta-background: var(--template-a-accent);
-  --theme-primary-detail-cta-color: #fffaf7;
-  --theme-primary-detail-cta-shadow: 0 10px 26px rgb(127 48 71 / 25%);
-  --theme-primary-detail-cta-focus-ring: 0 0 0 3px rgb(167 68 99 / 38%);
-  --theme-primary-detail-cta-arrow-background: rgb(255 250 247 / 16%);
+  --theme-primary-detail-cta-color: #fffcfa;
+  --theme-primary-detail-cta-shadow: 0 10px 26px rgb(111 47 69 / 20%);
+  --theme-primary-detail-cta-focus-ring: 0 0 0 3px rgb(142 63 89 / 32%);
+  --theme-primary-detail-cta-arrow-background: rgb(255 252 250 / 16%);
   color: var(--template-a-ink);
   font-family: var(--template-a-font-body);
 }
 
 .product-detail-page.is-template-a {
-  --template-a-surface: #fffaf7;
-  --template-a-surface-soft: #f1e7e3;
-  --template-a-muted: #6f5c60;
-  --template-a-line: #e6d8d5;
-  --template-a-accent-strong: #8e3452;
-  --template-a-media-canvas: #eee5e1;
-  --template-a-media-shadow: 0 12px 30px rgb(56 40 45 / 10%);
+  --template-a-surface: #fffcfa;
+  --template-a-surface-soft: #f0e8e5;
+  --template-a-muted: #786a70;
+  --template-a-line: #e6d9d5;
+  --template-a-accent-strong: #6f2f45;
+  --template-a-media-canvas: #f0e8e5;
+  --template-a-media-shadow: 0 12px 30px rgb(48 38 43 / 10%);
   --template-a-media-control: rgb(255 250 247 / 94%);
   --storefront-font-brand: var(--template-a-font-display);
   --storefront-text-body: 0.9375rem;
