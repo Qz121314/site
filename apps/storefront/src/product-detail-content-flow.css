@@ -271,12 +271,16 @@
   --app-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --theme-press-brightness: 0.94;
   --theme-press-scale: 0.985;
-  --theme-detail-cta-height: 58px;
-  --theme-detail-cta-radius: 14px;
-  --theme-primary-detail-cta-background: var(--brand);
-  --theme-primary-detail-cta-color: var(--theme-on-brand);
-  --theme-primary-detail-cta-shadow: 0 10px 26px
-    color-mix(in srgb, var(--brand) 20%, transparent);
+  --theme-detail-cta-height: 52px;
+  --theme-detail-cta-radius: 999px;
+  --theme-primary-detail-cta-background: color-mix(
+    in srgb,
+    var(--brand) 12%,
+    var(--surface)
+  );
+  --theme-primary-detail-cta-color: var(--brand-strong);
+  --theme-primary-detail-cta-shadow: 0 4px 12px
+    color-mix(in srgb, var(--brand) 9%, transparent);
   --theme-primary-detail-cta-focus-ring: 0 0 0 3px
     color-mix(in srgb, var(--brand) 32%, transparent);
   --theme-primary-detail-cta-arrow-background: color-mix(
@@ -304,8 +308,8 @@
   --theme-detail-desktop-media-ratio: 0.88 / 1;
   --theme-detail-media-radius: 12px;
   --theme-detail-inline-media-radius: 12px;
-  --theme-detail-cta-height: 58px;
-  --theme-detail-cta-radius: 14px;
+  --theme-detail-cta-height: 52px;
+  --theme-detail-cta-radius: 999px;
   --theme-primary-detail-media-background: var(--template-a-media-canvas);
   --theme-primary-detail-media-shadow: var(--template-a-media-shadow);
   --theme-art-media-filter: none;
@@ -355,17 +359,19 @@
 
 .product-detail-route-action.is-template-a .cta-button,
 .product-detail-inline-action .cta-button.is-template-a {
-  min-height: 58px;
-  border-radius: 14px;
-  font-size: 0.88rem;
-  letter-spacing: 0.055em;
-  text-transform: uppercase;
+  min-height: 52px;
+  border-color: color-mix(in srgb, var(--brand) 20%, var(--surface));
+  border-radius: 999px;
+  box-shadow: var(--theme-primary-detail-cta-shadow);
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
 }
 
 .product-detail-route-action.is-template-a {
   --theme-primary-detail-cta-bar-background: var(--template-a-page);
   --theme-primary-detail-cta-bar-shadow: 0 -8px 24px
-    color-mix(in srgb, var(--text) 9%, transparent);
+    color-mix(in srgb, var(--text) 5%, transparent);
   border-top: 1px solid var(--template-a-line);
 }
 
