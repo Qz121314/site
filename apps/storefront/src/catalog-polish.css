@@ -12,11 +12,7 @@
 }
 
 :is(html, .storefront-theme-root)
-  :is(
-    .home-product-cover::before,
-    .browse-search-product-cover::before,
-    .section-product-cover::before
-  ) {
+  :is(.home-product-cover::before, .browse-search-product-cover::before) {
   background: linear-gradient(
     180deg,
     transparent 50%,
@@ -34,8 +30,7 @@
   border-color: var(--theme-art-media-frame);
 }
 
-:is(html, .storefront-theme-root)
-  :is(.home-product-title, .browse-search-product-title, .section-product-title) {
+:is(html, .storefront-theme-root) :is(.home-product-title, .browse-search-product-title) {
   right: 10px;
   bottom: 9px;
   left: 10px;
@@ -200,7 +195,7 @@
 
 @media (min-width: 768px) {
   :is(html, .storefront-theme-root)
-    :is(.home-product-title, .browse-search-product-title, .section-product-title) {
+    :is(.home-product-title, .browse-search-product-title) {
     right: 12px;
     bottom: 11px;
     left: 12px;
