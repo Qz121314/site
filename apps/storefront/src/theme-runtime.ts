@@ -61,6 +61,21 @@ const TOKEN_KEYS: Array<keyof ThemeTokens> = [
   'heroGlow',
   'shadow',
 ];
+const LEGACY_PEARL_TOKENS: Partial<Record<keyof ThemeTokens, readonly [string, string]>> =
+  {
+    brand: ['#a64562', '#8e3f59'],
+    brandStrong: ['#7f2c46', '#6f2f45'],
+    text: ['#2d2226', '#30262b'],
+    muted: ['#7d6e73', '#786a70'],
+    surface: ['#fffaf6', '#fffcfa'],
+    surfaceSoft: ['#eee3df', '#f0e8e5'],
+    line: ['#ded0cc', '#e6d9d5'],
+    pageBg: ['#f5efe9', '#f6f1ef'],
+    heroStart: ['#8e3a54', '#703448'],
+    heroEnd: ['#c98a99', '#aa6d7b'],
+    heroGlow: ['#efd2d5', '#e8c9d0'],
+    shadow: ['0 18px 44px rgb(75 47 56 / 12%)', '0 18px 44px rgb(75 47 56 / 10%)'],
+  };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -170,6 +185,16 @@ function syncThemeColor(themeColor: string): void {
 }
 
 function applyTheme(theme: PublicTheme): void {
+  if (theme.key === 'pearl') {
+    const tokens = { ...theme.tokens };
+    for (const [key, [legacy, current]] of Object.entries(LEGACY_PEARL_TOKENS)) {
+      if (tokens[key as keyof ThemeTokens] === legacy) {
+        tokens[key as keyof ThemeTokens] = current;
+      }
+    }
+    theme = { ...theme, tokens };
+  }
+
   const root = document.documentElement;
   root.dataset.theme = theme.key;
   root.dataset.colorScheme = theme.colorScheme;
