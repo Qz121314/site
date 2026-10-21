@@ -184,7 +184,7 @@ function syncThemeColor(themeColor: string): void {
   meta.content = themeColor;
 }
 
-function applyTheme(theme: PublicTheme): void {
+function normalizeTheme(theme: PublicTheme): PublicTheme {
   if (theme.key === 'pearl') {
     const tokens = { ...theme.tokens };
     for (const [key, [legacy, current]] of Object.entries(LEGACY_PEARL_TOKENS)) {
@@ -192,9 +192,12 @@ function applyTheme(theme: PublicTheme): void {
         tokens[key as keyof ThemeTokens] = current;
       }
     }
-    theme = { ...theme, tokens };
+    return { ...theme, tokens };
   }
+  return theme;
+}
 
+function applyTheme(theme: PublicTheme): void {
   const root = document.documentElement;
   root.dataset.theme = theme.key;
   root.dataset.colorScheme = theme.colorScheme;
@@ -254,14 +257,18 @@ function cacheTheme(theme: PublicTheme): void {
 
 export function installCachedStorefrontTheme(): PublicTheme | null {
   const cached = readCachedTheme();
-  if (cached) applyTheme(cached);
-  return cached;
+  if (!cached) return null;
+  const normalized = normalizeTheme(cached);
+  applyTheme(normalized);
+  cacheTheme(normalized);
+  return normalized;
 }
 
 export function applyStorefrontTheme(theme: PublicTheme): boolean {
   if (!validTheme(theme)) return false;
-  applyTheme(theme);
-  cacheTheme(theme);
+  const normalized = normalizeTheme(theme);
+  applyTheme(normalized);
+  cacheTheme(normalized);
   return true;
 }
 
@@ -278,8 +285,10 @@ export async function installStorefrontTheme(): Promise<PublicTheme | null> {
     if (!response.ok) return cached;
     const body = (await response.json()) as unknown;
     if (!isRecord(body) || !validTheme(body.theme)) return cached;
-    applyStorefrontTheme(body.theme);
-    return body.theme;
+    const normalized = normalizeTheme(body.theme);
+    applyTheme(normalized);
+    cacheTheme(normalized);
+    return normalized;
   } catch {
     // Keep the cached/default theme when the theme endpoint is temporarily unavailable.
     return cached;
