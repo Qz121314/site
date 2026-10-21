@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { StorefrontIconButton } from '@site/storefront-ui/icon-button';
 import Search from 'reicon-react/icons/Search';
-import { ChevronLeft, CircleAlert, X } from 'lucide-react';
+import { ArrowUpRight, ChevronLeft, CircleAlert, X } from 'lucide-react';
 import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { publicImageVariantUrl, type StorefrontBootstrap } from './content';
 import { loadSectionSnapshot } from './content-route';
@@ -269,7 +269,26 @@ export function SectionCatalogPage({
                       srcSet={srcSet}
                       width={640}
                     />
-                    <h2 className="section-product-title">{product.title}</h2>
+                  </div>
+                  <div className="section-product-meta">
+                    <div className="section-product-heading">
+                      <h2 className="section-product-name">{product.title}</h2>
+                      <ArrowUpRight
+                        aria-hidden="true"
+                        className="section-product-arrow"
+                      />
+                    </div>
+                    {product.category.name ? (
+                      <p className="section-product-category">{product.category.name}</p>
+                    ) : null}
+                    {product.tags.length > 0 ? (
+                      <p className="section-product-tags">
+                        {product.tags
+                          .slice(0, 2)
+                          .map((tag) => tag.name)
+                          .join(' · ')}
+                      </p>
+                    ) : null}
                   </div>
                 </LinkComponent>
               );

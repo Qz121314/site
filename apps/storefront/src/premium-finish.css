@@ -1,14 +1,14 @@
 /* Quiet premium finish: material, type rhythm, and focus details share theme tokens. */
 
-:is(.product-card, .section-product-card, .home-product-tile, .browse-section-card) {
+:is(.product-card, .home-product-tile, .browse-section-card) {
   -webkit-tap-highlight-color: transparent;
 }
 
-:is(.product-card, .section-product-card) {
+.product-card {
   position: relative;
 }
 
-:is(.product-card, .section-product-card)::after {
+.product-card::after {
   position: absolute;
   inset: 0;
   border: 1px solid color-mix(in srgb, var(--text) 7%, transparent);
@@ -19,18 +19,18 @@
   transition: opacity var(--app-motion-base, 240ms) ease;
 }
 
-:is(.product-card, .section-product-card):hover::after {
+.product-card:hover::after {
   opacity: 1;
 }
 
-:is(.product-card, .section-product-card) :is(h3, .section-product-title),
+.product-card h3,
 .home-product-title,
 .browse-search-product-title {
   letter-spacing: -0.025em;
   text-wrap: balance;
 }
 
-:is(.product-card, .section-product-card) :is(h3, .section-product-title)::after {
+.product-card h3::after {
   display: inline-block;
   margin-left: 0.38em;
   color: var(--brand-strong);
@@ -104,7 +104,7 @@ html[data-storefront-scrolled] .app-shell .brand-lockup {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  :is(.product-card, .section-product-card):hover :is(h3, .section-product-title)::after {
+  .product-card:hover h3::after {
     opacity: 0.9;
     transform: translate3d(0, 0, 0);
   }
