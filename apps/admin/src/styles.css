@@ -175,10 +175,6 @@ input:disabled {
   background: white;
 }
 
-.admin-main {
-  padding: 22px 16px 50px;
-}
-
 .admin-header {
   display: flex;
   flex-wrap: wrap;
@@ -212,12 +208,4 @@ input:disabled {
   justify-content: space-between;
   gap: 14px;
   margin-bottom: 16px;
-}
-
-@media (min-width: 1024px) {
-  .admin-main {
-    width: min(1220px, 100%);
-    margin: 0 auto;
-    padding: 34px 32px 70px;
-  }
 }
